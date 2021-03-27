@@ -80,13 +80,14 @@ function update(msg: Msg, model: Model, send: (msg: Msg) => void): Model {
     switch (msg.kind){
         case 'FlipName':
             setTimeout(() =>{
-                if (model.name === 'Noah') {
-                    send({ name: 'Ianto' });
-                } else {
-                    send({ name: 'Noah' })
-                }
+                send(FlipName())
             }, 3000);
-            return model;
+
+            if (model.name === 'Noah') {
+                return { name: 'Ianto' };
+            } else {
+                return { name: 'Noah' };
+            }
     }
 }
 ```
