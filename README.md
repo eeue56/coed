@@ -18,7 +18,7 @@ You should break your program down into logical sections: two types, `Model` to 
 
 For example:
 
-```
+```javascript
 type FlipName = { kind: 'FlipName' }
 type Msg = FlipName;
 type Model = { name: string; }
@@ -56,7 +56,7 @@ function main() {
 
 You can send data to `program` at a later point, for example:
 
-```
+```javascript
 function main() {
     const root = document.getElementById('root');
 
@@ -75,7 +75,7 @@ function main() {
 
 Or via the optional argument `send` in the update function:
 
-```
+```javascript
 function update(msg: Msg, model: Model, send: (msg: Msg) => void): Model {
     switch (msg.kind){
         case 'FlipName':
