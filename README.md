@@ -12,6 +12,8 @@ npm install --save @eeue56/coed
 
 ## Usage
 
+[API docs](docs/src/html.md)
+
 Like Elm, everything is built around functions. There's no JSX to be seen - writing html is done via functions that take three arguments: events, attributes, and children. There's also `html.text` which simply takes a string to be rendered.
 
 You should break your program down into logical sections: two types, `Model` to represent the data used by the view functions to render, `Msg` to represent interactions and state changes. Then you need a view function of the type `Model -> HtmlNode<Msg>`, and an update function of the type `Msg -> Model -> (?Msg -> void) -> Model`. These will be passed to `html.program`. You will need a root element in your index.html file which you pass to `html.program`, too.

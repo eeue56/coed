@@ -7,7 +7,8 @@
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "format": "npx prettier --write .",
-        "test": "npx @eeue56/bach"
+        "test": "npx @eeue56/bach",
+        "docs": "npx @eeue56/geiriadur"
     },
     "repository": {
         "type": "git",
@@ -32,6 +33,7 @@
     },
     "devDependencies": {
         "@eeue56/bach": "^0.0.2",
+        "@eeue56/geiriadur": "^0.0.1-beta.0",
         "prettier": "git+https://github.com/eeue56/prettier.git#feat/spacing-around-square-brackets"
     }
 }
