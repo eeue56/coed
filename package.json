@@ -33,7 +33,7 @@
     },
     "devDependencies": {
         "@eeue56/bach": "^0.0.2",
-        "@eeue56/geiriadur": "^0.0.1-beta.0",
+        "@eeue56/geiriadur": "^0.0.1",
         "prettier": "git+https://github.com/eeue56/prettier.git#feat/spacing-around-square-brackets"
     }
 }
