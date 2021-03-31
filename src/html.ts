@@ -137,8 +137,17 @@ type NumberAttribute = {
     value: string;
 };
 
+/**
+Used to represent the different types of attributes possible.
+*/
 export type Attribute = None | StringAttribute | NumberAttribute | StyleAttribute;
 
+/**
+Creates a class attribute - classes are combined by the html creator, so you can use it like:
+```
+html.div([ ], [ class_("one"), class_("two") ], [ ])
+```
+*/
 export function class_(str: string): Attribute {
     return {
         kind: "string",
@@ -147,6 +156,12 @@ export function class_(str: string): Attribute {
     };
 }
 
+/**
+Creates a style attribute - styles are combined by the html creator, so you can use it like:
+```
+html.div([ ], [ style_("color", "red"), style_("background-color", "blue") ], [ ])
+```
+*/
 export function style_(key: string, value: string): Attribute {
     return {
         kind: "style",
@@ -155,12 +170,22 @@ export function style_(key: string, value: string): Attribute {
     };
 }
 
+/**
+An empty attribute - filtered by the html creator on creation. This is useful if you have a tenary
+operator, e.g:
+```
+html.div([ ], [ somethingTruthy ? none() : class_("something") ], [ ])
+```
+*/
 export function none(): Attribute {
     return {
         kind: "none",
     };
 }
 
+/**
+Create an attribute with a given key and value. This is set via `setAttribute` at runtime.
+*/
 export function attribute(key: string, value: string): Attribute {
     if (key === "style") return style_(value.split(":")[0], value.split(":")[1]);
 
@@ -171,11 +196,17 @@ export function attribute(key: string, value: string): Attribute {
     };
 }
 
+/**
+Every event has a `name`, like `click`, and a tagger which produces a message of the right type
+*/
 export type Event<Msg> = {
     name: string;
     tagger(data: any): Msg;
 };
 
+/**
+Creates an event handler for passing to a html node
+*/
 export function on<Msg>(name: string, tagger: (data: any) => Msg): Event<Msg> {
     return {
         name: name,
@@ -183,6 +214,9 @@ export function on<Msg>(name: string, tagger: (data: any) => Msg): Event<Msg> {
     };
 }
 
+/**
+Special-cased input handler
+*/
 export function onInput<Msg>(tagger: (data: string) => Msg): Event<Msg> {
     return {
         name: "input",
@@ -207,8 +241,21 @@ type RegularNode<Msg> = {
     children: HtmlNode<Msg>[];
 };
 
+/**
+A HtmlNode is either a text, like:
+```
+html.text("hello world")
+```
+Or html, like:
+```
+html.div([ ], [ ], [ ])
+```
+*/
 export type HtmlNode<Msg> = TextNode | RegularNode<Msg>;
 
+/**
+Creates a text node
+*/
 export function text(str: string): TextNode {
     return {
         kind: "text",
@@ -216,6 +263,9 @@ export function text(str: string): TextNode {
     };
 }
 
+/**
+Creates a html node with a given tag name, any events, any attributes and any children.
+*/
 export function node<Msg>(
     tag: Tag,
     events: Event<Msg>[],
@@ -302,6 +352,9 @@ function renderAttribute(attribute: Attribute): string {
     }
 }
 
+/**
+Renders a HtmlNode tree as a string.
+*/
 export function render<Msg>(node: HtmlNode<Msg>): string {
     switch (node.kind) {
         case "text":
@@ -317,6 +370,10 @@ export function render<Msg>(node: HtmlNode<Msg>): string {
     }
 }
 
+/**
+Builds a HTMLElement tree from a HtmlNode tree, with event triggers being sent to the runner via the listener
+This function should not be needed by most usage.
+*/
 export function buildTree<Msg>(
     listener: (msg: Msg) => void,
     node: HtmlNode<Msg>
@@ -359,7 +416,8 @@ export function buildTree<Msg>(
     }
 }
 
-/* Triggers the event by name, passing it the payload provided.
+/**
+Triggers the event by name, passing it the payload provided.
 This function is useful for testing but not much else
  */
 export function triggerEvent<Msg>(
@@ -382,6 +440,9 @@ export function triggerEvent<Msg>(
     }
 }
 
+/**
+Converts a `HtmlNode` of type `A` to a `HtmlNode` of type `B`, including children.
+*/
 export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
     switch (tree.kind) {
         case "text":
@@ -503,6 +564,12 @@ function patch<Msg>(
     }
 }
 
+/**
+Every Coed program follows the model-view-update (MVU) pattern made popular on the frontend by Elm.
+An initial model is given, which is passed to the view function which then populates the `root` element.
+Any events triggered within the view will use the `update` function to create a new model.
+Async updates can be handled via the optional `send` callback within the update function.
+*/
 export type Program<Model, Msg> = {
     initialModel: Model;
     view(model: Model): HtmlNode<Msg>;
@@ -510,12 +577,19 @@ export type Program<Model, Msg> = {
     root: HTMLElement;
 };
 
+/**
+Every running program can be interacted with via `send`.
+For example you may want to start a program but send some data to it after loading a network request.
+*/
 export type RunningProgram<Model, Msg> = {
     program: Program<Model, Msg>;
     send: (msg: Msg) => void;
 };
 
-export function program<Model, Msg>(program: Program<Model, Msg>) {
+/**
+Takes in a program, sets it up and runs it as a main loop
+*/
+export function program<Model, Msg>(program: Program<Model, Msg>): RunningProgram<Model, Msg> {
     let model = program.initialModel;
     let previousView = program.view(program.initialModel);
 
