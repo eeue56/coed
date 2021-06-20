@@ -1,4 +1,4 @@
-import { html } from "hiraeth";
+import { html } from "@eeue56/coed";
 
 type Add = {
     kind: "Add";

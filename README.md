@@ -79,16 +79,16 @@ Or via the optional argument `send` in the update function:
 
 ```javascript
 function update(msg: Msg, model: Model, send: (msg: Msg) => void): Model {
-    switch (msg.kind){
-        case 'FlipName':
-            setTimeout(() =>{
-                send(FlipName())
+    switch (msg.kind) {
+        case "FlipName":
+            setTimeout(() => {
+                send(FlipName());
             }, 3000);
 
-            if (model.name === 'Noah') {
-                return { name: 'Ianto' };
+            if (model.name === "Noah") {
+                return { name: "Ianto" };
             } else {
-                return { name: 'Noah' };
+                return { name: "Noah" };
             }
     }
 }

@@ -1,12 +1,16 @@
 ## type Attribute 
 ```javascript
-export type Attribute = None | StringAttribute | NumberAttribute | StyleAttribute;
+export type Attribute =
+    | None
+    | StringAttribute
+    | NumberAttribute
+    | StyleAttribute;
 
 ```
 /**
 Used to represent the different types of attributes possible.
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L142-L143)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L142-L147)
 ## class_
 ```javascript
 export function class_(str: string): Attribute {
@@ -17,7 +21,7 @@ Creates a class attribute - classes are combined by the html creator, so you can
 html.div([ ], [ class_("one"), class_("two") ], [ ])
 ```
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L150-L150)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L154-L154)
 ## style_
 ```javascript
 export function style_(key: string, value: string): Attribute {
@@ -28,7 +32,7 @@ Creates a style attribute - styles are combined by the html creator, so you can 
 html.div([ ], [ style_("color", "red"), style_("background-color", "blue") ], [ ])
 ```
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L164-L164)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L168-L168)
 ## none
 ```javascript
 export function none(): Attribute {
@@ -40,7 +44,7 @@ operator, e.g:
 html.div([ ], [ somethingTruthy ? none() : class_("something") ], [ ])
 ```
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L179-L179)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L183-L183)
 ## attribute
 ```javascript
 export function attribute(key: string, value: string): Attribute {
@@ -48,7 +52,7 @@ export function attribute(key: string, value: string): Attribute {
 /**
 Create an attribute with a given key and value. This is set via `setAttribute` at runtime.
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L188-L188)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L192-L192)
 ## type Event<Msg> 
 ```javascript
 export type Event<Msg> = {
@@ -60,7 +64,7 @@ export type Event<Msg> = {
 /**
 Every event has a `name`, like `click`, and a tagger which produces a message of the right type
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L201-L205)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L206-L210)
 ## on
 ```javascript
 export function on<Msg>(name: string, tagger: (data: any) => Msg): Event<Msg> {
@@ -68,7 +72,7 @@ export function on<Msg>(name: string, tagger: (data: any) => Msg): Event<Msg> {
 /**
 Creates an event handler for passing to a html node
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L209-L209)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L214-L214)
 ## onInput
 ```javascript
 export function onInput<Msg>(tagger: (data: string) => Msg): Event<Msg> {
@@ -76,7 +80,7 @@ export function onInput<Msg>(tagger: (data: string) => Msg): Event<Msg> {
 /**
 Special-cased input handler
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L219-L219)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L228-L228)
 ## type HtmlNode<Msg> 
 ```javascript
 export type HtmlNode<Msg> = TextNode | RegularNode<Msg>;
@@ -92,7 +96,7 @@ Or html, like:
 html.div([ ], [ ], [ ])
 ```
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L253-L254)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L263-L264)
 ## text
 ```javascript
 export function text(str: string): TextNode {
@@ -100,7 +104,7 @@ export function text(str: string): TextNode {
 /**
 Creates a text node
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L258-L258)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L268-L268)
 ## node
 ```javascript
 export function node<Msg>(
@@ -113,7 +117,7 @@ export function node<Msg>(
 /**
 Creates a html node with a given tag name, any events, any attributes and any children.
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L268-L273)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L278-L283)
 ## render
 ```javascript
 export function render<Msg>(node: HtmlNode<Msg>): string {
@@ -121,7 +125,7 @@ export function render<Msg>(node: HtmlNode<Msg>): string {
 /**
 Renders a HtmlNode tree as a string.
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L357-L357)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L369-L369)
 ## buildTree
 ```javascript
 export function buildTree<Msg>(
@@ -133,7 +137,7 @@ export function buildTree<Msg>(
 Builds a HTMLElement tree from a HtmlNode tree, with event triggers being sent to the runner via the listener
 This function should not be needed by most usage.
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L376-L379)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L388-L391)
 ## triggerEvent
 ```javascript
 export function triggerEvent<Msg>(
@@ -146,7 +150,7 @@ export function triggerEvent<Msg>(
 Triggers the event by name, passing it the payload provided.
 This function is useful for testing but not much else
  */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L422-L426)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L432-L436)
 ## map
 ```javascript
 export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
@@ -154,7 +158,7 @@ export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
 /**
 Converts a `HtmlNode` of type `A` to a `HtmlNode` of type `B`, including children.
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L445-L445)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L455-L455)
 ## type Program<Model, Msg> 
 ```javascript
 export type Program<Model, Msg> = {
@@ -171,7 +175,7 @@ An initial model is given, which is passed to the view function which then popul
 Any events triggered within the view will use the `update` function to create a new model.
 Async updates can be handled via the optional `send` callback within the update function.
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L572-L578)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L639-L645)
 ## type RunningProgram<Model, Msg> 
 ```javascript
 export type RunningProgram<Model, Msg> = {
@@ -184,15 +188,17 @@ export type RunningProgram<Model, Msg> = {
 Every running program can be interacted with via `send`.
 For example you may want to start a program but send some data to it after loading a network request.
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L583-L587)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L650-L654)
 ## program
 ```javascript
-export function program<Model, Msg>(program: Program<Model, Msg>): RunningProgram<Model, Msg> {
+export function program<Model, Msg>(
+    program: Program<Model, Msg>
+): RunningProgram<Model, Msg> {
 ```
 /**
 Takes in a program, sets it up and runs it as a main loop
 */
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L591-L591)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L658-L660)
 ## a
 ```javascript
 export function a<Msg>(
@@ -202,7 +208,7 @@ export function a<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L615-L619)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L683-L687)
 ## abbr
 ```javascript
 export function abbr<Msg>(
@@ -212,7 +218,7 @@ export function abbr<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L623-L627)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L691-L695)
 ## address
 ```javascript
 export function address<Msg>(
@@ -222,7 +228,7 @@ export function address<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L631-L635)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L699-L703)
 ## area
 ```javascript
 export function area<Msg>(
@@ -232,7 +238,7 @@ export function area<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L639-L643)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L707-L711)
 ## article
 ```javascript
 export function article<Msg>(
@@ -242,7 +248,7 @@ export function article<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L647-L651)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L715-L719)
 ## aside
 ```javascript
 export function aside<Msg>(
@@ -252,7 +258,7 @@ export function aside<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L655-L659)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L723-L727)
 ## audio
 ```javascript
 export function audio<Msg>(
@@ -262,7 +268,7 @@ export function audio<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L663-L667)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L731-L735)
 ## b
 ```javascript
 export function b<Msg>(
@@ -272,7 +278,7 @@ export function b<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L671-L675)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L739-L743)
 ## base
 ```javascript
 export function base<Msg>(
@@ -282,7 +288,7 @@ export function base<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L679-L683)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L747-L751)
 ## bdi
 ```javascript
 export function bdi<Msg>(
@@ -292,7 +298,7 @@ export function bdi<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L687-L691)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L755-L759)
 ## bdo
 ```javascript
 export function bdo<Msg>(
@@ -302,7 +308,7 @@ export function bdo<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L695-L699)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L763-L767)
 ## blockquote
 ```javascript
 export function blockquote<Msg>(
@@ -312,7 +318,7 @@ export function blockquote<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L703-L707)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L771-L775)
 ## body
 ```javascript
 export function body<Msg>(
@@ -322,7 +328,7 @@ export function body<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L711-L715)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L779-L783)
 ## br
 ```javascript
 export function br<Msg>(
@@ -332,7 +338,7 @@ export function br<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L719-L723)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L787-L791)
 ## button
 ```javascript
 export function button<Msg>(
@@ -342,7 +348,7 @@ export function button<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L727-L731)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L795-L799)
 ## canvas
 ```javascript
 export function canvas<Msg>(
@@ -352,7 +358,7 @@ export function canvas<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L735-L739)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L803-L807)
 ## caption
 ```javascript
 export function caption<Msg>(
@@ -362,7 +368,7 @@ export function caption<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L743-L747)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L811-L815)
 ## cite
 ```javascript
 export function cite<Msg>(
@@ -372,7 +378,7 @@ export function cite<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L751-L755)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L819-L823)
 ## code
 ```javascript
 export function code<Msg>(
@@ -382,7 +388,7 @@ export function code<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L759-L763)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L827-L831)
 ## col
 ```javascript
 export function col<Msg>(
@@ -392,7 +398,7 @@ export function col<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L767-L771)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L835-L839)
 ## colgroup
 ```javascript
 export function colgroup<Msg>(
@@ -402,7 +408,7 @@ export function colgroup<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L775-L779)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L843-L847)
 ## data
 ```javascript
 export function data<Msg>(
@@ -412,7 +418,7 @@ export function data<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L783-L787)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L851-L855)
 ## datalist
 ```javascript
 export function datalist<Msg>(
@@ -422,7 +428,7 @@ export function datalist<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L791-L795)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L859-L863)
 ## dd
 ```javascript
 export function dd<Msg>(
@@ -432,7 +438,7 @@ export function dd<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L799-L803)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L867-L871)
 ## del
 ```javascript
 export function del<Msg>(
@@ -442,7 +448,7 @@ export function del<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L807-L811)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L875-L879)
 ## details
 ```javascript
 export function details<Msg>(
@@ -452,7 +458,7 @@ export function details<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L815-L819)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L883-L887)
 ## dfn
 ```javascript
 export function dfn<Msg>(
@@ -462,7 +468,7 @@ export function dfn<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L823-L827)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L891-L895)
 ## dialog
 ```javascript
 export function dialog<Msg>(
@@ -472,7 +478,7 @@ export function dialog<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L831-L835)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L899-L903)
 ## div
 ```javascript
 export function div<Msg>(
@@ -482,7 +488,7 @@ export function div<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L839-L843)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L907-L911)
 ## dl
 ```javascript
 export function dl<Msg>(
@@ -492,7 +498,7 @@ export function dl<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L847-L851)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L915-L919)
 ## dt
 ```javascript
 export function dt<Msg>(
@@ -502,7 +508,7 @@ export function dt<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L855-L859)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L923-L927)
 ## em
 ```javascript
 export function em<Msg>(
@@ -512,7 +518,7 @@ export function em<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L863-L867)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L931-L935)
 ## embed
 ```javascript
 export function embed<Msg>(
@@ -522,7 +528,7 @@ export function embed<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L871-L875)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L939-L943)
 ## fieldset
 ```javascript
 export function fieldset<Msg>(
@@ -532,7 +538,7 @@ export function fieldset<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L879-L883)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L947-L951)
 ## figure
 ```javascript
 export function figure<Msg>(
@@ -542,7 +548,7 @@ export function figure<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L887-L891)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L955-L959)
 ## footer
 ```javascript
 export function footer<Msg>(
@@ -552,7 +558,7 @@ export function footer<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L895-L899)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L963-L967)
 ## form
 ```javascript
 export function form<Msg>(
@@ -562,7 +568,7 @@ export function form<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L903-L907)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L971-L975)
 ## h1
 ```javascript
 export function h1<Msg>(
@@ -572,7 +578,7 @@ export function h1<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L911-L915)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L979-L983)
 ## h2
 ```javascript
 export function h2<Msg>(
@@ -582,7 +588,7 @@ export function h2<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L919-L923)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L987-L991)
 ## h3
 ```javascript
 export function h3<Msg>(
@@ -592,7 +598,7 @@ export function h3<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L927-L931)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L995-L999)
 ## h4
 ```javascript
 export function h4<Msg>(
@@ -602,7 +608,7 @@ export function h4<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L935-L939)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1003-L1007)
 ## h5
 ```javascript
 export function h5<Msg>(
@@ -612,7 +618,7 @@ export function h5<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L943-L947)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1011-L1015)
 ## h6
 ```javascript
 export function h6<Msg>(
@@ -622,7 +628,7 @@ export function h6<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L951-L955)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1019-L1023)
 ## head
 ```javascript
 export function head<Msg>(
@@ -632,7 +638,7 @@ export function head<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L959-L963)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1027-L1031)
 ## header
 ```javascript
 export function header<Msg>(
@@ -642,7 +648,7 @@ export function header<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L967-L971)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1035-L1039)
 ## hgroup
 ```javascript
 export function hgroup<Msg>(
@@ -652,7 +658,7 @@ export function hgroup<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L975-L979)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1043-L1047)
 ## hr
 ```javascript
 export function hr<Msg>(
@@ -662,7 +668,7 @@ export function hr<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L983-L987)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1051-L1055)
 ## html
 ```javascript
 export function html<Msg>(
@@ -672,7 +678,7 @@ export function html<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L991-L995)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1059-L1063)
 ## i
 ```javascript
 export function i<Msg>(
@@ -682,7 +688,7 @@ export function i<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L999-L1003)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1067-L1071)
 ## iframe
 ```javascript
 export function iframe<Msg>(
@@ -692,7 +698,7 @@ export function iframe<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1007-L1011)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1075-L1079)
 ## img
 ```javascript
 export function img<Msg>(
@@ -702,7 +708,7 @@ export function img<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1015-L1019)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1083-L1087)
 ## input
 ```javascript
 export function input<Msg>(
@@ -712,7 +718,7 @@ export function input<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1023-L1027)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1091-L1095)
 ## ins
 ```javascript
 export function ins<Msg>(
@@ -722,7 +728,7 @@ export function ins<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1031-L1035)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1099-L1103)
 ## kbd
 ```javascript
 export function kbd<Msg>(
@@ -732,7 +738,7 @@ export function kbd<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1039-L1043)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1107-L1111)
 ## keygen
 ```javascript
 export function keygen<Msg>(
@@ -742,7 +748,7 @@ export function keygen<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1047-L1051)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1115-L1119)
 ## label
 ```javascript
 export function label<Msg>(
@@ -752,7 +758,7 @@ export function label<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1055-L1059)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1123-L1127)
 ## legend
 ```javascript
 export function legend<Msg>(
@@ -762,7 +768,7 @@ export function legend<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1063-L1067)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1131-L1135)
 ## li
 ```javascript
 export function li<Msg>(
@@ -772,7 +778,7 @@ export function li<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1071-L1075)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1139-L1143)
 ## link
 ```javascript
 export function link<Msg>(
@@ -782,7 +788,7 @@ export function link<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1079-L1083)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1147-L1151)
 ## main
 ```javascript
 export function main<Msg>(
@@ -792,7 +798,7 @@ export function main<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1087-L1091)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1155-L1159)
 ## map_
 ```javascript
 export function map_<Msg>(
@@ -802,7 +808,7 @@ export function map_<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1095-L1099)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1163-L1167)
 ## mark
 ```javascript
 export function mark<Msg>(
@@ -812,7 +818,7 @@ export function mark<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1103-L1107)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1171-L1175)
 ## menu
 ```javascript
 export function menu<Msg>(
@@ -822,7 +828,7 @@ export function menu<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1111-L1115)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1179-L1183)
 ## menuitem
 ```javascript
 export function menuitem<Msg>(
@@ -832,7 +838,7 @@ export function menuitem<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1119-L1123)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1187-L1191)
 ## meta
 ```javascript
 export function meta<Msg>(
@@ -842,7 +848,7 @@ export function meta<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1127-L1131)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1195-L1199)
 ## meter
 ```javascript
 export function meter<Msg>(
@@ -852,7 +858,7 @@ export function meter<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1135-L1139)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1203-L1207)
 ## nav
 ```javascript
 export function nav<Msg>(
@@ -862,7 +868,7 @@ export function nav<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1143-L1147)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1211-L1215)
 ## noscript
 ```javascript
 export function noscript<Msg>(
@@ -872,7 +878,7 @@ export function noscript<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1151-L1155)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1219-L1223)
 ## object
 ```javascript
 export function object<Msg>(
@@ -882,7 +888,7 @@ export function object<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1159-L1163)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1227-L1231)
 ## ol
 ```javascript
 export function ol<Msg>(
@@ -892,7 +898,7 @@ export function ol<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1167-L1171)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1235-L1239)
 ## optgroup
 ```javascript
 export function optgroup<Msg>(
@@ -902,7 +908,7 @@ export function optgroup<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1175-L1179)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1243-L1247)
 ## option
 ```javascript
 export function option<Msg>(
@@ -912,7 +918,7 @@ export function option<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1183-L1187)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1251-L1255)
 ## output
 ```javascript
 export function output<Msg>(
@@ -922,7 +928,7 @@ export function output<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1191-L1195)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1259-L1263)
 ## p
 ```javascript
 export function p<Msg>(
@@ -932,7 +938,7 @@ export function p<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1199-L1203)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1267-L1271)
 ## param
 ```javascript
 export function param<Msg>(
@@ -942,7 +948,7 @@ export function param<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1207-L1211)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1275-L1279)
 ## pre
 ```javascript
 export function pre<Msg>(
@@ -952,7 +958,7 @@ export function pre<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1215-L1219)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1283-L1287)
 ## progress
 ```javascript
 export function progress<Msg>(
@@ -962,7 +968,7 @@ export function progress<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1223-L1227)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1291-L1295)
 ## q
 ```javascript
 export function q<Msg>(
@@ -972,7 +978,7 @@ export function q<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1231-L1235)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1299-L1303)
 ## rb
 ```javascript
 export function rb<Msg>(
@@ -982,7 +988,7 @@ export function rb<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1239-L1243)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1307-L1311)
 ## rp
 ```javascript
 export function rp<Msg>(
@@ -992,7 +998,7 @@ export function rp<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1247-L1251)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1315-L1319)
 ## rt
 ```javascript
 export function rt<Msg>(
@@ -1002,7 +1008,7 @@ export function rt<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1255-L1259)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1323-L1327)
 ## rtc
 ```javascript
 export function rtc<Msg>(
@@ -1012,7 +1018,7 @@ export function rtc<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1263-L1267)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1331-L1335)
 ## ruby
 ```javascript
 export function ruby<Msg>(
@@ -1022,7 +1028,7 @@ export function ruby<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1271-L1275)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1339-L1343)
 ## s
 ```javascript
 export function s<Msg>(
@@ -1032,7 +1038,7 @@ export function s<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1279-L1283)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1347-L1351)
 ## samp
 ```javascript
 export function samp<Msg>(
@@ -1042,7 +1048,7 @@ export function samp<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1287-L1291)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1355-L1359)
 ## script
 ```javascript
 export function script<Msg>(
@@ -1052,7 +1058,7 @@ export function script<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1295-L1299)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1363-L1367)
 ## section
 ```javascript
 export function section<Msg>(
@@ -1062,7 +1068,7 @@ export function section<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1303-L1307)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1371-L1375)
 ## select
 ```javascript
 export function select<Msg>(
@@ -1072,7 +1078,7 @@ export function select<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1311-L1315)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1379-L1383)
 ## small
 ```javascript
 export function small<Msg>(
@@ -1082,7 +1088,7 @@ export function small<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1319-L1323)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1387-L1391)
 ## source
 ```javascript
 export function source<Msg>(
@@ -1092,7 +1098,7 @@ export function source<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1327-L1331)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1395-L1399)
 ## span
 ```javascript
 export function span<Msg>(
@@ -1102,7 +1108,7 @@ export function span<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1335-L1339)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1403-L1407)
 ## strong
 ```javascript
 export function strong<Msg>(
@@ -1112,7 +1118,7 @@ export function strong<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1343-L1347)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1411-L1415)
 ## style
 ```javascript
 export function style<Msg>(
@@ -1122,7 +1128,7 @@ export function style<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1351-L1355)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1419-L1423)
 ## sub
 ```javascript
 export function sub<Msg>(
@@ -1132,7 +1138,7 @@ export function sub<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1359-L1363)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1427-L1431)
 ## summary
 ```javascript
 export function summary<Msg>(
@@ -1142,7 +1148,7 @@ export function summary<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1367-L1371)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1435-L1439)
 ## sup
 ```javascript
 export function sup<Msg>(
@@ -1152,7 +1158,7 @@ export function sup<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1375-L1379)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1443-L1447)
 ## table
 ```javascript
 export function table<Msg>(
@@ -1162,7 +1168,7 @@ export function table<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1383-L1387)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1451-L1455)
 ## tbody
 ```javascript
 export function tbody<Msg>(
@@ -1172,7 +1178,7 @@ export function tbody<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1391-L1395)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1459-L1463)
 ## td
 ```javascript
 export function td<Msg>(
@@ -1182,7 +1188,7 @@ export function td<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1399-L1403)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1467-L1471)
 ## template
 ```javascript
 export function template<Msg>(
@@ -1192,7 +1198,7 @@ export function template<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1407-L1411)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1475-L1479)
 ## textarea
 ```javascript
 export function textarea<Msg>(
@@ -1202,7 +1208,7 @@ export function textarea<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1415-L1419)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1483-L1487)
 ## tfoot
 ```javascript
 export function tfoot<Msg>(
@@ -1212,7 +1218,7 @@ export function tfoot<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1423-L1427)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1491-L1495)
 ## th
 ```javascript
 export function th<Msg>(
@@ -1222,7 +1228,7 @@ export function th<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1431-L1435)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1499-L1503)
 ## thead
 ```javascript
 export function thead<Msg>(
@@ -1232,7 +1238,7 @@ export function thead<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1439-L1443)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1507-L1511)
 ## time
 ```javascript
 export function time<Msg>(
@@ -1242,7 +1248,7 @@ export function time<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1447-L1451)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1515-L1519)
 ## title
 ```javascript
 export function title<Msg>(
@@ -1252,7 +1258,7 @@ export function title<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1455-L1459)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1523-L1527)
 ## tr
 ```javascript
 export function tr<Msg>(
@@ -1262,7 +1268,7 @@ export function tr<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1463-L1467)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1531-L1535)
 ## track
 ```javascript
 export function track<Msg>(
@@ -1272,7 +1278,7 @@ export function track<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1471-L1475)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1539-L1543)
 ## u
 ```javascript
 export function u<Msg>(
@@ -1282,7 +1288,7 @@ export function u<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1479-L1483)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1547-L1551)
 ## ul
 ```javascript
 export function ul<Msg>(
@@ -1292,7 +1298,7 @@ export function ul<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1487-L1491)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1555-L1559)
 ## var_
 ```javascript
 export function var_<Msg>(
@@ -1302,7 +1308,7 @@ export function var_<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1495-L1499)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1563-L1567)
 ## video
 ```javascript
 export function video<Msg>(
@@ -1312,7 +1318,7 @@ export function video<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1503-L1507)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1571-L1575)
 ## wbr
 ```javascript
 export function wbr<Msg>(
@@ -1322,4 +1328,4 @@ export function wbr<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1511-L1515)
+[View source](https://github.com/eeue56/coed/blob/main/src/html.ts#L1579-L1583)

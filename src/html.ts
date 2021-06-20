@@ -140,7 +140,11 @@ type NumberAttribute = {
 /**
 Used to represent the different types of attributes possible.
 */
-export type Attribute = None | StringAttribute | NumberAttribute | StyleAttribute;
+export type Attribute =
+    | None
+    | StringAttribute
+    | NumberAttribute
+    | StyleAttribute;
 
 /**
 Creates a class attribute - classes are combined by the html creator, so you can use it like:
@@ -187,7 +191,8 @@ export function none(): Attribute {
 Create an attribute with a given key and value. This is set via `setAttribute` at runtime.
 */
 export function attribute(key: string, value: string): Attribute {
-    if (key === "style") return style_(value.split(":")[0], value.split(":")[1]);
+    if (key === "style")
+        return style_(value.split(":")[0], value.split(":")[1]);
 
     return {
         kind: "string",
@@ -210,7 +215,11 @@ Creates an event handler for passing to a html node
 export function on<Msg>(name: string, tagger: (data: any) => Msg): Event<Msg> {
     return {
         name: name,
-        tagger: tagger,
+        tagger: (event: any) => {
+            event.stopPropagation();
+            event.preventDefault();
+            return tagger(event);
+        },
     };
 }
 
@@ -239,6 +248,7 @@ type RegularNode<Msg> = {
     events: Event<Msg>[];
     attributes: Attribute[];
     children: HtmlNode<Msg>[];
+    _eventListeners: any[];
 };
 
 /**
@@ -278,9 +288,9 @@ export function node<Msg>(
         events: events,
         attributes: combineAttributes(attributes),
         children: children,
+        _eventListeners: [ ],
     };
 }
-
 
 function combineAttributes(attributes: Attribute[]): Attribute[] {
     const knownStringAttributes: { [id: string]: StringAttribute[] } = {};
@@ -323,12 +333,14 @@ function combineAttributes(attributes: Attribute[]): Attribute[] {
         );
     });
 
-    if (knownStyleAttributes.length > 0){
+    if (knownStyleAttributes.length > 0) {
         // actually combine attributes together
         combinedAttributes.push(
             knownStyleAttributes.reduce(
                 (acc: StringAttribute, currentValue: StyleAttribute) => {
-                    acc.value += currentValue.key + ":" + currentValue.value + ";";
+                    if (typeof acc.value === "undefined") acc.value = "";
+                    acc.value +=
+                        currentValue.key + ":" + currentValue.value + ";";
                     return acc;
                 },
                 attribute("style", "") as StringAttribute
@@ -389,24 +401,22 @@ export function buildTree<Msg>(
             const element = document.createElement(node.tag);
 
             node.attributes.forEach((attribute: Attribute) => {
-                switch (attribute.kind) {
-                    case "string":
-                        element.setAttribute(attribute.key, attribute.value);
-                    case "number":
-                        element.setAttribute(attribute.key, attribute.value);
-                    default:
-                        return;
-                }
+                setAttributeOnElement(element, attribute);
             });
 
             node.events.forEach((event: Event<Msg>) => {
-                element.addEventListener(
-                    event.name,
-                    (data) => {
-                        listener(event.tagger(data));
-                    },
-                    { once: true }
-                );
+                const listenerFunction = (data: globalThis.Event) => {
+                    listener(event.tagger(data));
+                };
+
+                element.addEventListener(event.name, listenerFunction, {
+                    once: true,
+                });
+
+                node._eventListeners.push({
+                    event: event,
+                    listener: listenerFunction,
+                });
             });
 
             children.forEach((child) => {
@@ -463,20 +473,39 @@ export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
     }
 }
 
+function setAttributeOnElement(
+    element: HTMLElement,
+    attribute: Attribute
+): void {
+    switch (attribute.kind) {
+        case "string":
+            (element as any)[attribute.key] = attribute.value;
+            element.setAttribute(attribute.key, attribute.value);
+            return;
+        case "number":
+            (element as any)[attribute.key] = attribute.value;
+            element.setAttribute(attribute.key, attribute.value);
+            return;
+        case "style":
+            element.removeAttribute("style");
+            const styles = attribute.value.split(";");
+
+            for (var i = 0; i < styles.length; i++) {
+                const styleName: string = styles[i].split(":")[0];
+                const styleValue = styles[i].split(":")[1];
+                element.style[styleName as any] = styleValue;
+            }
+            return;
+        case "none":
+            return;
+    }
+}
+
 function patchFacts<Msg>(nextTree: HtmlNode<Msg>, elements: HTMLElement) {
     switch (nextTree.kind) {
         case "regular":
             nextTree.attributes.forEach((attribute: Attribute) => {
-                switch (attribute.kind) {
-                    case "string":
-                        elements.setAttribute(attribute.key, attribute.value);
-                        return;
-                    case "number":
-                        elements.setAttribute(attribute.key, attribute.value);
-                        return;
-                    case "none":
-                        return;
-                }
+                setAttributeOnElement(elements, attribute);
             });
             return;
         case "text":
@@ -486,20 +515,35 @@ function patchFacts<Msg>(nextTree: HtmlNode<Msg>, elements: HTMLElement) {
 
 function patchEvents<Msg>(
     listener: (msg: Msg) => void,
+    previousTree: HtmlNode<Msg>,
     nextTree: HtmlNode<Msg>,
     elements: HTMLElement
 ) {
     switch (nextTree.kind) {
         case "regular":
+            (previousTree as RegularNode<Msg>)._eventListeners.forEach(
+                (eventListeners) => {
+                    elements.removeEventListener(
+                        eventListeners.event.name,
+                        eventListeners.listener
+                    );
+                }
+            );
+
             (nextTree as RegularNode<Msg>).events.forEach(
                 (event: Event<Msg>) => {
-                    elements.addEventListener(
-                        event.name,
-                        (data) => {
-                            listener(event.tagger(data));
-                        },
-                        { once: true }
-                    );
+                    const listenerFunction = (data: globalThis.Event) => {
+                        listener(event.tagger(data));
+                    };
+
+                    elements.addEventListener(event.name, listenerFunction, {
+                        once: true,
+                    });
+
+                    nextTree._eventListeners.push({
+                        event: event,
+                        listener: listenerFunction,
+                    });
                 }
             );
             return;
@@ -540,12 +584,26 @@ function patch<Msg>(
                 return nextTree;
             } else {
                 patchFacts(nextTree, elements as HTMLElement);
-                patchEvents(listener, nextTree, elements as HTMLElement);
 
-                for (var i = 0; i < currentTree.children.length; i++) {
+                patchEvents(
+                    listener,
+                    currentTree,
+                    nextTree,
+                    elements as HTMLElement
+                );
+                const htmlElements = elements as HTMLElement;
+
+                for (var i = 0; i < nextTree.children.length; i++) {
                     const currentChild = currentTree.children[i];
                     const nextChild = nextTree.children[i];
-                    const node = (elements as HTMLElement).childNodes[i];
+                    const node = htmlElements.childNodes[i];
+
+                    if (typeof node === "undefined") {
+                        htmlElements.appendChild(
+                            buildTree(listener, nextChild)
+                        );
+                        continue;
+                    }
 
                     switch (node.nodeType) {
                         case Node.ELEMENT_NODE:
@@ -558,6 +616,15 @@ function patch<Msg>(
                             patch(listener, currentChild, nextChild, text);
                             break;
                     }
+                }
+
+                for (
+                    var i = nextTree.children.length;
+                    i < htmlElements.childNodes.length;
+                    i++
+                ) {
+                    const node = htmlElements.childNodes[i];
+                    htmlElements.removeChild(node);
                 }
             }
             return nextTree;
@@ -589,7 +656,9 @@ export type RunningProgram<Model, Msg> = {
 /**
 Takes in a program, sets it up and runs it as a main loop
 */
-export function program<Model, Msg>(program: Program<Model, Msg>): RunningProgram<Model, Msg> {
+export function program<Model, Msg>(
+    program: Program<Model, Msg>
+): RunningProgram<Model, Msg> {
     let model = program.initialModel;
     let previousView = program.view(program.initialModel);
 
@@ -609,7 +678,6 @@ export function program<Model, Msg>(program: Program<Model, Msg>): RunningProgra
         send: listener,
     };
 }
-
 
 // tags
 

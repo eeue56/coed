@@ -1,5 +1,4 @@
-import { html } from "hiraeth";
-
+import { html } from "@eeue56/coed";
 
 type Roll = {
     kind: "Roll";
@@ -34,13 +33,7 @@ function view(model: Model): html.HtmlNode<Msg> {
         [ ],
         [
             html.h1([ ], [ ], [ html.text(`${model.dieFace}`) ]),
-            html.button(
-                [
-                    html.on("click", Roll),
-                ],
-                [ ],
-                [ html.text("Roll") ]
-            ),
+            html.button([ html.on("click", Roll) ], [ ], [ html.text("Roll") ]),
         ]
     );
 }

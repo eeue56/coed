@@ -1,4 +1,4 @@
-import { html } from "hiraeth";
+import { html } from "@eeue56/coed";
 
 type SetName = {
     kind: "SetName";
@@ -99,6 +99,7 @@ function viewValidation<Msg>(model: Model): html.HtmlNode<Msg> {
         [
             html.style_("color", "red"),
             html.style_("border", "1px solid black"),
+            html.style_("background", "lightblue"),
         ],
         [ html.text("Passwords don't match") ]
     );

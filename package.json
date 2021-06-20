@@ -6,6 +6,7 @@
     "typings": "build/index.d.ts",
     "scripts": {
         "build": "tsc -p tsconfig.json",
+        "watch": "tsc -w -p tsconfig.json",
         "format": "npx prettier --write .",
         "test": "npx @eeue56/bach",
         "docs": "npx @eeue56/geiriadur"
