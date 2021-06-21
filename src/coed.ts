@@ -216,8 +216,10 @@ export function on<Msg>(name: string, tagger: (data: any) => Msg): Event<Msg> {
     return {
         name: name,
         tagger: (event: any) => {
-            event.stopPropagation();
-            event.preventDefault();
+            if (event.stopPropagation) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
             return tagger(event);
         },
     };
