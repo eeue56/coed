@@ -1,2 +1,5 @@
 examples/
 node_modules/
+make_example.sh
+build/coed_test*
+src/coed_test.ts
