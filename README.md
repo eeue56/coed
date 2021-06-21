@@ -21,6 +21,9 @@ You should break your program down into logical sections: two types, `Model` to 
 For example:
 
 ```javascript
+import { HtmlNode, div, oncClick, style_, text } from "@eeue56/coed";
+import * as coed from "@eeue56/coed";
+
 type FlipName = { kind: 'FlipName' }
 type Msg = FlipName;
 type Model = { name: string; }
@@ -36,18 +39,18 @@ function update(msg: Msg, model: Model): Model {
     }
 }
 
-function view<Msg>(model: Model): html.HtmlNode<Msg> {
-    return html.div(
-        [ html.onClick(() => FlipName()) ],
-        [ html.style_("color", model.name === "Noah" ? 'green' : 'red') ]
-        [ html.text(model.name) ]
+function view<Msg>(model: Model): HtmlNode<Msg> {
+    return div(
+        [ onClick(() => FlipName()) ],
+        [ style_("color", model.name === "Noah" ? 'green' : 'red') ]
+        [ text(model.name) ]
     );
 }
 
 function main() {
     const root = document.getElementById('root');
 
-    const program = html.program({
+    const program = coed.program({
         root: root
         initialModel: { name: "Noah" },
         view: view,
@@ -62,7 +65,7 @@ You can send data to `program` at a later point, for example:
 function main() {
     const root = document.getElementById('root');
 
-    const program = html.program({
+    const program = coed.program({
         root: root
         initialModel: { name: "Noah" },
         view: view,
