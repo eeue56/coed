@@ -1,4 +1,4 @@
-import { html } from "@eeue56/coed";
+import * as coed from "@eeue56/coed";
 
 type SetName = {
     kind: "SetName";
@@ -60,53 +60,53 @@ function viewInput<Msg>(
     placeholder: string,
     value: string,
     onInput: (input: string) => Msg
-): html.HtmlNode<Msg> {
-    return html.input(
-        [ html.onInput(onInput) ],
+): coed.HtmlNode<Msg> {
+    return coed.input(
+        [ coed.onInput(onInput) ],
         [
-            html.attribute("type", type_),
-            html.attribute("placeholder", placeholder),
-            html.attribute("value", value),
+            coed.attribute("type", type_),
+            coed.attribute("placeholder", placeholder),
+            coed.attribute("value", value),
         ],
         [ ]
     );
 }
 
-function viewValidation<Msg>(model: Model): html.HtmlNode<Msg> {
+function viewValidation<Msg>(model: Model): coed.HtmlNode<Msg> {
     if (model.password.length === 0) {
-        return html.div(
+        return coed.div(
             [ ],
             [
-                html.style_("color", "red"),
-                html.style_("border", "1px solid black"),
+                coed.style_("color", "red"),
+                coed.style_("border", "1px solid black"),
             ],
-            [ html.text("No password set") ]
+            [ coed.text("No password set") ]
         );
     }
     if (model.password === model.passwordAgain) {
-        return html.div(
+        return coed.div(
             [ ],
             [
-                html.style_("color", "green"),
-                html.style_("border", "5px dashed yellow"),
+                coed.style_("color", "green"),
+                coed.style_("border", "5px dashed yellow"),
             ],
-            [ html.text("Matching passwords") ]
+            [ coed.text("Matching passwords") ]
         );
     }
 
-    return html.div(
+    return coed.div(
         [ ],
         [
-            html.style_("color", "red"),
-            html.style_("border", "1px solid black"),
-            html.style_("background", "lightblue"),
+            coed.style_("color", "red"),
+            coed.style_("border", "1px solid black"),
+            coed.style_("background", "lightblue"),
         ],
-        [ html.text("Passwords don't match") ]
+        [ coed.text("Passwords don't match") ]
     );
 }
 
-function view(model: Model): html.HtmlNode<Msg> {
-    return html.div(
+function view(model: Model): coed.HtmlNode<Msg> {
+    return coed.div(
         [ ],
         [ ],
         [
@@ -127,7 +127,7 @@ function main() {
     const root = document.getElementById("root");
     if (root === null) return;
 
-    const program = html.program({
+    const program = coed.program({
         root: root,
         initialModel: { password: "", passwordAgain: "", name: "" },
         view: view,

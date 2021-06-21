@@ -1,4 +1,4 @@
-import { html } from "@eeue56/coed";
+import * as coed from "@eeue56/coed";
 
 type Clicked = {
     kind: "Clicked";
@@ -32,15 +32,15 @@ function update(msg: Msg, model: Model): Model {
     }
 }
 
-function view(model: Model): html.HtmlNode<Msg> {
-    return html.button(
-        [ html.on("click", () => Clicked()) ],
+function view(model: Model): coed.HtmlNode<Msg> {
+    return coed.button(
+        [ coed.on("click", () => Clicked()) ],
         [
-            html.style_("position", "absolute"),
-            html.style_("top", `${model.x}px`),
-            html.style_("left", `${model.y}px`),
+            coed.style_("position", "absolute"),
+            coed.style_("top", `${model.x}px`),
+            coed.style_("left", `${model.y}px`),
         ],
-        [ html.text("Click me!") ]
+        [ coed.text("Click me!") ]
     );
 }
 
@@ -48,7 +48,7 @@ function main() {
     const root = document.getElementById("root");
     if (root === null) return;
 
-    const program = html.program({
+    const program = coed.program({
         root: root,
         initialModel: { x: 100, y: 100 },
         view: view,

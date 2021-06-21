@@ -1,4 +1,4 @@
-import { html } from "@eeue56/coed";
+import * as coed from "@eeue56/coed";
 
 type ChangeText = {
     kind: "ChangeText";
@@ -25,23 +25,23 @@ function update(msg: Msg, model: Model): Model {
     }
 }
 
-function view(model: Model): html.HtmlNode<Msg> {
-    return html.div(
+function view(model: Model): coed.HtmlNode<Msg> {
+    return coed.div(
         [ ],
         [ ],
         [
-            html.input(
-                [ html.onInput(ChangeText) ],
+            coed.input(
+                [ coed.onInput(ChangeText) ],
                 [
-                    html.attribute("placeholder", "Text to reverse"),
-                    html.attribute("value", model.text),
+                    coed.attribute("placeholder", "Text to reverse"),
+                    coed.attribute("value", model.text),
                 ],
                 [ ]
             ),
-            html.div(
+            coed.div(
                 [ ],
                 [ ],
-                [ html.text(model.text.split("").reverse().join("")) ]
+                [ coed.text(model.text.split("").reverse().join("")) ]
             ),
         ]
     );
@@ -51,7 +51,7 @@ function main() {
     const root = document.getElementById("root");
     if (root === null) return;
 
-    const program = html.program({
+    const program = coed.program({
         root: root,
         initialModel: { text: "" },
         view: view,

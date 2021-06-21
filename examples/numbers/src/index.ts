@@ -1,4 +1,4 @@
-import { html } from "@eeue56/coed";
+import * as coed from "@eeue56/coed";
 
 type Roll = {
     kind: "Roll";
@@ -27,13 +27,13 @@ function update(msg: Msg, model: Model): Model {
     }
 }
 
-function view(model: Model): html.HtmlNode<Msg> {
-    return html.div(
+function view(model: Model): coed.HtmlNode<Msg> {
+    return coed.div(
         [ ],
         [ ],
         [
-            html.h1([ ], [ ], [ html.text(`${model.dieFace}`) ]),
-            html.button([ html.on("click", Roll) ], [ ], [ html.text("Roll") ]),
+            coed.h1([ ], [ ], [ coed.text(`${model.dieFace}`) ]),
+            coed.button([ coed.on("click", Roll) ], [ ], [ coed.text("Roll") ]),
         ]
     );
 }
@@ -42,7 +42,7 @@ function main() {
     const root = document.getElementById("root");
     if (root === null) return;
 
-    const program = html.program({
+    const program = coed.program({
         root: root,
         initialModel: { dieFace: 1 },
         view: view,

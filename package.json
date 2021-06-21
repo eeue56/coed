@@ -2,8 +2,8 @@
     "name": "@eeue56/coed",
     "version": "0.0.1",
     "description": "Write HTML in pure TS",
-    "main": "build/index.js",
-    "typings": "build/index.d.ts",
+    "main": "build/coed.js",
+    "typings": "build/coed.d.ts",
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "watch": "tsc -w -p tsconfig.json",

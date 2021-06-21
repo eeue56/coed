@@ -1,4 +1,4 @@
-import { html } from "@eeue56/coed";
+import * as coed from "@eeue56/coed";
 
 type MorePlease = {
     kind: "MorePlease";
@@ -102,46 +102,46 @@ function SubMsg(): SubMsg {
     };
 }
 
-function viewGif(model: Model): html.HtmlNode<SubMsg> {
+function viewGif(model: Model): coed.HtmlNode<SubMsg> {
     switch (model.kind) {
         case "Failure":
-            return html.div(
+            return coed.div(
                 [ ],
                 [ ],
                 [
-                    html.text("I could not load a random cat for some reason"),
-                    html.button(
-                        [ html.on("click", () => SubMsg()) ],
+                    coed.text("I could not load a random cat for some reason"),
+                    coed.button(
+                        [ coed.on("click", () => SubMsg()) ],
                         [ ],
-                        [ html.text("Try again!") ]
+                        [ coed.text("Try again!") ]
                     ),
                 ]
             );
         case "Loading":
-            return html.text("Loading...");
+            return coed.text("Loading...");
         case "Success":
-            return html.div(
+            return coed.div(
                 [ ],
                 [ ],
                 [
-                    html.button(
-                        [ html.on("click", () => SubMsg()) ],
-                        [ html.style_("display", "block") ],
-                        [ html.text("More please!") ]
+                    coed.button(
+                        [ coed.on("click", () => SubMsg()) ],
+                        [ coed.style_("display", "block") ],
+                        [ coed.text("More please!") ]
                     ),
-                    html.img([ ], [ html.attribute("src", model.url) ], [ ]),
+                    coed.img([ ], [ coed.attribute("src", model.url) ], [ ]),
                 ]
             );
     }
 }
 
-function view(model: Model): html.HtmlNode<Msg> {
-    return html.div(
+function view(model: Model): coed.HtmlNode<Msg> {
+    return coed.div(
         [ ],
         [ ],
         [
-            html.h2([ ], [ ], [ html.text("Random cats") ]),
-            html.map((sub: SubMsg) => MorePlease(), viewGif(model)),
+            coed.h2([ ], [ ], [ coed.text("Random cats") ]),
+            coed.map((sub: SubMsg) => MorePlease(), viewGif(model)),
         ]
     );
 }
@@ -150,7 +150,7 @@ function main() {
     const root = document.getElementById("root");
     if (root === null) return;
 
-    const program = html.program({
+    const program = coed.program({
         root: root,
         initialModel: Loading(),
         view: view,

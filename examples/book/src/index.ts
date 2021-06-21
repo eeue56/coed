@@ -1,4 +1,5 @@
-import { html } from "@eeue56/coed";
+import * as coed from "@eeue56/coed";
+import { text, pre, HtmlNode } from "@eeue56/coed";
 
 type GotText = {
     kind: "GotText";
@@ -67,14 +68,14 @@ function update(msg: Msg, model: Model): Model {
     }
 }
 
-function view(model: Model): html.HtmlNode<Msg> {
+function view(model: Model): HtmlNode<Msg> {
     switch (model.kind) {
         case "Loading":
-            return html.text("Loading...");
+            return text("Loading...");
         case "Failure":
-            return html.text("I was unable to load your book.");
+            return text("I was unable to load your book.");
         case "Success":
-            return html.pre([ ], [ ], [ html.text(model.text) ]);
+            return pre([ ], [ ], [ text(model.text) ]);
     }
 }
 
@@ -82,7 +83,7 @@ function main() {
     const root = document.getElementById("root");
     if (root === null) return;
 
-    const program = html.program({
+    const program = coed.program({
         root: root,
         initialModel: Loading(),
         view: view,
