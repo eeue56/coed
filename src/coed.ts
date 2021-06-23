@@ -303,7 +303,7 @@ export function node<Msg>(
 }
 
 /**
-Creates a html node with a given tag name, any events, any attributes and any children.
+Creates a void html node with a given tag name, any events, any attributes.
 */
 export function voidNode<Msg>(
     tag: Tag,
