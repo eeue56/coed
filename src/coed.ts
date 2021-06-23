@@ -418,8 +418,8 @@ export function render<Msg>(node: HtmlNode<Msg>, depth = 0): string {
                         return (
                             whitespace +
                             `<${node.tag}${attributes}>
-        ${node.children.map((child) => render(child, depth + 1)).join("\n")}
-        ${whitespace}</${node.tag}>`
+${node.children.map((child) => render(child, depth + 1)).join("\n")}
+${whitespace}</${node.tag}>`
                         );
                     }
 
