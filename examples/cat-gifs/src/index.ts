@@ -129,7 +129,10 @@ function viewGif(model: Model): coed.HtmlNode<SubMsg> {
                         [ coed.style_("display", "block") ],
                         [ coed.text("More please!") ]
                     ),
-                    coed.img([ ], [ coed.attribute("src", model.url) ], [ ]),
+                    coed.img(
+                        [ coed.on("click", () => SubMsg()) ],
+                        [ coed.attribute("src", model.url) ]
+                    ),
                 ]
             );
     }

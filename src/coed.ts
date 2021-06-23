@@ -253,6 +253,14 @@ type RegularNode<Msg> = {
     _eventListeners: any[];
 };
 
+type VoidNode<Msg> = {
+    kind: "void";
+    tag: Tag;
+    events: Event<Msg>[];
+    attributes: Attribute[];
+    _eventListeners: any[];
+};
+
 /**
 A HtmlNode is either a text, like:
 ```
@@ -263,7 +271,7 @@ Or html, like:
 html.div([ ], [ ], [ ])
 ```
 */
-export type HtmlNode<Msg> = TextNode | RegularNode<Msg>;
+export type HtmlNode<Msg> = TextNode | RegularNode<Msg> | VoidNode<Msg>;
 
 /**
 Creates a text node
@@ -290,6 +298,23 @@ export function node<Msg>(
         events: events,
         attributes: combineAttributes(attributes),
         children: children,
+        _eventListeners: [ ],
+    };
+}
+
+/**
+Creates a html node with a given tag name, any events, any attributes and any children.
+*/
+export function voidNode<Msg>(
+    tag: Tag,
+    events: Event<Msg>[],
+    attributes: Attribute[]
+): VoidNode<Msg> {
+    return {
+        kind: "void",
+        tag: tag,
+        events: events,
+        attributes: combineAttributes(attributes),
         _eventListeners: [ ],
     };
 }
@@ -356,6 +381,9 @@ function combineAttributes(attributes: Attribute[]): Attribute[] {
 function renderAttribute(attribute: Attribute): string {
     switch (attribute.kind) {
         case "string":
+            if (attribute.value.indexOf('"') > 0) {
+                return `${attribute.key}='${attribute.value}'`;
+            }
             return `${attribute.key}="${attribute.value}"`;
         case "number":
             return `${attribute.key}=${attribute.value}`;
@@ -369,18 +397,37 @@ function renderAttribute(attribute: Attribute): string {
 /**
 Renders a HtmlNode tree as a string.
 */
-export function render<Msg>(node: HtmlNode<Msg>): string {
+export function render<Msg>(node: HtmlNode<Msg>, depth = 0): string {
+    const whitespace = " ".repeat(depth * 4);
     switch (node.kind) {
         case "text":
-            return node.text;
+            return whitespace + node.text;
+
+        case "void":
         case "regular":
             const attributes =
                 (node.attributes.length > 0 ? " " : "") +
                 node.attributes.map(renderAttribute).join(" ");
 
-            return `
-<${node.tag}${attributes}>${node.children.map(render).join("")}</${node.tag}>
-            `.trim();
+            switch (node.kind) {
+                case "void":
+                    return whitespace + `<${node.tag}${attributes}>`;
+
+                case "regular": {
+                    if (node.children.length > 0) {
+                        return (
+                            whitespace +
+                            `<${node.tag}${attributes}>
+        ${node.children.map((child) => render(child, depth + 1)).join("\n")}
+        ${whitespace}</${node.tag}>`
+                        );
+                    }
+
+                    return (
+                        whitespace + `<${node.tag}${attributes}></${node.tag}>`
+                    );
+                }
+            }
     }
 }
 
@@ -395,11 +442,8 @@ export function buildTree<Msg>(
     switch (node.kind) {
         case "text":
             return document.createTextNode(node.text);
-        case "regular":
-            const children = node.children.map((child) =>
-                buildTree(listener, child)
-            );
-
+        case "void":
+        case "regular": {
             const element = document.createElement(node.tag);
 
             node.attributes.forEach((attribute: Attribute) => {
@@ -421,10 +465,17 @@ export function buildTree<Msg>(
                 });
             });
 
-            children.forEach((child) => {
-                element.appendChild(child);
-            });
+            if (node.kind === "regular") {
+                const children = node.children.map((child) =>
+                    buildTree(listener, child)
+                );
+                children.forEach((child) => {
+                    element.appendChild(child);
+                });
+            }
+
             return element;
+        }
     }
 }
 
@@ -440,6 +491,7 @@ export function triggerEvent<Msg>(
     switch (node.kind) {
         case "text":
             return Maybe.Nothing();
+        case "void":
         case "regular":
             const events = node.events.filter(
                 (event) => event.name === eventName
@@ -459,6 +511,16 @@ export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
     switch (tree.kind) {
         case "text":
             return tree as HtmlNode<B>;
+        case "void":
+            return voidNode(
+                tree.tag,
+                tree.events.map((event: Event<A>) => {
+                    return on(event.name, (data: any) =>
+                        tagger(event.tagger(data))
+                    );
+                }),
+                tree.attributes
+            );
         case "regular":
             return node(
                 tree.tag,
@@ -481,9 +543,6 @@ function setAttributeOnElement(
 ): void {
     switch (attribute.kind) {
         case "string":
-            (element as any)[attribute.key] = attribute.value;
-            element.setAttribute(attribute.key, attribute.value);
-            return;
         case "number":
             (element as any)[attribute.key] = attribute.value;
             element.setAttribute(attribute.key, attribute.value);
@@ -505,6 +564,7 @@ function setAttributeOnElement(
 
 function patchFacts<Msg>(nextTree: HtmlNode<Msg>, elements: HTMLElement) {
     switch (nextTree.kind) {
+        case "void":
         case "regular":
             nextTree.attributes.forEach((attribute: Attribute) => {
                 setAttributeOnElement(elements, attribute);
@@ -522,17 +582,18 @@ function patchEvents<Msg>(
     elements: HTMLElement
 ) {
     switch (nextTree.kind) {
+        case "void":
         case "regular":
-            (previousTree as RegularNode<Msg>)._eventListeners.forEach(
-                (eventListeners) => {
-                    elements.removeEventListener(
-                        eventListeners.event.name,
-                        eventListeners.listener
-                    );
-                }
-            );
+            (
+                previousTree as RegularNode<Msg> | VoidNode<Msg>
+            )._eventListeners.forEach((eventListeners) => {
+                elements.removeEventListener(
+                    eventListeners.event.name,
+                    eventListeners.listener
+                );
+            });
 
-            (nextTree as RegularNode<Msg>).events.forEach(
+            (nextTree as RegularNode<Msg> | VoidNode<Msg>).events.forEach(
                 (event: Event<Msg>) => {
                     const listenerFunction = (data: globalThis.Event) => {
                         listener(event.tagger(data));
@@ -576,6 +637,27 @@ function patch<Msg>(
                 elements.replaceWith(document.createTextNode(nextTree.text));
                 return nextTree;
             }
+
+        case "void": {
+            currentTree = currentTree as VoidNode<Msg>;
+            nextTree = nextTree as VoidNode<Msg>;
+
+            if (currentTree.tag != nextTree.tag) {
+                elements.replaceWith(buildTree(listener, nextTree));
+                return nextTree;
+            } else {
+                patchFacts(nextTree, elements as HTMLElement);
+
+                patchEvents(
+                    listener,
+                    currentTree,
+                    nextTree,
+                    elements as HTMLElement
+                );
+                const htmlElements = elements as HTMLElement;
+            }
+            return nextTree;
+        }
 
         case "regular":
             currentTree = currentTree as RegularNode<Msg>;
@@ -709,10 +791,9 @@ export function address<Msg>(
 
 export function area<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    attributes: Attribute[]
 ): HtmlNode<Msg> {
-    return node("area", events, attributes, children);
+    return voidNode("area", events, attributes);
 }
 
 export function article<Msg>(
@@ -749,10 +830,9 @@ export function b<Msg>(
 
 export function base<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    attributes: Attribute[]
 ): HtmlNode<Msg> {
-    return node("base", events, attributes, children);
+    return voidNode("base", events, attributes);
 }
 
 export function bdi<Msg>(
@@ -789,10 +869,9 @@ export function body<Msg>(
 
 export function br<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    attributes: Attribute[]
 ): HtmlNode<Msg> {
-    return node("br", events, attributes, children);
+    return voidNode("br", events, attributes);
 }
 
 export function button<Msg>(
@@ -837,10 +916,9 @@ export function code<Msg>(
 
 export function col<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    attributes: Attribute[]
 ): HtmlNode<Msg> {
-    return node("col", events, attributes, children);
+    return voidNode("col", events, attributes);
 }
 
 export function colgroup<Msg>(
@@ -941,10 +1019,9 @@ export function em<Msg>(
 
 export function embed<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    attributes: Attribute[]
 ): HtmlNode<Msg> {
-    return node("embed", events, attributes, children);
+    return voidNode("embed", events, attributes);
 }
 
 export function fieldset<Msg>(
@@ -1053,10 +1130,9 @@ export function hgroup<Msg>(
 
 export function hr<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    attributes: Attribute[]
 ): HtmlNode<Msg> {
-    return node("hr", events, attributes, children);
+    return voidNode("hr", events, attributes);
 }
 
 export function html<Msg>(
@@ -1085,18 +1161,16 @@ export function iframe<Msg>(
 
 export function img<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    attributes: Attribute[]
 ): HtmlNode<Msg> {
-    return node("img", events, attributes, children);
+    return voidNode("img", events, attributes);
 }
 
 export function input<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    attributes: Attribute[]
 ): HtmlNode<Msg> {
-    return node("input", events, attributes, children);
+    return voidNode("input", events, attributes);
 }
 
 export function ins<Msg>(
@@ -1149,10 +1223,9 @@ export function li<Msg>(
 
 export function link<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    attributes: Attribute[]
 ): HtmlNode<Msg> {
-    return node("link", events, attributes, children);
+    return voidNode("link", events, attributes);
 }
 
 export function main<Msg>(
@@ -1197,10 +1270,9 @@ export function menuitem<Msg>(
 
 export function meta<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    attributes: Attribute[]
 ): HtmlNode<Msg> {
-    return node("meta", events, attributes, children);
+    return voidNode("meta", events, attributes);
 }
 
 export function meter<Msg>(
@@ -1277,10 +1349,9 @@ export function p<Msg>(
 
 export function param<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    attributes: Attribute[]
 ): HtmlNode<Msg> {
-    return node("param", events, attributes, children);
+    return voidNode("param", events, attributes);
 }
 
 export function pre<Msg>(
@@ -1397,10 +1468,9 @@ export function small<Msg>(
 
 export function source<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    attributes: Attribute[]
 ): HtmlNode<Msg> {
-    return node("source", events, attributes, children);
+    return voidNode("source", events, attributes);
 }
 
 export function span<Msg>(
@@ -1541,10 +1611,9 @@ export function tr<Msg>(
 
 export function track<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    attributes: Attribute[]
 ): HtmlNode<Msg> {
-    return node("track", events, attributes, children);
+    return voidNode("track", events, attributes);
 }
 
 export function u<Msg>(
@@ -1581,8 +1650,7 @@ export function video<Msg>(
 
 export function wbr<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    attributes: Attribute[]
 ): HtmlNode<Msg> {
-    return node("wbr", events, attributes, children);
+    return voidNode("wbr", events, attributes);
 }

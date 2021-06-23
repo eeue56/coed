@@ -80,14 +80,14 @@ function update(msg: Msg, model: Model): Model {
 }
 
 function viewItem(item: Item): coed.HtmlNode<Msg> {
-    return coed.div(
+    return coed.li(
         [ ],
         [ ],
         [
             coed.text(item.id + ":" + item.text),
             coed.button(
                 [ coed.on("click", () => DeleteItem(item.id)) ],
-                [ ],
+                [ coed.attribute("id", "btn-remove-" + item.id) ],
                 [ coed.text("Remove") ]
             ),
         ]
@@ -96,7 +96,7 @@ function viewItem(item: Item): coed.HtmlNode<Msg> {
 
 function viewAddItem(newItemText: string): coed.HtmlNode<Msg> {
     const copy = newItemText.slice();
-    return coed.li(
+    return coed.div(
         [ ],
         [ ],
         [
@@ -106,12 +106,11 @@ function viewAddItem(newItemText: string): coed.HtmlNode<Msg> {
                     coed.attribute("type", "string"),
                     coed.attribute("placeholder", "New item text"),
                     coed.attribute("value", newItemText),
-                ],
-                [ ]
+                ]
             ),
             coed.button(
                 [ coed.on("click", () => AddItem(newItemText)) ],
-                [ ],
+                [ coed.attribute("id", "btn-add-item") ],
                 [ coed.text("Add") ]
             ),
         ]

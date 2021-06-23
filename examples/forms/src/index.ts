@@ -67,8 +67,7 @@ function viewInput<Msg>(
             coed.attribute("type", type_),
             coed.attribute("placeholder", placeholder),
             coed.attribute("value", value),
-        ],
-        [ ]
+        ]
     );
 }
 

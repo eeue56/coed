@@ -35,8 +35,7 @@ function view(model: Model): coed.HtmlNode<Msg> {
                 [
                     coed.attribute("placeholder", "Text to reverse"),
                     coed.attribute("value", model.text),
-                ],
-                [ ]
+                ]
             ),
             coed.div(
                 [ ],
