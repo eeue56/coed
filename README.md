@@ -21,7 +21,7 @@ You should break your program down into logical sections: two types, `Model` to 
 For example:
 
 ```javascript
-import { HtmlNode, div, oncClick, style_, text } from "@eeue56/coed";
+import { HtmlNode, div, onClick, style_, text } from "@eeue56/coed";
 import * as coed from "@eeue56/coed";
 
 type FlipName = { kind: 'FlipName' }
