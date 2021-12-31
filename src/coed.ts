@@ -1,6 +1,6 @@
 import { Maybe } from "@eeue56/ts-core";
 
-type Tag =
+export type Tag =
     | "a"
     | "abbr"
     | "address"

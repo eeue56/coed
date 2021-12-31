@@ -33,7 +33,7 @@
         "typescript": "^4.2.2"
     },
     "devDependencies": {
-        "@eeue56/bach": "^0.0.2",
+        "@eeue56/bach": "^0.0.10",
         "@eeue56/geiriadur": "^0.0.2",
         "prettier": "git+https://github.com/eeue56/prettier.git#feat/spacing-around-square-brackets"
     }
