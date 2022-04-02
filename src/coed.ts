@@ -663,7 +663,17 @@ function patch<Msg>(
             currentTree = currentTree as RegularNode<Msg>;
             nextTree = nextTree as RegularNode<Msg>;
 
-            if (currentTree.tag != nextTree.tag) {
+            const currentTreeId = currentTree.attributes.filter(
+                (x) => x.kind === "string" && x.key === "id"
+            )[0];
+            const nextTreeId = nextTree.attributes.filter(
+                (x) => x.kind === "string" && x.key === "id"
+            )[0];
+
+            if (
+                currentTree.tag !== nextTree.tag ||
+                currentTreeId !== nextTreeId
+            ) {
                 elements.replaceWith(buildTree(listener, nextTree));
                 return nextTree;
             } else {
