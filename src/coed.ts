@@ -713,9 +713,9 @@ function patch<Msg>(
                 }
 
                 for (
-                    var i = nextTree.children.length;
-                    i < htmlElements.childNodes.length;
-                    i++
+                    var i = htmlElements.childNodes.length;
+                    i > nextTree.children.length;
+                    i--
                 ) {
                     const node = htmlElements.childNodes[i];
                     htmlElements.removeChild(node);
