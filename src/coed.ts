@@ -714,7 +714,7 @@ function patch<Msg>(
 
                 for (
                     var i = htmlElements.childNodes.length;
-                    i > nextTree.children.length;
+                    i > nextTree.children.length - 1;
                     i--
                 ) {
                     const node = htmlElements.childNodes[i];
