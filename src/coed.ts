@@ -713,7 +713,7 @@ function patch<Msg>(
                 }
 
                 for (
-                    var i = htmlElements.childNodes.length;
+                    var i = htmlElements.childNodes.length - 1;
                     i > nextTree.children.length - 1;
                     i--
                 ) {
