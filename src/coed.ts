@@ -562,14 +562,57 @@ function setAttributeOnElement(
     }
 }
 
-function patchFacts<Msg>(nextTree: HtmlNode<Msg>, elements: HTMLElement) {
+function patchFacts<Msg>(
+    previousTree: HtmlNode<Msg>,
+    nextTree: HtmlNode<Msg>,
+    elements: HTMLElement
+) {
     switch (nextTree.kind) {
         case "void":
-        case "regular":
+        case "regular": {
+            // remove previous attributes that no longer exist on the next dom version
+            if (previousTree.kind === nextTree.kind) {
+                previousTree.attributes
+                    .filter((attribute) => {
+                        for (const nextAttribute of nextTree.attributes) {
+                            let seen = false;
+                            if (attribute.kind === nextAttribute.kind) {
+                                switch (nextAttribute.kind) {
+                                    case "number":
+                                    case "string": {
+                                        seen =
+                                            nextAttribute.key ===
+                                            (
+                                                attribute as
+                                                    | NumberAttribute
+                                                    | StringAttribute
+                                            ).key;
+                                        break;
+                                    }
+                                    case "style":
+                                        seen = true;
+                                }
+                            }
+                            if (seen) return false;
+                        }
+                        return true;
+                    })
+                    .forEach((attribute) => {
+                        switch (attribute.kind) {
+                            case "number":
+                                elements.removeAttribute(attribute.key);
+                            case "string":
+                                elements.removeAttribute(attribute.key);
+                            case "style":
+                                elements.removeAttribute("style");
+                        }
+                    });
+            }
             nextTree.attributes.forEach((attribute: Attribute) => {
                 setAttributeOnElement(elements, attribute);
             });
             return;
+        }
         case "text":
             return;
     }
@@ -646,7 +689,7 @@ function patch<Msg>(
                 elements.replaceWith(buildTree(listener, nextTree));
                 return nextTree;
             } else {
-                patchFacts(nextTree, elements as HTMLElement);
+                patchFacts(currentTree, nextTree, elements as HTMLElement);
 
                 patchEvents(
                     listener,
@@ -677,7 +720,7 @@ function patch<Msg>(
                 elements.replaceWith(buildTree(listener, nextTree));
                 return nextTree;
             } else {
-                patchFacts(nextTree, elements as HTMLElement);
+                patchFacts(currentTree, nextTree, elements as HTMLElement);
 
                 patchEvents(
                     listener,
