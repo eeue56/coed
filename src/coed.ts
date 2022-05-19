@@ -544,6 +544,11 @@ function setAttributeOnElement(
     switch (attribute.kind) {
         case "string":
         case "number":
+            const hasSameAttributeAlready =
+                ((element as any)[attribute.key] &&
+                    (element as any)[attribute.key] === attribute.value) ||
+                element.getAttribute(attribute.key) === attribute.value;
+            if (hasSameAttributeAlready) return;
             (element as any)[attribute.key] = attribute.value;
             element.setAttribute(attribute.key, attribute.value);
             return;
