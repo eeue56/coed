@@ -706,12 +706,16 @@ function patch<Msg>(
             currentTree = currentTree as RegularNode<Msg>;
             nextTree = nextTree as RegularNode<Msg>;
 
-            const currentTreeId = currentTree.attributes.filter(
-                (x) => x.kind === "string" && x.key === "id"
-            )[0];
-            const nextTreeId = nextTree.attributes.filter(
-                (x) => x.kind === "string" && x.key === "id"
-            )[0];
+            const currentTreeId = (
+                currentTree.attributes.filter(
+                    (x) => x.kind === "string" && x.key === "id"
+                )[0] as StringAttribute
+            )?.value;
+            const nextTreeId = (
+                nextTree.attributes.filter(
+                    (x) => x.kind === "string" && x.key === "id"
+                )[0] as StringAttribute
+            )?.value;
 
             if (
                 currentTree.tag !== nextTree.tag ||
