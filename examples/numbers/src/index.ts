@@ -29,11 +29,11 @@ function update(msg: Msg, model: Model): Model {
 
 function view(model: Model): coed.HtmlNode<Msg> {
     return coed.div(
-        [ ],
-        [ ],
+        [],
+        [],
         [
-            coed.h1([ ], [ ], [ coed.text(`${model.dieFace}`) ]),
-            coed.button([ coed.on("click", Roll) ], [ ], [ coed.text("Roll") ]),
+            coed.h1([], [], [coed.text(`${model.dieFace}`)]),
+            coed.button([coed.on("click", Roll)], [], [coed.text("Roll")]),
         ]
     );
 }

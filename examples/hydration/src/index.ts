@@ -110,19 +110,19 @@ function viewState(model: Model): HtmlNode<Msg> {
         case "Failure":
             return text("I was unable to load your book.");
         case "Success":
-            return pre([ ], [ ], [ text(model.text) ]);
+            return pre([], [], [text(model.text)]);
     }
 }
 
 export function view(model: Model): HtmlNode<Msg> {
     return coed.div(
-        [ ],
-        [ ],
+        [],
+        [],
         [
             coed.button(
-                [ coed.on("click", () => Fetch()) ],
-                [ ],
-                [ text("Fetch text") ]
+                [coed.on("click", () => Fetch())],
+                [],
+                [text("Fetch text")]
             ),
             viewState(model),
         ]

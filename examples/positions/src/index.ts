@@ -34,13 +34,13 @@ function update(msg: Msg, model: Model): Model {
 
 function view(model: Model): coed.HtmlNode<Msg> {
     return coed.button(
-        [ coed.on("click", () => Clicked()) ],
+        [coed.on("click", () => Clicked())],
         [
             coed.style_("position", "absolute"),
             coed.style_("top", `${model.x}px`),
             coed.style_("left", `${model.y}px`),
         ],
-        [ coed.text("Click me!") ]
+        [coed.text("Click me!")]
     );
 }
 

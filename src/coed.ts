@@ -298,7 +298,7 @@ export function node<Msg>(
         events: events,
         attributes: combineAttributes(attributes),
         children: children,
-        _eventListeners: [ ],
+        _eventListeners: [],
     };
 }
 
@@ -315,21 +315,21 @@ export function voidNode<Msg>(
         tag: tag,
         events: events,
         attributes: combineAttributes(attributes),
-        _eventListeners: [ ],
+        _eventListeners: [],
     };
 }
 
 function combineAttributes(attributes: Attribute[]): Attribute[] {
     const knownStringAttributes: { [id: string]: StringAttribute[] } = {};
-    const knownStyleAttributes: StyleAttribute[] = [ ];
-    const otherAttributes: Attribute[] = [ ];
+    const knownStyleAttributes: StyleAttribute[] = [];
+    const otherAttributes: Attribute[] = [];
 
     // group attribute values
     attributes.forEach((attribute: Attribute) => {
         switch (attribute.kind) {
             case "string":
                 if (!knownStringAttributes[attribute.key]) {
-                    knownStringAttributes[attribute.key] = [ ];
+                    knownStringAttributes[attribute.key] = [];
                 }
 
                 knownStringAttributes[attribute.key].push(attribute);
@@ -838,7 +838,7 @@ function patch<Msg>(
                             break;
 
                         case Node.TEXT_NODE:
-                            const text = (node as unknown) as Text;
+                            const text = node as unknown as Text;
                             patch(listener, currentChild, nextChild, text);
                             break;
                     }

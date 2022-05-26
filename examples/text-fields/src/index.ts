@@ -27,20 +27,20 @@ function update(msg: Msg, model: Model): Model {
 
 function view(model: Model): coed.HtmlNode<Msg> {
     return coed.div(
-        [ ],
-        [ ],
+        [],
+        [],
         [
             coed.input(
-                [ coed.onInput(ChangeText) ],
+                [coed.onInput(ChangeText)],
                 [
                     coed.attribute("placeholder", "Text to reverse"),
                     coed.attribute("value", model.text),
                 ]
             ),
             coed.div(
-                [ ],
-                [ ],
-                [ coed.text(model.text.split("").reverse().join("")) ]
+                [],
+                [],
+                [coed.text(model.text.split("").reverse().join(""))]
             ),
         ]
     );

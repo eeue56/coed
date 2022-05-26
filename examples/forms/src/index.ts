@@ -62,7 +62,7 @@ function viewInput<Msg>(
     onInput: (input: string) => Msg
 ): coed.HtmlNode<Msg> {
     return coed.input(
-        [ coed.onInput(onInput) ],
+        [coed.onInput(onInput)],
         [
             coed.attribute("type", type_),
             coed.attribute("placeholder", placeholder),
@@ -74,40 +74,40 @@ function viewInput<Msg>(
 function viewValidation<Msg>(model: Model): coed.HtmlNode<Msg> {
     if (model.password.length === 0) {
         return coed.div(
-            [ ],
+            [],
             [
                 coed.style_("color", "red"),
                 coed.style_("border", "1px solid black"),
             ],
-            [ coed.text("No password set") ]
+            [coed.text("No password set")]
         );
     }
     if (model.password === model.passwordAgain) {
         return coed.div(
-            [ ],
+            [],
             [
                 coed.style_("color", "green"),
                 coed.style_("border", "5px dashed yellow"),
             ],
-            [ coed.text("Matching passwords") ]
+            [coed.text("Matching passwords")]
         );
     }
 
     return coed.div(
-        [ ],
+        [],
         [
             coed.style_("color", "red"),
             coed.style_("border", "1px solid black"),
             coed.style_("background", "lightblue"),
         ],
-        [ coed.text("Passwords don't match") ]
+        [coed.text("Passwords don't match")]
     );
 }
 
 function view(model: Model): coed.HtmlNode<Msg> {
     return coed.div(
-        [ ],
-        [ ],
+        [],
+        [],
         [
             viewInput("text", "Name", model.name, SetName),
             viewInput("password", "Password", model.password, SetPassword),

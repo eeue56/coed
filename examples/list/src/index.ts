@@ -81,14 +81,14 @@ function update(msg: Msg, model: Model): Model {
 
 function viewItem(item: Item): coed.HtmlNode<Msg> {
     return coed.li(
-        [ ],
-        [ ],
+        [],
+        [],
         [
             coed.text(item.id + ":" + item.text),
             coed.button(
-                [ coed.on("click", () => DeleteItem(item.id)) ],
-                [ coed.attribute("id", "btn-remove-" + item.id) ],
-                [ coed.text("Remove") ]
+                [coed.on("click", () => DeleteItem(item.id))],
+                [coed.attribute("id", "btn-remove-" + item.id)],
+                [coed.text("Remove")]
             ),
         ]
     );
@@ -97,11 +97,11 @@ function viewItem(item: Item): coed.HtmlNode<Msg> {
 function viewAddItem(newItemText: string): coed.HtmlNode<Msg> {
     const copy = newItemText.slice();
     return coed.div(
-        [ ],
-        [ ],
+        [],
+        [],
         [
             coed.input(
-                [ coed.onInput(ChangeNewItemText) ],
+                [coed.onInput(ChangeNewItemText)],
                 [
                     coed.attribute("type", "string"),
                     coed.attribute("placeholder", "New item text"),
@@ -109,9 +109,9 @@ function viewAddItem(newItemText: string): coed.HtmlNode<Msg> {
                 ]
             ),
             coed.button(
-                [ coed.on("click", () => AddItem(newItemText)) ],
-                [ coed.attribute("id", "btn-add-item") ],
-                [ coed.text("Add") ]
+                [coed.on("click", () => AddItem(newItemText))],
+                [coed.attribute("id", "btn-add-item")],
+                [coed.text("Add")]
             ),
         ]
     );
@@ -119,10 +119,10 @@ function viewAddItem(newItemText: string): coed.HtmlNode<Msg> {
 
 function view(model: Model): coed.HtmlNode<Msg> {
     return coed.div(
-        [ ],
-        [ ],
+        [],
+        [],
         [
-            coed.ul([ ], [ ], model.items.map(viewItem)),
+            coed.ul([], [], model.items.map(viewItem)),
             viewAddItem(model.newItemText),
         ]
     );
@@ -134,7 +134,7 @@ function main() {
 
     const program = coed.program({
         root: root,
-        initialModel: { maxId: 0, items: [ ], newItemText: "sample" },
+        initialModel: { maxId: 0, items: [], newItemText: "sample" },
         view: view,
         update: update,
     });

@@ -75,7 +75,7 @@ function view(model: Model): HtmlNode<Msg> {
         case "Failure":
             return text("I was unable to load your book.");
         case "Success":
-            return pre([ ], [ ], [ text(model.text) ]);
+            return pre([], [], [text(model.text)]);
     }
 }
 

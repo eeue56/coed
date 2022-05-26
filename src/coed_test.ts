@@ -17,21 +17,21 @@ export function testNonEmptyStringRendering() {
 // regular nodes
 
 export function testEmptyDivRendering() {
-    const emptyDiv = coed.node("div", [ ], [ ], [ ]);
+    const emptyDiv = coed.node("div", [], [], []);
     assert.deepStrictEqual(coed.render(emptyDiv), "<div></div>");
 }
 
 export function testEmptyDivWithClassRendering() {
-    const emptyDiv = coed.node("div", [ ], [ coed.class_("button") ], [ ]);
+    const emptyDiv = coed.node("div", [], [coed.class_("button")], []);
     assert.deepStrictEqual(coed.render(emptyDiv), '<div class="button"></div>');
 }
 
 export function testEmptyDivWithMultipleClassesRendering() {
     const emptyDiv = coed.node(
         "div",
-        [ ],
-        [ coed.class_("button"), coed.class_("btn") ],
-        [ ]
+        [],
+        [coed.class_("button"), coed.class_("btn")],
+        []
     );
 
     assert.deepStrictEqual(
@@ -43,14 +43,9 @@ export function testEmptyDivWithMultipleClassesRendering() {
 export function testDivWithVoidElement() {
     const emptyDiv = coed.node(
         "div",
-        [ ],
-        [ coed.class_("button"), coed.class_("btn") ],
-        [
-            coed.img(
-                [ ],
-                [ coed.attribute("src", "https://example.com/image.gif") ]
-            ),
-        ]
+        [],
+        [coed.class_("button"), coed.class_("btn")],
+        [coed.img([], [coed.attribute("src", "https://example.com/image.gif")])]
     );
 
     assert.deepStrictEqual(
@@ -65,14 +60,9 @@ export function testDivWithVoidElement() {
 export function testDivWithQuotedAttribute() {
     const emptyDiv = coed.node(
         "div",
-        [ ],
-        [ coed.class_("button"), coed.class_("'btn'") ],
-        [
-            coed.img(
-                [ ],
-                [ coed.attribute("src", "https://example.com/image.gif") ]
-            ),
-        ]
+        [],
+        [coed.class_("button"), coed.class_("'btn'")],
+        [coed.img([], [coed.attribute("src", "https://example.com/image.gif")])]
     );
 
     assert.deepStrictEqual(
@@ -87,14 +77,9 @@ export function testDivWithQuotedAttribute() {
 export function testDivWithDoublyQuotedAttribute() {
     const emptyDiv = coed.node(
         "div",
-        [ ],
-        [ coed.class_("button"), coed.class_('"btn"') ],
-        [
-            coed.img(
-                [ ],
-                [ coed.attribute("src", "https://example.com/image.gif") ]
-            ),
-        ]
+        [],
+        [coed.class_("button"), coed.class_('"btn"')],
+        [coed.img([], [coed.attribute("src", "https://example.com/image.gif")])]
     );
 
     assert.deepStrictEqual(
@@ -107,7 +92,7 @@ export function testDivWithDoublyQuotedAttribute() {
 }
 
 export function testDivWithTextRendering() {
-    const emptyDiv = coed.node("div", [ ], [ ], [ coed.text("hello") ]);
+    const emptyDiv = coed.node("div", [], [], [coed.text("hello")]);
     assert.deepStrictEqual(
         coed.render(emptyDiv),
         `
@@ -120,9 +105,9 @@ export function testDivWithTextRendering() {
 export function testDivWithTextWithClassRendering() {
     const emptyDiv = coed.node(
         "div",
-        [ ],
-        [ coed.class_("button") ],
-        [ coed.text("hello") ]
+        [],
+        [coed.class_("button")],
+        [coed.text("hello")]
     );
 
     assert.deepStrictEqual(
@@ -139,12 +124,9 @@ export function testDivWithTextWithClassRendering() {
 export function testDoublyNestedDivWithTextRendering() {
     const emptyDiv = coed.node(
         "div",
-        [ ],
-        [ ],
-        [
-            coed.text("hello"),
-            coed.node("div", [ ], [ ], [ coed.text("world") ]),
-        ]
+        [],
+        [],
+        [coed.text("hello"), coed.node("div", [], [], [coed.text("world")])]
     );
 
     assert.deepStrictEqual(
@@ -162,15 +144,15 @@ export function testDoublyNestedDivWithTextRendering() {
 export function testDoublyNestedDivWithTextWithClassesRendering() {
     const emptyDiv = coed.node(
         "div",
-        [ ],
-        [ coed.class_("outer-button") ],
+        [],
+        [coed.class_("outer-button")],
         [
             coed.text("hello"),
             coed.node(
                 "div",
-                [ ],
-                [ coed.class_("inner-button") ],
-                [ coed.text("world") ]
+                [],
+                [coed.class_("inner-button")],
+                [coed.text("world")]
             ),
         ]
     );
@@ -190,15 +172,15 @@ export function testDoublyNestedDivWithTextWithClassesRendering() {
 export function testDoublyNestedDivWithTextWithMultipleClassesRendering() {
     const emptyDiv = coed.node(
         "div",
-        [ ],
-        [ coed.class_("outer-button"), coed.class_("btn") ],
+        [],
+        [coed.class_("outer-button"), coed.class_("btn")],
         [
             coed.text("hello"),
             coed.node(
                 "div",
-                [ ],
-                [ coed.class_("inner-button"), coed.class_("btn-2") ],
-                [ coed.text("world") ]
+                [],
+                [coed.class_("inner-button"), coed.class_("btn-2")],
+                [coed.text("world")]
             ),
         ]
     );
@@ -227,7 +209,7 @@ export function testEmptyStringEvent() {
 }
 
 export function testEmptyDivEvent() {
-    const emptyText = coed.node("div", [ ], [ ], [ coed.text("") ]);
+    const emptyText = coed.node("div", [], [], [coed.text("")]);
 
     assert.deepStrictEqual(
         coed.triggerEvent("click", {}, emptyText),
@@ -238,9 +220,9 @@ export function testEmptyDivEvent() {
 export function testEmptyDivWithValidEvent() {
     const emptyText = coed.node(
         "div",
-        [ coed.on("click", () => "hello") ],
-        [ ],
-        [ coed.text("") ]
+        [coed.on("click", () => "hello")],
+        [],
+        [coed.text("")]
     );
 
     assert.deepStrictEqual(
@@ -252,9 +234,9 @@ export function testEmptyDivWithValidEvent() {
 export function testEmptyDivWithTwoValidEventsOfTheSameListener() {
     const emptyText = coed.node(
         "div",
-        [ coed.on("click", () => "hello"), coed.on("click", () => "goodbye") ],
-        [ ],
-        [ coed.text("") ]
+        [coed.on("click", () => "hello"), coed.on("click", () => "goodbye")],
+        [],
+        [coed.text("")]
     );
 
     assert.deepStrictEqual(
@@ -270,8 +252,8 @@ export function testEmptyDivWithTwoValidEventsOfTheDifferentListeners() {
             coed.on("click", () => "hello"),
             coed.on("mousemove", () => "goodbye"),
         ],
-        [ ],
-        [ coed.text("") ]
+        [],
+        [coed.text("")]
     );
 
     assert.deepStrictEqual(

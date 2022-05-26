@@ -37,19 +37,19 @@ function update(msg: Msg, model: Model): Model {
 
 function view(model: Model): coed.HtmlNode<Msg> {
     return coed.div(
-        [ ],
-        [ ],
+        [],
+        [],
         [
             coed.button(
-                [ coed.on("click", () => Sub()) ],
-                [ coed.class_("button-sub") ],
-                [ coed.text("-") ]
+                [coed.on("click", () => Sub())],
+                [coed.class_("button-sub")],
+                [coed.text("-")]
             ),
             coed.text(`${model.count}`),
             coed.button(
-                [ coed.on("click", () => Add()) ],
-                [ coed.class_("button-add") ],
-                [ coed.text("+") ]
+                [coed.on("click", () => Add())],
+                [coed.class_("button-add")],
+                [coed.text("+")]
             ),
         ]
     );

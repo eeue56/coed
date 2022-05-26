@@ -106,14 +106,14 @@ function viewGif(model: Model): coed.HtmlNode<SubMsg> {
     switch (model.kind) {
         case "Failure":
             return coed.div(
-                [ ],
-                [ ],
+                [],
+                [],
                 [
                     coed.text("I could not load a random cat for some reason"),
                     coed.button(
-                        [ coed.on("click", () => SubMsg()) ],
-                        [ ],
-                        [ coed.text("Try again!") ]
+                        [coed.on("click", () => SubMsg())],
+                        [],
+                        [coed.text("Try again!")]
                     ),
                 ]
             );
@@ -121,17 +121,17 @@ function viewGif(model: Model): coed.HtmlNode<SubMsg> {
             return coed.text("Loading...");
         case "Success":
             return coed.div(
-                [ ],
-                [ ],
+                [],
+                [],
                 [
                     coed.button(
-                        [ coed.on("click", () => SubMsg()) ],
-                        [ coed.style_("display", "block") ],
-                        [ coed.text("More please!") ]
+                        [coed.on("click", () => SubMsg())],
+                        [coed.style_("display", "block")],
+                        [coed.text("More please!")]
                     ),
                     coed.img(
-                        [ coed.on("click", () => SubMsg()) ],
-                        [ coed.attribute("src", model.url) ]
+                        [coed.on("click", () => SubMsg())],
+                        [coed.attribute("src", model.url)]
                     ),
                 ]
             );
@@ -140,10 +140,10 @@ function viewGif(model: Model): coed.HtmlNode<SubMsg> {
 
 function view(model: Model): coed.HtmlNode<Msg> {
     return coed.div(
-        [ ],
-        [ ],
+        [],
+        [],
         [
-            coed.h2([ ], [ ], [ coed.text("Random cats") ]),
+            coed.h2([], [], [coed.text("Random cats")]),
             coed.map((sub: SubMsg) => MorePlease(), viewGif(model)),
         ]
     );
