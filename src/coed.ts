@@ -432,6 +432,88 @@ ${whitespace}</${node.tag}>`
 }
 
 /**
+Render a node without whitespace
+*/
+export function flatRender<Msg>(node: HtmlNode<Msg>): string {
+    switch (node.kind) {
+        case "text":
+            return node.text;
+
+        case "void":
+        case "regular":
+            const attributes =
+                (node.attributes.length > 0 ? " " : "") +
+                node.attributes.map(renderAttribute).join(" ");
+
+            switch (node.kind) {
+                case "void":
+                    return `<${node.tag}${attributes}>`;
+
+                case "regular": {
+                    if (node.children.length > 0) {
+                        return `<${node.tag}${attributes}>${node.children
+                            .map((child) => flatRender(child))
+                            .join("")}</${node.tag}>`;
+                    }
+
+                    return `<${node.tag}${attributes}></${node.tag}>`;
+                }
+            }
+    }
+}
+
+/**
+Hydrates a root from a given program. Program must have root set as the string "hydration"
+*/
+export function hydrate<Model, Msg>(
+    program: RunningProgram<Model, Msg>,
+    root: Element
+) {
+    program.program.root = root as HTMLElement;
+    const node = program.program.view(program.program.initialModel);
+    hydrateNode(node, program.send, root);
+}
+
+/**
+Attaches event listeners to nodes
+*/
+export function hydrateNode<Msg>(
+    node: HtmlNode<Msg>,
+    listener: (msg: Msg) => void,
+    root: Element
+): void {
+    switch (node.kind) {
+        case "text": {
+            return;
+        }
+        case "void":
+        case "regular": {
+            node.events.forEach((event: Event<Msg>) => {
+                const listenerFunction = (data: globalThis.Event) => {
+                    listener(event.tagger(data));
+                };
+
+                root.addEventListener(event.name, listenerFunction, {
+                    once: true,
+                });
+
+                node._eventListeners.push({
+                    event: event,
+                    listener: listenerFunction,
+                });
+            });
+        }
+    }
+
+    if (node.kind === "regular") {
+        node.children.forEach((child: HtmlNode<Msg>, i: number) => {
+            const newRoot = root.children[i];
+            hydrateNode(child, listener, newRoot);
+        });
+    }
+}
+
+/**
 Builds a HTMLElement tree from a HtmlNode tree, with event triggers being sent to the runner via the listener
 This function should not be needed by most usage.
 */
@@ -785,7 +867,7 @@ export type Program<Model, Msg> = {
     initialModel: Model;
     view(model: Model): HtmlNode<Msg>;
     update(msg: Msg, model: Model, send?: (msg: Msg) => void): Model;
-    root: HTMLElement;
+    root: HTMLElement | "hydration";
 };
 
 /**
@@ -805,8 +887,18 @@ export function program<Model, Msg>(
 ): RunningProgram<Model, Msg> {
     let model = program.initialModel;
     let previousView = program.view(program.initialModel);
+    let currentTree: HTMLElement | Text | null = null;
 
     const listener = (msg: Msg) => {
+        if (currentTree === null) {
+            currentTree = buildTree(listener, previousView);
+            if (program.root !== "hydration") {
+                while (program.root.firstChild) {
+                    program.root.removeChild(program.root.firstChild);
+                }
+                program.root.appendChild(currentTree);
+            }
+        }
         model = program.update(msg, model, listener);
 
         const nextView = program.view(model);
@@ -814,8 +906,10 @@ export function program<Model, Msg>(
         previousView = nextView;
     };
 
-    let currentTree = buildTree(listener, previousView);
-    program.root.appendChild(currentTree);
+    if (program.root !== "hydration") {
+        currentTree = buildTree(listener, previousView);
+        program.root.appendChild(currentTree);
+    }
 
     return {
         program: program,
