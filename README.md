@@ -97,6 +97,10 @@ function update(msg: Msg, model: Model, send: (msg: Msg) => void): Model {
 }
 ```
 
+## Hydration
+
+There is also hydration support, via using `render` with `hydrate`. Check out the [hydration](examples/hydration/) folder for an example.
+
 ## Name
 
 Coed is the Welsh word for trees, forest, wood. For English speakers it'd be pronounced similar to "coyed".
