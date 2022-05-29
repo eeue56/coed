@@ -212,12 +212,14 @@ export type Event<Msg> = {
 /**
 Creates an event handler for passing to a html node
 */
-export function on<Msg>(name: string, tagger: (data: any) => Msg): Event<Msg> {
+export function on<Msg>(name: string, tagger: (data: any) => Msg, stopPropagation: boolean = true, preventDefault: boolean = true): Event<Msg> {
     return {
         name: name,
         tagger: (event: any) => {
-            if (event.stopPropagation) {
+            if (stopPropagation) {
                 event.stopPropagation();
+            }
+            if (preventDefault) {
                 event.preventDefault();
             }
             return tagger(event);
@@ -570,6 +572,7 @@ export function triggerEvent<Msg>(
     payload: any,
     node: HtmlNode<Msg>
 ): Maybe.Maybe<Msg> {
+    payload = { stopPropagation: () => undefined, preventDefault: () => undefined, ...payload }
     switch (node.kind) {
         case "text":
             return Maybe.Nothing();

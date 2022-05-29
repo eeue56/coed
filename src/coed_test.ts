@@ -1,5 +1,5 @@
-import { strict as assert } from "assert";
 import { Maybe } from "@eeue56/ts-core";
+import { strict as assert } from "assert";
 import * as coed from "./coed";
 
 // text nodes
