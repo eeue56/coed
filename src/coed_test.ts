@@ -1,6 +1,7 @@
 import { Maybe } from "@eeue56/ts-core";
 import { strict as assert } from "assert";
 import * as coed from "./coed";
+import { booleanAttribute } from "./coed";
 
 // text nodes
 
@@ -194,6 +195,22 @@ export function testDoublyNestedDivWithTextWithMultipleClassesRendering() {
         world
     </div>
 </div>`.trim()
+    );
+}
+
+export function testPositiveBooleanAttribute() {
+    const inputElement = coed.node("input", [ ], [ booleanAttribute("checked", true) ], []);
+    assert.deepStrictEqual(
+        coed.render(inputElement),
+        `<input checked="checked"></input>`.trim()
+    );
+}
+
+export function testNegativeBooleanAttribute() {
+    const inputElement = coed.node("input", [ ], [ booleanAttribute("checked", false) ], []);
+    assert.deepStrictEqual(
+        coed.render(inputElement),
+        `<input></input>`.trim()
     );
 }
 

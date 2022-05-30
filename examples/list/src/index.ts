@@ -24,6 +24,18 @@ function DeleteItem(id: number): Msg {
     };
 }
 
+type Toggle = {
+    kind: "Toggle";
+    id: number;
+};
+
+function Toggle(id: number): Msg {
+    return {
+        kind: "Toggle",
+        id: id,
+    };
+}
+
 type ChangeNewItemText = {
     kind: "ChangeNewItemText";
     text: string;
@@ -36,11 +48,12 @@ function ChangeNewItemText(text: string): Msg {
     };
 }
 
-type Msg = AddItem | DeleteItem | ChangeNewItemText;
+type Msg = AddItem | DeleteItem | Toggle | ChangeNewItemText;
 
 type Item = {
     id: number;
     text: string;
+    state: boolean;
 };
 
 type Model = {
@@ -55,6 +68,7 @@ function update(msg: Msg, model: Model): Model {
             const newItem = {
                 id: model.maxId,
                 text: msg.text,
+                state: true,
             };
 
             model.items.push(newItem);
@@ -71,6 +85,11 @@ function update(msg: Msg, model: Model): Model {
                 ...model,
                 items: model.items.filter((item) => item.id !== msg.id),
             };
+        case "Toggle":
+            return {
+                ...model,
+                items: model.items.map((item) => item.id === msg.id ? {...item, state: !item.state} : item),
+            };
         case "ChangeNewItemText":
             return {
                 ...model,
@@ -85,6 +104,10 @@ function viewItem(item: Item): coed.HtmlNode<Msg> {
         [],
         [
             coed.text(item.id + ":" + item.text),
+            coed.input (
+                [ coed.on("click", () => Toggle(item.id), false, false)],
+                [ coed.booleanAttribute("checked", item.state), coed.attribute("type", "checkbox")]
+            ),
             coed.button(
                 [coed.on("click", () => DeleteItem(item.id))],
                 [coed.attribute("id", "btn-remove-" + item.id)],
@@ -95,7 +118,6 @@ function viewItem(item: Item): coed.HtmlNode<Msg> {
 }
 
 function viewAddItem(newItemText: string): coed.HtmlNode<Msg> {
-    const copy = newItemText.slice();
     return coed.div(
         [],
         [],

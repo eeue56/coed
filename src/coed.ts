@@ -137,6 +137,12 @@ type NumberAttribute = {
     value: string;
 };
 
+type BooleanAttribute = {
+    kind: "boolean";
+    key: string;
+    value: boolean;
+}
+
 /**
 Used to represent the different types of attributes possible.
 */
@@ -144,7 +150,8 @@ export type Attribute =
     | None
     | StringAttribute
     | NumberAttribute
-    | StyleAttribute;
+    | StyleAttribute
+    | BooleanAttribute;
 
 /**
 Creates a class attribute - classes are combined by the html creator, so you can use it like:
@@ -196,6 +203,17 @@ export function attribute(key: string, value: string): Attribute {
 
     return {
         kind: "string",
+        key: key,
+        value: value,
+    };
+}
+
+/**
+Create an attribute with a given key and value. This is set via `setAttribute` at runtime.
+*/
+export function booleanAttribute(key: string, value: boolean): Attribute {
+    return {
+        kind: "boolean",
         key: key,
         value: value,
     };
@@ -391,6 +409,8 @@ function renderAttribute(attribute: Attribute): string {
             return `${attribute.key}=${attribute.value}`;
         case "style":
             return "";
+        case "boolean":
+            return attribute.value ? `${attribute.key}="${attribute.key}"` : "";
         case "none":
             return "";
     }
@@ -407,9 +427,9 @@ export function render<Msg>(node: HtmlNode<Msg>, depth = 0): string {
 
         case "void":
         case "regular":
+            const renderedAttributes = node.attributes.map(renderAttribute).join(" ");
             const attributes =
-                (node.attributes.length > 0 ? " " : "") +
-                node.attributes.map(renderAttribute).join(" ");
+                (renderedAttributes.length > 0 ? " " : "") + renderedAttributes;
 
             switch (node.kind) {
                 case "void":
@@ -625,16 +645,16 @@ export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
 function setAttributeOnElement(
     element: HTMLElement,
     attribute: Attribute
-): void {
+): boolean {
     switch (attribute.kind) {
         case "string":
         case "number":
             const hasSameAttributeAlready =
                 element.getAttribute(attribute.key) === attribute.value;
-            if (hasSameAttributeAlready) return;
+            if (hasSameAttributeAlready) return true;
             (element as any)[attribute.key] = attribute.value;
             element.setAttribute(attribute.key, attribute.value);
-            return;
+            return true;
         case "style":
             element.removeAttribute("style");
             const styles = attribute.value.split(";");
@@ -644,9 +664,22 @@ function setAttributeOnElement(
                 const styleValue = styles[i].split(":")[1];
                 element.style[styleName as any] = styleValue;
             }
-            return;
+            return true;
+        case "boolean": {
+            if (attribute.value){
+                const hasSameAttributeAlready =
+                    (element as any)[attribute.key] === true || element.getAttribute(attribute.key) === attribute.key;
+                if (hasSameAttributeAlready) return true;
+                element.setAttribute(attribute.key, attribute.key);
+            } else {
+                if (element.getAttribute(attribute.key) === attribute.key) {
+                    element.removeAttribute(attribute.key);
+                }
+            }
+            return true;
+        }
         case "none":
-            return;
+            return true;
     }
 }
 
@@ -677,6 +710,7 @@ function patchFacts<Msg>(
                                             ).key;
                                         break;
                                     }
+                                    case "boolean":
                                     case "style":
                                         seen = true;
                                 }
@@ -690,6 +724,8 @@ function patchFacts<Msg>(
                             case "number":
                                 elements.removeAttribute(attribute.key);
                             case "string":
+                                elements.removeAttribute(attribute.key);
+                            case "boolean":
                                 elements.removeAttribute(attribute.key);
                             case "style":
                                 elements.removeAttribute("style");
