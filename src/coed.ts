@@ -141,7 +141,7 @@ type BooleanAttribute = {
     kind: "boolean";
     key: string;
     value: boolean;
-}
+};
 
 /**
 Used to represent the different types of attributes possible.
@@ -230,7 +230,12 @@ export type Event<Msg> = {
 /**
 Creates an event handler for passing to a html node
 */
-export function on<Msg>(name: string, tagger: (data: any) => Msg, stopPropagation: boolean = true, preventDefault: boolean = true): Event<Msg> {
+export function on<Msg>(
+    name: string,
+    tagger: (data: any) => Msg,
+    stopPropagation: boolean = true,
+    preventDefault: boolean = true
+): Event<Msg> {
     return {
         name: name,
         tagger: (event: any) => {
@@ -427,7 +432,9 @@ export function render<Msg>(node: HtmlNode<Msg>, depth = 0): string {
 
         case "void":
         case "regular":
-            const renderedAttributes = node.attributes.map(renderAttribute).join(" ");
+            const renderedAttributes = node.attributes
+                .map(renderAttribute)
+                .join(" ");
             const attributes =
                 (renderedAttributes.length > 0 ? " " : "") + renderedAttributes;
 
@@ -592,7 +599,11 @@ export function triggerEvent<Msg>(
     payload: any,
     node: HtmlNode<Msg>
 ): Maybe.Maybe<Msg> {
-    payload = { stopPropagation: () => undefined, preventDefault: () => undefined, ...payload }
+    payload = {
+        stopPropagation: () => undefined,
+        preventDefault: () => undefined,
+        ...payload,
+    };
     switch (node.kind) {
         case "text":
             return Maybe.Nothing();
@@ -651,9 +662,16 @@ function setAttributeOnElement(
         case "number":
             const hasSameAttributeAlready =
                 element.getAttribute(attribute.key) === attribute.value;
-            if (hasSameAttributeAlready) return true;
-            (element as any)[attribute.key] = attribute.value;
+
+            const hasSameAttributeValueAlready =
+                (element as any)[attribute.key] === attribute.value;
+
+            if (hasSameAttributeAlready) {
+                return true;
+            }
+
             element.setAttribute(attribute.key, attribute.value);
+            (element as any)[attribute.key] = attribute.value;
             return true;
         case "style":
             element.removeAttribute("style");
@@ -666,9 +684,10 @@ function setAttributeOnElement(
             }
             return true;
         case "boolean": {
-            if (attribute.value){
+            if (attribute.value) {
                 const hasSameAttributeAlready =
-                    (element as any)[attribute.key] === true || element.getAttribute(attribute.key) === attribute.key;
+                    (element as any)[attribute.key] === true ||
+                    element.getAttribute(attribute.key) === attribute.key;
                 if (hasSameAttributeAlready) return true;
                 element.setAttribute(attribute.key, attribute.key);
             } else {
@@ -692,46 +711,33 @@ function patchFacts<Msg>(
         case "void":
         case "regular": {
             // remove previous attributes that no longer exist on the next dom version
+
             if (previousTree.kind === nextTree.kind) {
-                previousTree.attributes
-                    .filter((attribute) => {
-                        for (const nextAttribute of nextTree.attributes) {
-                            let seen = false;
-                            if (attribute.kind === nextAttribute.kind) {
-                                switch (nextAttribute.kind) {
-                                    case "number":
-                                    case "string": {
-                                        seen =
-                                            nextAttribute.key ===
-                                            (
-                                                attribute as
-                                                    | NumberAttribute
-                                                    | StringAttribute
-                                            ).key;
-                                        break;
-                                    }
-                                    case "boolean":
-                                    case "style":
-                                        seen = true;
-                                }
-                            }
-                            if (seen) return false;
-                        }
-                        return true;
-                    })
-                    .forEach((attribute) => {
-                        switch (attribute.kind) {
-                            case "number":
-                                elements.removeAttribute(attribute.key);
-                            case "string":
-                                elements.removeAttribute(attribute.key);
-                            case "boolean":
-                                elements.removeAttribute(attribute.key);
-                            case "style":
-                                elements.removeAttribute("style");
-                        }
-                    });
+                const nextAttributes = [];
+                for (const attr of nextTree.attributes) {
+                    if (attr.kind != "none") {
+                        nextAttributes.push(attr.key);
+                    }
+                }
+
+                for (const attribute of previousTree.attributes) {
+                    if (
+                        attribute.kind !== "none" &&
+                        nextAttributes.indexOf(
+                            (
+                                attribute as
+                                    | StringAttribute
+                                    | NumberAttribute
+                                    | BooleanAttribute
+                                    | StyleAttribute
+                            ).key
+                        ) === -1
+                    ) {
+                        elements.removeAttribute(attribute.key);
+                    }
+                }
             }
+
             nextTree.attributes.forEach((attribute: Attribute) => {
                 setAttributeOnElement(elements, attribute);
             });
@@ -821,7 +827,6 @@ function patch<Msg>(
                     nextTree,
                     elements as HTMLElement
                 );
-                const htmlElements = elements as HTMLElement;
             }
             return nextTree;
         }
