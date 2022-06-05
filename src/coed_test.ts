@@ -199,7 +199,12 @@ export function testDoublyNestedDivWithTextWithMultipleClassesRendering() {
 }
 
 export function testPositiveBooleanAttribute() {
-    const inputElement = coed.node("input", [ ], [ booleanAttribute("checked", true) ], []);
+    const inputElement = coed.node(
+        "input",
+        [],
+        [booleanAttribute("checked", true)],
+        []
+    );
     assert.deepStrictEqual(
         coed.render(inputElement),
         `<input checked="checked"></input>`.trim()
@@ -207,11 +212,13 @@ export function testPositiveBooleanAttribute() {
 }
 
 export function testNegativeBooleanAttribute() {
-    const inputElement = coed.node("input", [ ], [ booleanAttribute("checked", false) ], []);
-    assert.deepStrictEqual(
-        coed.render(inputElement),
-        `<input></input>`.trim()
+    const inputElement = coed.node(
+        "input",
+        [],
+        [booleanAttribute("checked", false)],
+        []
     );
+    assert.deepStrictEqual(coed.render(inputElement), `<input></input>`.trim());
 }
 
 // events

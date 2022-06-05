@@ -88,7 +88,9 @@ function update(msg: Msg, model: Model): Model {
         case "Toggle":
             return {
                 ...model,
-                items: model.items.map((item) => item.id === msg.id ? {...item, state: !item.state} : item),
+                items: model.items.map((item) =>
+                    item.id === msg.id ? { ...item, state: !item.state } : item
+                ),
             };
         case "ChangeNewItemText":
             return {
@@ -104,9 +106,12 @@ function viewItem(item: Item): coed.HtmlNode<Msg> {
         [],
         [
             coed.text(item.id + ":" + item.text),
-            coed.input (
-                [ coed.on("click", () => Toggle(item.id), false, false)],
-                [ coed.booleanAttribute("checked", item.state), coed.attribute("type", "checkbox")]
+            coed.input(
+                [coed.on("click", () => Toggle(item.id), false, false)],
+                [
+                    coed.booleanAttribute("checked", item.state),
+                    coed.attribute("type", "checkbox"),
+                ]
             ),
             coed.button(
                 [coed.on("click", () => DeleteItem(item.id))],
