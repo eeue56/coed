@@ -670,6 +670,29 @@ export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
     }
 }
 
+function isProperty(tag: string, key: string): boolean {
+    switch (tag) {
+        case "INPUT":
+            return (
+                key === "checked" ||
+                key === "indeterminate" ||
+                key === "value" ||
+                key === "readonly" ||
+                key === "disabled"
+            );
+        case "OPTION":
+            return key === "selected" || key === "disabled";
+        case "TEXTAREA":
+            return key === "value" || key === "readonly" || key === "disabled";
+        case "SELECT":
+            return key === "value" || key === "disabled";
+        case "BUTTON":
+        case "OPTGROUP":
+            return key === "disabled";
+    }
+    return false;
+}
+
 function setAttributeOnElement(
     element: HTMLElement,
     attribute: Attribute
@@ -677,19 +700,13 @@ function setAttributeOnElement(
     switch (attribute.kind) {
         case "string":
         case "number":
-            const hasSameAttributeAlready =
-                element.getAttribute(attribute.key) === attribute.value;
-
-            const hasSameAttributeValueAlready =
-                (element as any)[attribute.key] === attribute.value;
-
-            if (hasSameAttributeAlready) {
+            if (isProperty(element.tagName, attribute.key)) {
+                (element as any)[attribute.key] = attribute.value;
+                return true;
+            } else {
+                element.setAttribute(attribute.key, attribute.value);
                 return true;
             }
-
-            element.setAttribute(attribute.key, attribute.value);
-            (element as any)[attribute.key] = attribute.value;
-            return true;
         case "style":
             element.removeAttribute("style");
             const styles = attribute.value.split(";");
@@ -702,10 +719,10 @@ function setAttributeOnElement(
             return true;
         case "boolean": {
             if (attribute.value) {
-                const hasSameAttributeAlready =
-                    (element as any)[attribute.key] === true ||
-                    element.getAttribute(attribute.key) === attribute.key;
-                if (hasSameAttributeAlready) return true;
+                if (isProperty(element.tagName, attribute.key)) {
+                    (element as any)[attribute.key] = attribute.value;
+                    return true;
+                }
                 element.setAttribute(attribute.key, attribute.key);
             } else {
                 if (element.getAttribute(attribute.key) === attribute.key) {
