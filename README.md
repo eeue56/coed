@@ -20,11 +20,17 @@ You should break your program down into logical sections: two types, `Model` to 
 
 For example:
 
-```javascript
-import { HtmlNode, div, onClick, style_, text } from "@eeue56/coed";
+```typescript
+import { HtmlNode, div, on, style_, text } from "@eeue56/coed";
 import * as coed from "@eeue56/coed";
 
 type FlipName = { kind: 'FlipName' }
+function FlipName(): Msg {
+    return {
+        kind: "FlipName",
+    };
+}
+
 type Msg = FlipName;
 type Model = { name: string; }
 
@@ -39,24 +45,27 @@ function update(msg: Msg, model: Model): Model {
     }
 }
 
-function view<Msg>(model: Model): HtmlNode<Msg> {
+function view(model: Model): HtmlNode<Msg> {
     return div(
-        [ onClick(() => FlipName()) ],
-        [ style_("color", model.name === "Noah" ? 'green' : 'red') ]
+        [ on("click", () => FlipName()) ],
+        [ style_("color", model.name === "Noah" ? 'green' : 'red') ],
         [ text(model.name) ]
     );
 }
 
 function main() {
-    const root = document.getElementById('root');
+    const root = document.getElementById("root");
+    if (root === null) return;
 
     const program = coed.program({
-        root: root
+        root: root,
         initialModel: { name: "Noah" },
         view: view,
         update: update,
     });
 }
+
+main();
 ```
 
 You can send data to `program` at a later point, for example:
@@ -80,7 +89,7 @@ function main() {
 
 Or via the optional argument `send` in the update function:
 
-```javascript
+```typescript
 function update(msg: Msg, model: Model, send: (msg: Msg) => void): Model {
     switch (msg.kind) {
         case "FlipName":
