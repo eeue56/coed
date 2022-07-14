@@ -323,7 +323,7 @@ export function node<Msg>(
         events: events,
         attributes: combineAttributes(attributes),
         children: children,
-        _eventListeners: [],
+        _eventListeners: [ ],
     };
 }
 
@@ -340,21 +340,21 @@ export function voidNode<Msg>(
         tag: tag,
         events: events,
         attributes: combineAttributes(attributes),
-        _eventListeners: [],
+        _eventListeners: [ ],
     };
 }
 
 function combineAttributes(attributes: Attribute[]): Attribute[] {
     const knownStringAttributes: { [id: string]: StringAttribute[] } = {};
-    const knownStyleAttributes: StyleAttribute[] = [];
-    const otherAttributes: Attribute[] = [];
+    const knownStyleAttributes: StyleAttribute[] = [ ];
+    const otherAttributes: Attribute[] = [ ];
 
     // group attribute values
     attributes.forEach((attribute: Attribute) => {
         switch (attribute.kind) {
             case "string":
                 if (!knownStringAttributes[attribute.key]) {
-                    knownStringAttributes[attribute.key] = [];
+                    knownStringAttributes[attribute.key] = [ ];
                 }
 
                 knownStringAttributes[attribute.key].push(attribute);
@@ -500,7 +500,21 @@ export function hydrate<Model, Msg>(
 ) {
     program.program.root = root as HTMLElement;
     const node = program.program.view(program.program.initialModel);
-    hydrateNode(node, program.send, root);
+
+    if (node.kind === "text") return;
+
+    if (root.children.length === 0) {
+        console.error(
+            "This root has no children. Did you correctly server-side render content?"
+        );
+        console.error(
+            `Your html should look like <div id="root">{your content}</div>`
+        );
+        console.error(
+            "The root node should have exactly one child, which is your generated html."
+        );
+    }
+    hydrateNode(node, program.send, root.children[0]);
 }
 
 /**
@@ -535,10 +549,13 @@ export function hydrateNode<Msg>(
     }
 
     if (node.kind === "regular") {
-        node.children.forEach((child: HtmlNode<Msg>, i: number) => {
+        let i = 0;
+        for (const child of node.children) {
+            if (child.kind === "text") continue;
             const newRoot = root.children[i];
             hydrateNode(child, listener, newRoot);
-        });
+            i++;
+        }
     }
 }
 
@@ -713,7 +730,7 @@ function patchFacts<Msg>(
             // remove previous attributes that no longer exist on the next dom version
 
             if (previousTree.kind === nextTree.kind) {
-                const nextAttributes = [];
+                const nextAttributes = [ ];
                 for (const attr of nextTree.attributes) {
                     if (attr.kind != "none") {
                         nextAttributes.push(attr.key);
@@ -882,7 +899,7 @@ function patch<Msg>(
                             break;
 
                         case Node.TEXT_NODE:
-                            const text = node as unknown as Text;
+                            const text = (node as unknown) as Text;
                             patch(listener, currentChild, nextChild, text);
                             break;
                     }
