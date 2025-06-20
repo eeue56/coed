@@ -224,7 +224,7 @@ Every event has a `name`, like `click`, and a tagger which produces a message of
 */
 export type Event<Msg> = {
     name: string;
-    tagger(data: any): Msg;
+    tagger(event: globalThis.Event): Msg;
 };
 
 /**
@@ -232,13 +232,13 @@ Creates an event handler for passing to a html node
 */
 export function on<Msg>(
     name: string,
-    tagger: (data: any) => Msg,
+    tagger: (data: globalThis.Event) => Msg,
     stopPropagation: boolean = true,
     preventDefault: boolean = true
 ): Event<Msg> {
     return {
         name: name,
-        tagger: (event: any) => {
+        tagger: (event: globalThis.Event) => {
             if (stopPropagation) {
                 event.stopPropagation();
             }
@@ -256,10 +256,13 @@ Special-cased input handler
 export function onInput<Msg>(tagger: (data: string) => Msg): Event<Msg> {
     return {
         name: "input",
-        tagger: (event: any) => {
+        tagger: (event: globalThis.InputEvent) => {
             event.stopPropagation();
             event.preventDefault();
-            return tagger(event.target.value);
+            if (event.target && "value" in event.target) {
+                return tagger(event.target.value as string);
+            }
+            return tagger("");
         },
     };
 }
@@ -269,13 +272,18 @@ type TextNode = {
     text: string;
 };
 
+type CoedEventListener<Msg> = {
+    event: Event<Msg>;
+    listener: EventListener;
+};
+
 type RegularNode<Msg> = {
     kind: "regular";
     tag: Tag;
     events: Event<Msg>[];
     attributes: Attribute[];
     children: HtmlNode<Msg>[];
-    _eventListeners: any[];
+    _eventListeners: CoedEventListener<Msg>[];
 };
 
 type VoidNode<Msg> = {
@@ -283,7 +291,7 @@ type VoidNode<Msg> = {
     tag: Tag;
     events: Event<Msg>[];
     attributes: Attribute[];
-    _eventListeners: any[];
+    _eventListeners: CoedEventListener<Msg>[];
 };
 
 /**
@@ -323,7 +331,7 @@ export function node<Msg>(
         events: events,
         attributes: combineAttributes(attributes),
         children: children,
-        _eventListeners: [ ],
+        _eventListeners: [],
     };
 }
 
@@ -340,21 +348,21 @@ export function voidNode<Msg>(
         tag: tag,
         events: events,
         attributes: combineAttributes(attributes),
-        _eventListeners: [ ],
+        _eventListeners: [],
     };
 }
 
 function combineAttributes(attributes: Attribute[]): Attribute[] {
     const knownStringAttributes: { [id: string]: StringAttribute[] } = {};
-    const knownStyleAttributes: StyleAttribute[] = [ ];
-    const otherAttributes: Attribute[] = [ ];
+    const knownStyleAttributes: StyleAttribute[] = [];
+    const otherAttributes: Attribute[] = [];
 
     // group attribute values
     attributes.forEach((attribute: Attribute) => {
         switch (attribute.kind) {
             case "string":
                 if (!knownStringAttributes[attribute.key]) {
-                    knownStringAttributes[attribute.key] = [ ];
+                    knownStringAttributes[attribute.key] = [];
                 }
 
                 knownStringAttributes[attribute.key].push(attribute);
@@ -648,7 +656,7 @@ export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
             return voidNode(
                 tree.tag,
                 tree.events.map((event: Event<A>) => {
-                    return on(event.name, (data: any) =>
+                    return on(event.name, (data: globalThis.Event) =>
                         tagger(event.tagger(data))
                     );
                 }),
@@ -658,7 +666,7 @@ export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
             return node(
                 tree.tag,
                 tree.events.map((event: Event<A>) => {
-                    return on(event.name, (data: any) =>
+                    return on(event.name, (data: globalThis.Event) =>
                         tagger(event.tagger(data))
                     );
                 }),
@@ -747,7 +755,7 @@ function patchFacts<Msg>(
             // remove previous attributes that no longer exist on the next dom version
 
             if (previousTree.kind === nextTree.kind) {
-                const nextAttributes = [ ];
+                const nextAttributes = [];
                 for (const attr of nextTree.attributes) {
                     if (attr.kind != "none") {
                         nextAttributes.push(attr.key);
@@ -916,7 +924,7 @@ function patch<Msg>(
                             break;
 
                         case Node.TEXT_NODE:
-                            const text = (node as unknown) as Text;
+                            const text = node as unknown as Text;
                             patch(listener, currentChild, nextChild, text);
                             break;
                     }
