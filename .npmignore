@@ -5,3 +5,4 @@ build/coed_test*
 src/coed_test.ts
 src/coed/jsx.tsx
 build/coed/*
+src/
