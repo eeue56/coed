@@ -6,3 +6,6 @@ src/coed_test.ts
 src/coed/jsx.tsx
 build/coed/*
 src/
+tsconfig.json
+.prettierignore
+.prettierrc.json
