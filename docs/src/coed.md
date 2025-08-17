@@ -380,7 +380,7 @@ export type Program<Model, Msg> = {
         send?: (msg: Msg) => void
     ) => Model | Promise<Model>;
     root: HTMLElement | "hydration";
-    postRender?: () => void | Promise<void>;
+    postRender?: (model: Model) => void | Promise<void>;
 };
 
 ```
