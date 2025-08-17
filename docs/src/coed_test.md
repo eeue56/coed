@@ -52,7 +52,7 @@ export function testDivWithVoidElement() {
 export function testDivWithQuotedAttribute() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L60-L60)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L65-L65)
 
 ## testDivWithDoublyQuotedAttribute
 
@@ -60,7 +60,7 @@ export function testDivWithQuotedAttribute() {
 export function testDivWithDoublyQuotedAttribute() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L77-L77)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L87-L87)
 
 ## testDivWithTextRendering
 
@@ -68,7 +68,7 @@ export function testDivWithDoublyQuotedAttribute() {
 export function testDivWithTextRendering() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L94-L94)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L109-L109)
 
 ## testDivWithTextWithClassRendering
 
@@ -76,7 +76,7 @@ export function testDivWithTextRendering() {
 export function testDivWithTextWithClassRendering() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L105-L105)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L120-L120)
 
 ## testDoublyNestedDivWithTextRendering
 
@@ -84,7 +84,7 @@ export function testDivWithTextWithClassRendering() {
 export function testDoublyNestedDivWithTextRendering() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L124-L124)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L139-L139)
 
 ## testDoublyNestedDivWithTextWithClassesRendering
 
@@ -92,7 +92,7 @@ export function testDoublyNestedDivWithTextRendering() {
 export function testDoublyNestedDivWithTextWithClassesRendering() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L144-L144)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L159-L159)
 
 ## testDoublyNestedDivWithTextWithMultipleClassesRendering
 
@@ -100,7 +100,7 @@ export function testDoublyNestedDivWithTextWithClassesRendering() {
 export function testDoublyNestedDivWithTextWithMultipleClassesRendering() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L172-L172)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L187-L187)
 
 ## testPositiveBooleanAttribute
 
@@ -108,7 +108,7 @@ export function testDoublyNestedDivWithTextWithMultipleClassesRendering() {
 export function testPositiveBooleanAttribute() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L200-L200)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L215-L215)
 
 ## testNegativeBooleanAttribute
 
@@ -116,7 +116,7 @@ export function testPositiveBooleanAttribute() {
 export function testNegativeBooleanAttribute() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L213-L213)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L228-L228)
 
 ## testEmptyStringEvent
 
@@ -124,7 +124,7 @@ export function testNegativeBooleanAttribute() {
 export function testEmptyStringEvent() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L225-L225)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L240-L240)
 
 ## testEmptyDivEvent
 
@@ -132,7 +132,7 @@ export function testEmptyStringEvent() {
 export function testEmptyDivEvent() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L234-L234)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L249-L249)
 
 ## testEmptyDivWithValidEvent
 
@@ -140,7 +140,7 @@ export function testEmptyDivEvent() {
 export function testEmptyDivWithValidEvent() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L243-L243)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L258-L258)
 
 ## testEmptyDivWithTwoValidEventsOfTheSameListener
 
@@ -148,7 +148,7 @@ export function testEmptyDivWithValidEvent() {
 export function testEmptyDivWithTwoValidEventsOfTheSameListener() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L257-L257)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L272-L272)
 
 ## testEmptyDivWithTwoValidEventsOfTheDifferentListeners
 
@@ -156,4 +156,4 @@ export function testEmptyDivWithTwoValidEventsOfTheSameListener() {
 export function testEmptyDivWithTwoValidEventsOfTheDifferentListeners() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L271-L271)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L286-L286)

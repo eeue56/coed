@@ -944,11 +944,12 @@ function patch<Msg>(
 }
 
 /**
-Every Coed program follows the model-view-update (MVU) pattern made popular on the frontend by Elm.
-An initial model is given, which is passed to the view function which then populates the `root` element.
-Any events triggered within the view will use the `update` function to create a new model.
-Async updates can be handled via the optional `send` callback within the update function.
-*/
+ * Every Coed program follows the model-view-update (MVU) pattern made popular on the frontend by Elm.
+ * An initial model is given, which is passed to the view function which then populates the `root` element.
+ * Any events triggered within the view will use the `update` function to create a new model.
+ * Async updates can be handled via the optional `send` callback within the update function.
+ * `postRender`, if it exists, will be called after rendering and patching the DOM (useful for attaching things to the DOM after the main render)
+ */
 export type Program<Model, Msg> = {
     initialModel: Model;
     view(model: Model): HtmlNode<Msg>;
@@ -958,6 +959,7 @@ export type Program<Model, Msg> = {
         send?: (msg: Msg) => void,
     ) => Model | Promise<Model>;
     root: HTMLElement | "hydration";
+    postRender?: () => void | Promise<void>;
 };
 
 /**
@@ -994,6 +996,9 @@ export function program<Model, Msg>(
         const nextView = program.view(model);
         patch(listener, previousView, nextView, currentTree);
         previousView = nextView;
+        if (program.postRender) {
+            program.postRender();
+        }
     };
 
     if (program.root !== "hydration") {
