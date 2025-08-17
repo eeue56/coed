@@ -24,7 +24,7 @@ For example:
 import { HtmlNode, div, on, style_, text } from "@eeue56/coed";
 import * as coed from "@eeue56/coed";
 
-type FlipName = { kind: 'FlipName' }
+type FlipName = { kind: "FlipName" };
 function FlipName(): Msg {
     return {
         kind: "FlipName",
@@ -32,24 +32,24 @@ function FlipName(): Msg {
 }
 
 type Msg = FlipName;
-type Model = { name: string; }
+type Model = { name: string };
 
 function update(msg: Msg, model: Model): Model {
-    switch (msg.kind){
-        case 'FlipName':
-            if (model.name === 'Noah') {
-                return { name: 'Ianto' };
+    switch (msg.kind) {
+        case "FlipName":
+            if (model.name === "Noah") {
+                return { name: "Ianto" };
             } else {
-                return { name: 'Noah' };
+                return { name: "Noah" };
             }
     }
 }
 
 function view(model: Model): HtmlNode<Msg> {
     return div(
-        [ on("click", () => FlipName()) ],
-        [ style_("color", model.name === "Noah" ? 'green' : 'red') ],
-        [ text(model.name) ]
+        [on("click", () => FlipName())],
+        [style_("color", model.name === "Noah" ? "green" : "red")],
+        [text(model.name)],
     );
 }
 

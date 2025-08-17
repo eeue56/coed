@@ -11,7 +11,7 @@
                 mod ||
                     (0, cb[__getOwnPropNames(cb)[0]])(
                         (mod = { exports: {} }).exports,
-                        mod
+                        mod,
                     ),
                 mod.exports
             );
@@ -35,14 +35,14 @@
             isNodeMode || !mod || !mod.__esModule
                 ? __defProp(target, "default", { value: mod, enumerable: true })
                 : target,
-            mod
+            mod,
         )
     );
 
     // ../../../../../node_modules/@eeue56/ts-core/build/main/lib/basics.js
     var require_basics = __commonJS({
         "../../../../../node_modules/@eeue56/ts-core/build/main/lib/basics.js"(
-            exports
+            exports,
         ) {
             "use strict";
             Object.defineProperty(exports, "__esModule", { value: true });
@@ -67,7 +67,7 @@
     // ../../../../../node_modules/@eeue56/ts-core/build/main/lib/debug.js
     var require_debug = __commonJS({
         "../../../../../node_modules/@eeue56/ts-core/build/main/lib/debug.js"(
-            exports
+            exports,
         ) {
             "use strict";
             Object.defineProperty(exports, "__esModule", { value: true });
@@ -83,7 +83,7 @@
     // ../../../../../node_modules/@eeue56/ts-core/build/main/lib/maybe.js
     var require_maybe = __commonJS({
         "../../../../../node_modules/@eeue56/ts-core/build/main/lib/maybe.js"(
-            exports
+            exports,
         ) {
             "use strict";
             Object.defineProperty(exports, "__esModule", { value: true });
@@ -154,8 +154,8 @@
                                 return Just(
                                     func(
                                         firstMaybeValue.value,
-                                        secondMaybeValue.value
-                                    )
+                                        secondMaybeValue.value,
+                                    ),
                                 );
                             default:
                                 return Nothing();
@@ -169,7 +169,7 @@
                 func,
                 firstMaybeValue,
                 secondMaybeValue,
-                thirdMaybeValue
+                thirdMaybeValue,
             ) {
                 switch (firstMaybeValue.kind) {
                     case "just":
@@ -181,8 +181,8 @@
                                             func(
                                                 firstMaybeValue.value,
                                                 secondMaybeValue.value,
-                                                thirdMaybeValue.value
-                                            )
+                                                thirdMaybeValue.value,
+                                            ),
                                         );
                                     default:
                                         return Nothing();
@@ -210,7 +210,7 @@
     // ../../../../../node_modules/@eeue56/ts-core/build/main/lib/result.js
     var require_result = __commonJS({
         "../../../../../node_modules/@eeue56/ts-core/build/main/lib/result.js"(
-            exports
+            exports,
         ) {
             "use strict";
             var __createBinding =
@@ -336,7 +336,7 @@
                         switch (secondResult.kind) {
                             case "ok":
                                 return Ok(
-                                    func(firstResult.value, secondResult.value)
+                                    func(firstResult.value, secondResult.value),
                                 );
                             default:
                                 return secondResult;
@@ -357,8 +357,8 @@
                                             func(
                                                 firstResult.value,
                                                 secondResult.value,
-                                                thirdResult.value
-                                            )
+                                                thirdResult.value,
+                                            ),
                                         );
                                     default:
                                         return thirdResult;
@@ -395,7 +395,7 @@
     // ../../../../../node_modules/@eeue56/ts-core/build/main/lib/tuple.js
     var require_tuple = __commonJS({
         "../../../../../node_modules/@eeue56/ts-core/build/main/lib/tuple.js"(
-            exports
+            exports,
         ) {
             "use strict";
             Object.defineProperty(exports, "__esModule", { value: true });
@@ -448,7 +448,7 @@
     // ../../../../../node_modules/@eeue56/ts-core/build/main/index.js
     var require_main = __commonJS({
         "../../../../../node_modules/@eeue56/ts-core/build/main/index.js"(
-            exports
+            exports,
         ) {
             "use strict";
             var __createBinding =
@@ -744,7 +744,7 @@
                                 knownStringAttributes[attribute2.key] = [];
                             }
                             knownStringAttributes[attribute2.key].push(
-                                attribute2
+                                attribute2,
                             );
                             break;
                         case "style":
@@ -755,7 +755,7 @@
                     }
                 });
                 const combinedAttributes = otherAttributes.filter(
-                    (attribute2) => attribute2.kind !== "none"
+                    (attribute2) => attribute2.kind !== "none",
                 );
                 Object.keys(knownStringAttributes).map((key) => {
                     combinedAttributes.push(
@@ -765,22 +765,25 @@
                                     acc.value += " " + currentValue.value;
                                 }
                                 return acc;
-                            }
-                        )
+                            },
+                        ),
                     );
                 });
                 if (knownStyleAttributes.length > 0) {
                     combinedAttributes.push(
-                        knownStyleAttributes.reduce((acc, currentValue) => {
-                            if (typeof acc.value === "undefined")
-                                acc.value = "";
-                            acc.value +=
-                                currentValue.key +
-                                ":" +
-                                currentValue.value +
-                                ";";
-                            return acc;
-                        }, attribute("style", ""))
+                        knownStyleAttributes.reduce(
+                            (acc, currentValue) => {
+                                if (typeof acc.value === "undefined")
+                                    acc.value = "";
+                                acc.value +=
+                                    currentValue.key +
+                                    ":" +
+                                    currentValue.value +
+                                    ";";
+                                return acc;
+                            },
+                            attribute("style", ""),
+                        ),
                     );
                 }
                 return combinedAttributes;
@@ -862,7 +865,7 @@ ${whitespace}</${node2.tag}>`
             function hydrate2(program3, root) {
                 program3.program.root = root;
                 const node2 = program3.program.view(
-                    program3.program.initialModel
+                    program3.program.initialModel,
                 );
                 hydrateNode(node2, program3.send, root);
             }
@@ -883,7 +886,7 @@ ${whitespace}</${node2.tag}>`
                                 listenerFunction,
                                 {
                                     once: true,
-                                }
+                                },
                             );
                             node2._eventListeners.push({
                                 event,
@@ -919,7 +922,7 @@ ${whitespace}</${node2.tag}>`
                                 listenerFunction,
                                 {
                                     once: true,
-                                }
+                                },
                             );
                             node2._eventListeners.push({
                                 event,
@@ -928,7 +931,7 @@ ${whitespace}</${node2.tag}>`
                         });
                         if (node2.kind === "regular") {
                             const children = node2.children.map((child) =>
-                                buildTree(listener, child)
+                                buildTree(listener, child),
                             );
                             children.forEach((child) => {
                                 element.appendChild(child);
@@ -946,11 +949,11 @@ ${whitespace}</${node2.tag}>`
                     case "void":
                     case "regular":
                         const events = node2.events.filter(
-                            (event) => event.name === eventName
+                            (event) => event.name === eventName,
                         );
                         if (events.length > 0) {
                             return ts_core_1.Maybe.Just(
-                                events[0].tagger(payload)
+                                events[0].tagger(payload),
                             );
                         } else {
                             return ts_core_1.Maybe.Nothing();
@@ -967,23 +970,23 @@ ${whitespace}</${node2.tag}>`
                             tree.tag,
                             tree.events.map((event) => {
                                 return on2(event.name, (data2) =>
-                                    tagger(event.tagger(data2))
+                                    tagger(event.tagger(data2)),
                                 );
                             }),
-                            tree.attributes
+                            tree.attributes,
                         );
                     case "regular":
                         return node(
                             tree.tag,
                             tree.events.map((event) => {
                                 return on2(event.name, (data2) =>
-                                    tagger(event.tagger(data2))
+                                    tagger(event.tagger(data2)),
                                 );
                             }),
                             tree.attributes,
                             tree.children.map((child) => {
                                 return map(tagger, child);
-                            })
+                            }),
                         );
                 }
             }
@@ -1045,11 +1048,11 @@ ${whitespace}</${node2.tag}>`
                                     switch (attribute2.kind) {
                                         case "number":
                                             elements.removeAttribute(
-                                                attribute2.key
+                                                attribute2.key,
                                             );
                                         case "string":
                                             elements.removeAttribute(
-                                                attribute2.key
+                                                attribute2.key,
                                             );
                                         case "style":
                                             elements.removeAttribute("style");
@@ -1073,9 +1076,9 @@ ${whitespace}</${node2.tag}>`
                             (eventListeners) => {
                                 elements.removeEventListener(
                                     eventListeners.event.name,
-                                    eventListeners.listener
+                                    eventListeners.listener,
                                 );
-                            }
+                            },
                         );
                         nextTree.events.forEach((event) => {
                             const listenerFunction = (data2) => {
@@ -1086,7 +1089,7 @@ ${whitespace}</${node2.tag}>`
                                 listenerFunction,
                                 {
                                     once: true,
-                                }
+                                },
                             );
                             nextTree._eventListeners.push({
                                 event,
@@ -1112,7 +1115,7 @@ ${whitespace}</${node2.tag}>`
                             return currentTree;
                         } else {
                             elements.replaceWith(
-                                document.createTextNode(nextTree.text)
+                                document.createTextNode(nextTree.text),
                             );
                             return nextTree;
                         }
@@ -1128,7 +1131,7 @@ ${whitespace}</${node2.tag}>`
                                 listener,
                                 currentTree,
                                 nextTree,
-                                elements
+                                elements,
                             );
                             const htmlElements = elements;
                         }
@@ -1139,13 +1142,13 @@ ${whitespace}</${node2.tag}>`
                         nextTree = nextTree;
                         const currentTreeId =
                             (_a = currentTree.attributes.filter(
-                                (x) => x.kind === "string" && x.key === "id"
+                                (x) => x.kind === "string" && x.key === "id",
                             )[0]) === null || _a === void 0
                                 ? void 0
                                 : _a.value;
                         const nextTreeId =
                             (_b = nextTree.attributes.filter(
-                                (x) => x.kind === "string" && x.key === "id"
+                                (x) => x.kind === "string" && x.key === "id",
                             )[0]) === null || _b === void 0
                                 ? void 0
                                 : _b.value;
@@ -1161,7 +1164,7 @@ ${whitespace}</${node2.tag}>`
                                 listener,
                                 currentTree,
                                 nextTree,
-                                elements
+                                elements,
                             );
                             const htmlElements = elements;
                             for (
@@ -1174,7 +1177,7 @@ ${whitespace}</${node2.tag}>`
                                 const node2 = htmlElements.childNodes[i2];
                                 if (typeof node2 === "undefined") {
                                     htmlElements.appendChild(
-                                        buildTree(listener, nextChild)
+                                        buildTree(listener, nextChild),
                                     );
                                     continue;
                                 }
@@ -1185,7 +1188,7 @@ ${whitespace}</${node2.tag}>`
                                             listener,
                                             currentChild,
                                             nextChild,
-                                            element
+                                            element,
                                         );
                                         break;
                                     case Node.TEXT_NODE:
@@ -1194,7 +1197,7 @@ ${whitespace}</${node2.tag}>`
                                             listener,
                                             currentChild,
                                             nextChild,
-                                            text3
+                                            text3,
                                         );
                                         break;
                                 }
@@ -1221,7 +1224,7 @@ ${whitespace}</${node2.tag}>`
                         if (program3.root !== "hydration") {
                             while (program3.root.firstChild) {
                                 program3.root.removeChild(
-                                    program3.root.firstChild
+                                    program3.root.firstChild,
                                 );
                             }
                             program3.root.appendChild(currentTree);
@@ -1770,7 +1773,7 @@ ${whitespace}</${node2.tag}>`
                 return (0, import_coed.pre)(
                     [],
                     [],
-                    [(0, import_coed.text)(model.text)]
+                    [(0, import_coed.text)(model.text)],
                 );
         }
     }
@@ -1782,10 +1785,10 @@ ${whitespace}</${node2.tag}>`
                 coed.button(
                     [coed.on("click", () => Fetch())],
                     [],
-                    [(0, import_coed.text)("Fetch text")]
+                    [(0, import_coed.text)("Fetch text")],
                 ),
                 viewState(model),
-            ]
+            ],
         );
     }
     var initalModel = PageLoaded();

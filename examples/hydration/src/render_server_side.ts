@@ -12,7 +12,7 @@ function main() {
         const rendered = flatRender(view(initalModel));
         const result = index.replace(
             `<div id="root"></div>`,
-            `<div id="root">${rendered}</div>`
+            `<div id="root">${rendered}</div>`,
         );
         res.send(result);
     });

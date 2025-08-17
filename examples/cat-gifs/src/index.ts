@@ -70,7 +70,7 @@ type Model = Failure | Loading | Success;
 
 function getRandomCatGif(send: (msg: Msg) => void) {
     fetch(
-        "https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=cat"
+        "https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=cat",
     ).then((data) => {
         data.json().then((json) => {
             const imageUrl = json.data.image_url as string;
@@ -113,9 +113,9 @@ function viewGif(model: Model): coed.HtmlNode<SubMsg> {
                     coed.button(
                         [coed.on("click", () => SubMsg())],
                         [],
-                        [coed.text("Try again!")]
+                        [coed.text("Try again!")],
                     ),
-                ]
+                ],
             );
         case "Loading":
             return coed.text("Loading...");
@@ -127,13 +127,13 @@ function viewGif(model: Model): coed.HtmlNode<SubMsg> {
                     coed.button(
                         [coed.on("click", () => SubMsg())],
                         [coed.style_("display", "block")],
-                        [coed.text("More please!")]
+                        [coed.text("More please!")],
                     ),
                     coed.img(
                         [coed.on("click", () => SubMsg())],
-                        [coed.attribute("src", model.url)]
+                        [coed.attribute("src", model.url)],
                     ),
-                ]
+                ],
             );
     }
 }
@@ -145,7 +145,7 @@ function view(model: Model): coed.HtmlNode<Msg> {
         [
             coed.h2([], [], [coed.text("Random cats")]),
             coed.map((sub: SubMsg) => MorePlease(), viewGif(model)),
-        ]
+        ],
     );
 }
 

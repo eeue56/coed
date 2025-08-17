@@ -122,10 +122,10 @@ export function view(model: Model): HtmlNode<Msg> {
             coed.button(
                 [coed.on("click", () => Fetch())],
                 [],
-                [text("Fetch text")]
+                [text("Fetch text")],
             ),
             viewState(model),
-        ]
+        ],
     );
 }
 

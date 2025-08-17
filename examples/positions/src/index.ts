@@ -40,7 +40,7 @@ function view(model: Model): coed.HtmlNode<Msg> {
             coed.style_("top", `${model.x}px`),
             coed.style_("left", `${model.y}px`),
         ],
-        [coed.text("Click me!")]
+        [coed.text("Click me!")],
     );
 }
 

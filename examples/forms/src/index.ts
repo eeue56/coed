@@ -59,7 +59,7 @@ function viewInput<Msg>(
     type_: string,
     placeholder: string,
     value: string,
-    onInput: (input: string) => Msg
+    onInput: (input: string) => Msg,
 ): coed.HtmlNode<Msg> {
     return coed.input(
         [coed.onInput(onInput)],
@@ -67,7 +67,7 @@ function viewInput<Msg>(
             coed.attribute("type", type_),
             coed.attribute("placeholder", placeholder),
             coed.attribute("value", value),
-        ]
+        ],
     );
 }
 
@@ -79,7 +79,7 @@ function viewValidation<Msg>(model: Model): coed.HtmlNode<Msg> {
                 coed.style_("color", "red"),
                 coed.style_("border", "1px solid black"),
             ],
-            [coed.text("No password set")]
+            [coed.text("No password set")],
         );
     }
     if (model.password === model.passwordAgain) {
@@ -89,7 +89,7 @@ function viewValidation<Msg>(model: Model): coed.HtmlNode<Msg> {
                 coed.style_("color", "green"),
                 coed.style_("border", "5px dashed yellow"),
             ],
-            [coed.text("Matching passwords")]
+            [coed.text("Matching passwords")],
         );
     }
 
@@ -100,7 +100,7 @@ function viewValidation<Msg>(model: Model): coed.HtmlNode<Msg> {
             coed.style_("border", "1px solid black"),
             coed.style_("background", "lightblue"),
         ],
-        [coed.text("Passwords don't match")]
+        [coed.text("Passwords don't match")],
     );
 }
 
@@ -115,10 +115,10 @@ function view(model: Model): coed.HtmlNode<Msg> {
                 "password",
                 "Re-enter password",
                 model.passwordAgain,
-                SetPasswordAgain
+                SetPasswordAgain,
             ),
             viewValidation(model),
-        ]
+        ],
     );
 }
 

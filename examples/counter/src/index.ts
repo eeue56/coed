@@ -43,15 +43,15 @@ function view(model: Model): coed.HtmlNode<Msg> {
             coed.button(
                 [coed.on("click", () => Sub())],
                 [coed.class_("button-sub")],
-                [coed.text("-")]
+                [coed.text("-")],
             ),
             coed.text(`${model.count}`),
             coed.button(
                 [coed.on("click", () => Add())],
                 [coed.class_("button-add")],
-                [coed.text("+")]
+                [coed.text("+")],
             ),
-        ]
+        ],
     );
 }
 

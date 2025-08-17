@@ -89,7 +89,7 @@ function update(msg: Msg, model: Model): Model {
             return {
                 ...model,
                 items: model.items.map((item) =>
-                    item.id === msg.id ? { ...item, state: !item.state } : item
+                    item.id === msg.id ? { ...item, state: !item.state } : item,
                 ),
             };
         case "ChangeNewItemText":
@@ -111,14 +111,14 @@ function viewItem(item: Item): coed.HtmlNode<Msg> {
                 [
                     coed.booleanAttribute("checked", item.state),
                     coed.attribute("type", "checkbox"),
-                ]
+                ],
             ),
             coed.button(
                 [coed.on("click", () => DeleteItem(item.id))],
                 [coed.attribute("id", "btn-remove-" + item.id)],
-                [coed.text("Remove")]
+                [coed.text("Remove")],
             ),
-        ]
+        ],
     );
 }
 
@@ -133,14 +133,14 @@ function viewAddItem(newItemText: string): coed.HtmlNode<Msg> {
                     coed.attribute("type", "string"),
                     coed.attribute("placeholder", "New item text"),
                     coed.attribute("value", newItemText),
-                ]
+                ],
             ),
             coed.button(
                 [coed.on("click", () => AddItem(newItemText))],
                 [coed.attribute("id", "btn-add-item")],
-                [coed.text("Add")]
+                [coed.text("Add")],
             ),
-        ]
+        ],
     );
 }
 
@@ -151,7 +151,7 @@ function view(model: Model): coed.HtmlNode<Msg> {
         [
             coed.ul([], [], model.items.map(viewItem)),
             viewAddItem(model.newItemText),
-        ]
+        ],
     );
 }
 

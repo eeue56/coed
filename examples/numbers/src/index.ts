@@ -34,7 +34,7 @@ function view(model: Model): coed.HtmlNode<Msg> {
         [
             coed.h1([], [], [coed.text(`${model.dieFace}`)]),
             coed.button([coed.on("click", Roll)], [], [coed.text("Roll")]),
-        ]
+        ],
     );
 }
 

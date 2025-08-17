@@ -1,5 +1,5 @@
 import * as coed from "@eeue56/coed";
-import { text, pre, HtmlNode } from "@eeue56/coed";
+import { HtmlNode, pre, text } from "@eeue56/coed";
 
 type GotText = {
     kind: "GotText";
