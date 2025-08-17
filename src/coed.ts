@@ -234,7 +234,7 @@ export function on<Msg>(
     name: string,
     tagger: (data: globalThis.Event) => Msg,
     stopPropagation: boolean = true,
-    preventDefault: boolean = true
+    preventDefault: boolean = true,
 ): Event<Msg> {
     return {
         name: name,
@@ -323,7 +323,7 @@ export function node<Msg>(
     tag: Tag,
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): RegularNode<Msg> {
     return {
         kind: "regular",
@@ -341,7 +341,7 @@ Creates a void html node with a given tag name, any events, any attributes.
 export function voidNode<Msg>(
     tag: Tag,
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): VoidNode<Msg> {
     return {
         kind: "void",
@@ -376,7 +376,7 @@ function combineAttributes(attributes: Attribute[]): Attribute[] {
     });
 
     const combinedAttributes: Attribute[] = otherAttributes.filter(
-        (attribute) => attribute.kind !== "none"
+        (attribute) => attribute.kind !== "none",
     );
 
     // actually combine attributes together
@@ -388,8 +388,8 @@ function combineAttributes(attributes: Attribute[]): Attribute[] {
                         acc.value += " " + currentValue.value;
                     }
                     return acc;
-                }
-            )
+                },
+            ),
         );
     });
 
@@ -403,8 +403,8 @@ function combineAttributes(attributes: Attribute[]): Attribute[] {
                         currentValue.key + ":" + currentValue.value + ";";
                     return acc;
                 },
-                attribute("style", "") as StringAttribute
-            )
+                attribute("style", "") as StringAttribute,
+            ),
         );
     }
 
@@ -504,7 +504,7 @@ Hydrates a root from a given program. Program must have root set as the string "
 */
 export function hydrate<Model, Msg>(
     program: RunningProgram<Model, Msg>,
-    root: Element
+    root: Element,
 ) {
     program.program.root = root as HTMLElement;
     const node = program.program.view(program.program.initialModel);
@@ -513,13 +513,13 @@ export function hydrate<Model, Msg>(
 
     if (root.children.length === 0) {
         console.error(
-            "This root has no children. Did you correctly server-side render content?"
+            "This root has no children. Did you correctly server-side render content?",
         );
         console.error(
-            `Your html should look like <div id="root">{your content}</div>`
+            `Your html should look like <div id="root">{your content}</div>`,
         );
         console.error(
-            "The root node should have exactly one child, which is your generated html."
+            "The root node should have exactly one child, which is your generated html.",
         );
     }
     hydrateNode(node, program.send, root.children[0]);
@@ -531,7 +531,7 @@ Attaches event listeners to nodes
 export function hydrateNode<Msg>(
     node: HtmlNode<Msg>,
     listener: (msg: Msg) => void,
-    root: Element
+    root: Element,
 ): void {
     switch (node.kind) {
         case "text": {
@@ -573,7 +573,7 @@ This function should not be needed by most usage.
 */
 export function buildTree<Msg>(
     listener: (msg: Msg) => void,
-    node: HtmlNode<Msg>
+    node: HtmlNode<Msg>,
 ): HTMLElement | Text {
     switch (node.kind) {
         case "text":
@@ -603,7 +603,7 @@ export function buildTree<Msg>(
 
             if (node.kind === "regular") {
                 const children = node.children.map((child) =>
-                    buildTree(listener, child)
+                    buildTree(listener, child),
                 );
                 children.forEach((child) => {
                     element.appendChild(child);
@@ -622,7 +622,7 @@ This function is useful for testing but not much else
 export function triggerEvent<Msg>(
     eventName: string,
     payload: any,
-    node: HtmlNode<Msg>
+    node: HtmlNode<Msg>,
 ): Maybe.Maybe<Msg> {
     payload = {
         stopPropagation: () => undefined,
@@ -635,7 +635,7 @@ export function triggerEvent<Msg>(
         case "void":
         case "regular":
             const events = node.events.filter(
-                (event) => event.name === eventName
+                (event) => event.name === eventName,
             );
             if (events.length > 0) {
                 return Maybe.Just(events[0].tagger(payload));
@@ -657,23 +657,23 @@ export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
                 tree.tag,
                 tree.events.map((event: Event<A>) => {
                     return on(event.name, (data: globalThis.Event) =>
-                        tagger(event.tagger(data))
+                        tagger(event.tagger(data)),
                     );
                 }),
-                tree.attributes
+                tree.attributes,
             );
         case "regular":
             return node(
                 tree.tag,
                 tree.events.map((event: Event<A>) => {
                     return on(event.name, (data: globalThis.Event) =>
-                        tagger(event.tagger(data))
+                        tagger(event.tagger(data)),
                     );
                 }),
                 tree.attributes,
                 tree.children.map((child: HtmlNode<A>) => {
                     return map(tagger, child);
-                })
+                }),
             );
     }
 }
@@ -703,7 +703,7 @@ function isProperty(tag: string, key: string): boolean {
 
 function setAttributeOnElement(
     element: HTMLElement,
-    attribute: Attribute
+    attribute: Attribute,
 ): boolean {
     switch (attribute.kind) {
         case "string":
@@ -747,7 +747,7 @@ function setAttributeOnElement(
 function patchFacts<Msg>(
     previousTree: HtmlNode<Msg>,
     nextTree: HtmlNode<Msg>,
-    elements: HTMLElement
+    elements: HTMLElement,
 ) {
     switch (nextTree.kind) {
         case "void":
@@ -772,7 +772,7 @@ function patchFacts<Msg>(
                                     | NumberAttribute
                                     | BooleanAttribute
                                     | StyleAttribute
-                            ).key
+                            ).key,
                         ) === -1
                     ) {
                         elements.removeAttribute(attribute.key);
@@ -794,7 +794,7 @@ function patchEvents<Msg>(
     listener: (msg: Msg) => void,
     previousTree: HtmlNode<Msg>,
     nextTree: HtmlNode<Msg>,
-    elements: HTMLElement
+    elements: HTMLElement,
 ) {
     switch (nextTree.kind) {
         case "void":
@@ -804,7 +804,7 @@ function patchEvents<Msg>(
             )._eventListeners.forEach((eventListeners) => {
                 elements.removeEventListener(
                     eventListeners.event.name,
-                    eventListeners.listener
+                    eventListeners.listener,
                 );
             });
 
@@ -822,7 +822,7 @@ function patchEvents<Msg>(
                         event: event,
                         listener: listenerFunction,
                     });
-                }
+                },
             );
             return;
         case "text":
@@ -834,7 +834,7 @@ function patch<Msg>(
     listener: (msg: Msg) => void,
     currentTree: HtmlNode<Msg>,
     nextTree: HtmlNode<Msg>,
-    elements: HTMLElement | Text
+    elements: HTMLElement | Text,
 ): HtmlNode<Msg> {
     if (currentTree.kind != nextTree.kind) {
         elements.replaceWith(buildTree(listener, nextTree));
@@ -867,7 +867,7 @@ function patch<Msg>(
                     listener,
                     currentTree,
                     nextTree,
-                    elements as HTMLElement
+                    elements as HTMLElement,
                 );
             }
             return nextTree;
@@ -879,12 +879,12 @@ function patch<Msg>(
 
             const currentTreeId = (
                 currentTree.attributes.filter(
-                    (x) => x.kind === "string" && x.key === "id"
+                    (x) => x.kind === "string" && x.key === "id",
                 )[0] as StringAttribute
             )?.value;
             const nextTreeId = (
                 nextTree.attributes.filter(
-                    (x) => x.kind === "string" && x.key === "id"
+                    (x) => x.kind === "string" && x.key === "id",
                 )[0] as StringAttribute
             )?.value;
 
@@ -901,7 +901,7 @@ function patch<Msg>(
                     listener,
                     currentTree,
                     nextTree,
-                    elements as HTMLElement
+                    elements as HTMLElement,
                 );
                 const htmlElements = elements as HTMLElement;
 
@@ -912,7 +912,7 @@ function patch<Msg>(
 
                     if (typeof node === "undefined") {
                         htmlElements.appendChild(
-                            buildTree(listener, nextChild)
+                            buildTree(listener, nextChild),
                         );
                         continue;
                     }
@@ -952,7 +952,11 @@ Async updates can be handled via the optional `send` callback within the update 
 export type Program<Model, Msg> = {
     initialModel: Model;
     view(model: Model): HtmlNode<Msg>;
-    update(msg: Msg, model: Model, send?: (msg: Msg) => void): Model;
+    update: (
+        msg: Msg,
+        model: Model,
+        send?: (msg: Msg) => void,
+    ) => Model | Promise<Model>;
     root: HTMLElement | "hydration";
 };
 
@@ -969,13 +973,13 @@ export type RunningProgram<Model, Msg> = {
 Takes in a program, sets it up and runs it as a main loop
 */
 export function program<Model, Msg>(
-    program: Program<Model, Msg>
+    program: Program<Model, Msg>,
 ): RunningProgram<Model, Msg> {
-    let model = program.initialModel;
+    let model: Model = program.initialModel;
     let previousView = program.view(program.initialModel);
     let currentTree: HTMLElement | Text | null = null;
 
-    const listener = (msg: Msg) => {
+    const listener = async (msg: Msg) => {
         if (currentTree === null) {
             currentTree = buildTree(listener, previousView);
             if (program.root !== "hydration") {
@@ -985,7 +989,7 @@ export function program<Model, Msg>(
                 program.root.appendChild(currentTree);
             }
         }
-        model = program.update(msg, model, listener);
+        model = await program.update(msg, model, listener);
 
         const nextView = program.view(model);
         patch(listener, previousView, nextView, currentTree);
@@ -1008,7 +1012,7 @@ export function program<Model, Msg>(
 export function a<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("a", events, attributes, children);
 }
@@ -1016,7 +1020,7 @@ export function a<Msg>(
 export function abbr<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("abbr", events, attributes, children);
 }
@@ -1024,14 +1028,14 @@ export function abbr<Msg>(
 export function address<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("address", events, attributes, children);
 }
 
 export function area<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNode("area", events, attributes);
 }
@@ -1039,7 +1043,7 @@ export function area<Msg>(
 export function article<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("article", events, attributes, children);
 }
@@ -1047,7 +1051,7 @@ export function article<Msg>(
 export function aside<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("aside", events, attributes, children);
 }
@@ -1055,7 +1059,7 @@ export function aside<Msg>(
 export function audio<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("audio", events, attributes, children);
 }
@@ -1063,14 +1067,14 @@ export function audio<Msg>(
 export function b<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("b", events, attributes, children);
 }
 
 export function base<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNode("base", events, attributes);
 }
@@ -1078,7 +1082,7 @@ export function base<Msg>(
 export function bdi<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("bdi", events, attributes, children);
 }
@@ -1086,7 +1090,7 @@ export function bdi<Msg>(
 export function bdo<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("bdo", events, attributes, children);
 }
@@ -1094,7 +1098,7 @@ export function bdo<Msg>(
 export function blockquote<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("blockquote", events, attributes, children);
 }
@@ -1102,14 +1106,14 @@ export function blockquote<Msg>(
 export function body<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("body", events, attributes, children);
 }
 
 export function br<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNode("br", events, attributes);
 }
@@ -1117,7 +1121,7 @@ export function br<Msg>(
 export function button<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("button", events, attributes, children);
 }
@@ -1125,7 +1129,7 @@ export function button<Msg>(
 export function canvas<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("canvas", events, attributes, children);
 }
@@ -1133,7 +1137,7 @@ export function canvas<Msg>(
 export function caption<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("caption", events, attributes, children);
 }
@@ -1141,7 +1145,7 @@ export function caption<Msg>(
 export function cite<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("cite", events, attributes, children);
 }
@@ -1149,14 +1153,14 @@ export function cite<Msg>(
 export function code<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("code", events, attributes, children);
 }
 
 export function col<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNode("col", events, attributes);
 }
@@ -1164,7 +1168,7 @@ export function col<Msg>(
 export function colgroup<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("colgroup", events, attributes, children);
 }
@@ -1172,7 +1176,7 @@ export function colgroup<Msg>(
 export function data<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("data", events, attributes, children);
 }
@@ -1180,7 +1184,7 @@ export function data<Msg>(
 export function datalist<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("datalist", events, attributes, children);
 }
@@ -1188,7 +1192,7 @@ export function datalist<Msg>(
 export function dd<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("dd", events, attributes, children);
 }
@@ -1196,7 +1200,7 @@ export function dd<Msg>(
 export function del<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("del", events, attributes, children);
 }
@@ -1204,7 +1208,7 @@ export function del<Msg>(
 export function details<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("details", events, attributes, children);
 }
@@ -1212,7 +1216,7 @@ export function details<Msg>(
 export function dfn<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("dfn", events, attributes, children);
 }
@@ -1220,7 +1224,7 @@ export function dfn<Msg>(
 export function dialog<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("dialog", events, attributes, children);
 }
@@ -1228,7 +1232,7 @@ export function dialog<Msg>(
 export function div<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("div", events, attributes, children);
 }
@@ -1236,7 +1240,7 @@ export function div<Msg>(
 export function dl<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("dl", events, attributes, children);
 }
@@ -1244,7 +1248,7 @@ export function dl<Msg>(
 export function dt<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("dt", events, attributes, children);
 }
@@ -1252,14 +1256,14 @@ export function dt<Msg>(
 export function em<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("em", events, attributes, children);
 }
 
 export function embed<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNode("embed", events, attributes);
 }
@@ -1267,7 +1271,7 @@ export function embed<Msg>(
 export function fieldset<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("fieldset", events, attributes, children);
 }
@@ -1275,7 +1279,7 @@ export function fieldset<Msg>(
 export function figure<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("figure", events, attributes, children);
 }
@@ -1283,7 +1287,7 @@ export function figure<Msg>(
 export function footer<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("footer", events, attributes, children);
 }
@@ -1291,7 +1295,7 @@ export function footer<Msg>(
 export function form<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("form", events, attributes, children);
 }
@@ -1299,7 +1303,7 @@ export function form<Msg>(
 export function h1<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("h1", events, attributes, children);
 }
@@ -1307,7 +1311,7 @@ export function h1<Msg>(
 export function h2<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("h2", events, attributes, children);
 }
@@ -1315,7 +1319,7 @@ export function h2<Msg>(
 export function h3<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("h3", events, attributes, children);
 }
@@ -1323,7 +1327,7 @@ export function h3<Msg>(
 export function h4<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("h4", events, attributes, children);
 }
@@ -1331,7 +1335,7 @@ export function h4<Msg>(
 export function h5<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("h5", events, attributes, children);
 }
@@ -1339,7 +1343,7 @@ export function h5<Msg>(
 export function h6<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("h6", events, attributes, children);
 }
@@ -1347,7 +1351,7 @@ export function h6<Msg>(
 export function head<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("head", events, attributes, children);
 }
@@ -1355,7 +1359,7 @@ export function head<Msg>(
 export function header<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("header", events, attributes, children);
 }
@@ -1363,14 +1367,14 @@ export function header<Msg>(
 export function hgroup<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("hgroup", events, attributes, children);
 }
 
 export function hr<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNode("hr", events, attributes);
 }
@@ -1378,7 +1382,7 @@ export function hr<Msg>(
 export function html<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("html", events, attributes, children);
 }
@@ -1386,7 +1390,7 @@ export function html<Msg>(
 export function i<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("i", events, attributes, children);
 }
@@ -1394,21 +1398,21 @@ export function i<Msg>(
 export function iframe<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("iframe", events, attributes, children);
 }
 
 export function img<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNode("img", events, attributes);
 }
 
 export function input<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNode("input", events, attributes);
 }
@@ -1416,7 +1420,7 @@ export function input<Msg>(
 export function ins<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("ins", events, attributes, children);
 }
@@ -1424,7 +1428,7 @@ export function ins<Msg>(
 export function kbd<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("kbd", events, attributes, children);
 }
@@ -1432,7 +1436,7 @@ export function kbd<Msg>(
 export function keygen<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("keygen", events, attributes, children);
 }
@@ -1440,7 +1444,7 @@ export function keygen<Msg>(
 export function label<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("label", events, attributes, children);
 }
@@ -1448,7 +1452,7 @@ export function label<Msg>(
 export function legend<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("legend", events, attributes, children);
 }
@@ -1456,14 +1460,14 @@ export function legend<Msg>(
 export function li<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("li", events, attributes, children);
 }
 
 export function link<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNode("link", events, attributes);
 }
@@ -1471,7 +1475,7 @@ export function link<Msg>(
 export function main<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("main", events, attributes, children);
 }
@@ -1479,7 +1483,7 @@ export function main<Msg>(
 export function map_<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("map", events, attributes, children);
 }
@@ -1487,7 +1491,7 @@ export function map_<Msg>(
 export function mark<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("mark", events, attributes, children);
 }
@@ -1495,7 +1499,7 @@ export function mark<Msg>(
 export function menu<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("menu", events, attributes, children);
 }
@@ -1503,14 +1507,14 @@ export function menu<Msg>(
 export function menuitem<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("menuitem", events, attributes, children);
 }
 
 export function meta<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNode("meta", events, attributes);
 }
@@ -1518,7 +1522,7 @@ export function meta<Msg>(
 export function meter<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("meter", events, attributes, children);
 }
@@ -1526,7 +1530,7 @@ export function meter<Msg>(
 export function nav<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("nav", events, attributes, children);
 }
@@ -1534,7 +1538,7 @@ export function nav<Msg>(
 export function noscript<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("noscript", events, attributes, children);
 }
@@ -1542,7 +1546,7 @@ export function noscript<Msg>(
 export function object<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("object", events, attributes, children);
 }
@@ -1550,7 +1554,7 @@ export function object<Msg>(
 export function ol<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("ol", events, attributes, children);
 }
@@ -1558,7 +1562,7 @@ export function ol<Msg>(
 export function optgroup<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("optgroup", events, attributes, children);
 }
@@ -1566,7 +1570,7 @@ export function optgroup<Msg>(
 export function option<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("option", events, attributes, children);
 }
@@ -1574,7 +1578,7 @@ export function option<Msg>(
 export function output<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("output", events, attributes, children);
 }
@@ -1582,14 +1586,14 @@ export function output<Msg>(
 export function p<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("p", events, attributes, children);
 }
 
 export function param<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNode("param", events, attributes);
 }
@@ -1597,7 +1601,7 @@ export function param<Msg>(
 export function pre<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("pre", events, attributes, children);
 }
@@ -1605,7 +1609,7 @@ export function pre<Msg>(
 export function progress<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("progress", events, attributes, children);
 }
@@ -1613,7 +1617,7 @@ export function progress<Msg>(
 export function q<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("q", events, attributes, children);
 }
@@ -1621,7 +1625,7 @@ export function q<Msg>(
 export function rb<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("rb", events, attributes, children);
 }
@@ -1629,7 +1633,7 @@ export function rb<Msg>(
 export function rp<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("rp", events, attributes, children);
 }
@@ -1637,7 +1641,7 @@ export function rp<Msg>(
 export function rt<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("rt", events, attributes, children);
 }
@@ -1645,7 +1649,7 @@ export function rt<Msg>(
 export function rtc<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("rtc", events, attributes, children);
 }
@@ -1653,7 +1657,7 @@ export function rtc<Msg>(
 export function ruby<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("ruby", events, attributes, children);
 }
@@ -1661,7 +1665,7 @@ export function ruby<Msg>(
 export function s<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("s", events, attributes, children);
 }
@@ -1669,7 +1673,7 @@ export function s<Msg>(
 export function samp<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("samp", events, attributes, children);
 }
@@ -1677,7 +1681,7 @@ export function samp<Msg>(
 export function script<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("script", events, attributes, children);
 }
@@ -1685,7 +1689,7 @@ export function script<Msg>(
 export function section<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("section", events, attributes, children);
 }
@@ -1693,7 +1697,7 @@ export function section<Msg>(
 export function select<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("select", events, attributes, children);
 }
@@ -1701,14 +1705,14 @@ export function select<Msg>(
 export function small<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("small", events, attributes, children);
 }
 
 export function source<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNode("source", events, attributes);
 }
@@ -1716,7 +1720,7 @@ export function source<Msg>(
 export function span<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("span", events, attributes, children);
 }
@@ -1724,7 +1728,7 @@ export function span<Msg>(
 export function strong<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("strong", events, attributes, children);
 }
@@ -1732,7 +1736,7 @@ export function strong<Msg>(
 export function style<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("style", events, attributes, children);
 }
@@ -1740,7 +1744,7 @@ export function style<Msg>(
 export function sub<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("sub", events, attributes, children);
 }
@@ -1748,7 +1752,7 @@ export function sub<Msg>(
 export function summary<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("summary", events, attributes, children);
 }
@@ -1756,7 +1760,7 @@ export function summary<Msg>(
 export function sup<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("sup", events, attributes, children);
 }
@@ -1764,7 +1768,7 @@ export function sup<Msg>(
 export function table<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("table", events, attributes, children);
 }
@@ -1772,7 +1776,7 @@ export function table<Msg>(
 export function tbody<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("tbody", events, attributes, children);
 }
@@ -1780,7 +1784,7 @@ export function tbody<Msg>(
 export function td<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("td", events, attributes, children);
 }
@@ -1788,7 +1792,7 @@ export function td<Msg>(
 export function template<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("template", events, attributes, children);
 }
@@ -1796,7 +1800,7 @@ export function template<Msg>(
 export function textarea<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("textarea", events, attributes, children);
 }
@@ -1804,7 +1808,7 @@ export function textarea<Msg>(
 export function tfoot<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("tfoot", events, attributes, children);
 }
@@ -1812,7 +1816,7 @@ export function tfoot<Msg>(
 export function th<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("th", events, attributes, children);
 }
@@ -1820,7 +1824,7 @@ export function th<Msg>(
 export function thead<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("thead", events, attributes, children);
 }
@@ -1828,7 +1832,7 @@ export function thead<Msg>(
 export function time<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("time", events, attributes, children);
 }
@@ -1836,7 +1840,7 @@ export function time<Msg>(
 export function title<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("title", events, attributes, children);
 }
@@ -1844,14 +1848,14 @@ export function title<Msg>(
 export function tr<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("tr", events, attributes, children);
 }
 
 export function track<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNode("track", events, attributes);
 }
@@ -1859,7 +1863,7 @@ export function track<Msg>(
 export function u<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("u", events, attributes, children);
 }
@@ -1867,7 +1871,7 @@ export function u<Msg>(
 export function ul<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("ul", events, attributes, children);
 }
@@ -1875,7 +1879,7 @@ export function ul<Msg>(
 export function var_<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("var", events, attributes, children);
 }
@@ -1883,14 +1887,14 @@ export function var_<Msg>(
 export function video<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
-    children: HtmlNode<Msg>[]
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return node("video", events, attributes, children);
 }
 
 export function wbr<Msg>(
     events: Event<Msg>[],
-    attributes: Attribute[]
+    attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNode("wbr", events, attributes);
 }
