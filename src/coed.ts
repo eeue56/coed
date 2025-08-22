@@ -295,6 +295,33 @@ type VoidNode<Msg> = {
 };
 
 /**
+ * A HtmlNode where the content is used to create a DOM element
+ */
+type HtmlStringNode = {
+    kind: "html-string";
+    content: string;
+};
+
+type NamespacedRegularNode<Msg> = {
+    kind: "ns-regular";
+    tag: Tag;
+    events: Event<Msg>[];
+    attributes: Attribute[];
+    children: HtmlNode<Msg>[];
+    namespace: string;
+    _eventListeners: CoedEventListener<Msg>[];
+};
+
+type NamespacedVoidNode<Msg> = {
+    kind: "ns-void";
+    tag: Tag;
+    events: Event<Msg>[];
+    attributes: Attribute[];
+    namespace: string;
+    _eventListeners: CoedEventListener<Msg>[];
+};
+
+/**
 A HtmlNode is either a text, like:
 ```
 html.text("hello world")
@@ -304,7 +331,13 @@ Or html, like:
 html.div([ ], [ ], [ ])
 ```
 */
-export type HtmlNode<Msg> = TextNode | RegularNode<Msg> | VoidNode<Msg>;
+export type HtmlNode<Msg> =
+    | TextNode
+    | RegularNode<Msg>
+    | VoidNode<Msg>
+    | NamespacedRegularNode<Msg>
+    | NamespacedVoidNode<Msg>
+    | HtmlStringNode;
 
 /**
 Creates a text node
@@ -346,6 +379,58 @@ export function voidNode<Msg>(
     return {
         kind: "void",
         tag: tag,
+        events: events,
+        attributes: combineAttributes(attributes),
+        _eventListeners: [],
+    };
+}
+
+/**
+Creates a void html node with a given tag name, any events, any attributes.
+*/
+export function nodeNS<Msg>(
+    tag: Tag,
+    namespace: string,
+    events: Event<Msg>[],
+    attributes: Attribute[],
+    children: HtmlNode<Msg>[],
+): NamespacedRegularNode<Msg> {
+    const namespaceXmlns: Attribute = {
+        kind: "string",
+        key: "xmlns",
+        value: namespace,
+    };
+    attributes.push(namespaceXmlns);
+    return {
+        kind: "ns-regular",
+        tag: tag,
+        namespace,
+        events: events,
+        attributes: combineAttributes(attributes),
+        children: children,
+        _eventListeners: [],
+    };
+}
+
+/**
+Creates a void html node with a given tag name, any events, any attributes.
+*/
+export function voidNodeNS<Msg>(
+    tag: Tag,
+    namespace: string,
+    events: Event<Msg>[],
+    attributes: Attribute[],
+): NamespacedVoidNode<Msg> {
+    const namespaceXmlns: Attribute = {
+        kind: "string",
+        key: "xmlns",
+        value: namespace,
+    };
+    attributes.push(namespaceXmlns);
+    return {
+        kind: "ns-void",
+        tag: tag,
+        namespace,
         events: events,
         attributes: combineAttributes(attributes),
         _eventListeners: [],
@@ -430,8 +515,8 @@ function renderAttribute(attribute: Attribute): string {
 }
 
 /**
-Renders a HtmlNode tree as a string.
-*/
+ * Renders a HtmlNode tree as a string.
+ */
 export function render<Msg>(node: HtmlNode<Msg>, depth = 0): string {
     const whitespace = " ".repeat(depth * 4);
     switch (node.kind) {
@@ -440,6 +525,8 @@ export function render<Msg>(node: HtmlNode<Msg>, depth = 0): string {
 
         case "void":
         case "regular":
+        case "ns-void":
+        case "ns-regular": {
             const renderedAttributes = node.attributes
                 .map(renderAttribute)
                 .join(" ");
@@ -448,9 +535,11 @@ export function render<Msg>(node: HtmlNode<Msg>, depth = 0): string {
 
             switch (node.kind) {
                 case "void":
+                case "ns-void":
                     return whitespace + `<${node.tag}${attributes}>`;
 
-                case "regular": {
+                case "regular":
+                case "ns-regular": {
                     if (node.children.length > 0) {
                         return (
                             whitespace +
@@ -465,12 +554,16 @@ ${whitespace}</${node.tag}>`
                     );
                 }
             }
+        }
+        case "html-string": {
+            return node.content;
+        }
     }
 }
 
 /**
-Render a node without whitespace
-*/
+ * Render a node without whitespace
+ */
 export function flatRender<Msg>(node: HtmlNode<Msg>): string {
     switch (node.kind) {
         case "text":
@@ -478,15 +571,19 @@ export function flatRender<Msg>(node: HtmlNode<Msg>): string {
 
         case "void":
         case "regular":
+        case "ns-void":
+        case "ns-regular": {
             const attributes =
                 (node.attributes.length > 0 ? " " : "") +
                 node.attributes.map(renderAttribute).join(" ");
 
             switch (node.kind) {
                 case "void":
+                case "ns-void":
                     return `<${node.tag}${attributes}>`;
 
-                case "regular": {
+                case "regular":
+                case "ns-regular": {
                     if (node.children.length > 0) {
                         return `<${node.tag}${attributes}>${node.children
                             .map((child) => flatRender(child))
@@ -496,16 +593,28 @@ export function flatRender<Msg>(node: HtmlNode<Msg>): string {
                     return `<${node.tag}${attributes}></${node.tag}>`;
                 }
             }
+        }
+        case "html-string": {
+            return node.content;
+        }
     }
 }
 
 /**
+ * Create a HtmlStringNode from a html string - and create a DOM element using it
+ * @param string a string of html
+ */
+export function fromString(string: string): HtmlNode<never> {
+    return { kind: "html-string", content: string };
+}
+
+/**
 Hydrates a root from a given program. Program must have root set as the string "hydration"
-*/
+**/
 export function hydrate<Model, Msg>(
     program: RunningProgram<Model, Msg>,
     root: Element,
-) {
+): void {
     program.program.root = root as HTMLElement;
     const node = program.program.view(program.program.initialModel);
 
@@ -568,9 +677,9 @@ export function hydrateNode<Msg>(
 }
 
 /**
-Builds a HTMLElement tree from a HtmlNode tree, with event triggers being sent to the runner via the listener
-This function should not be needed by most usage.
-*/
+ * Builds a HTMLElement tree from a HtmlNode tree, with event triggers being sent to the runner via the listener
+ * This function should not be needed by most usage.
+ */
 export function buildTree<Msg>(
     listener: (msg: Msg) => void,
     node: HtmlNode<Msg>,
@@ -579,8 +688,18 @@ export function buildTree<Msg>(
         case "text":
             return document.createTextNode(node.text);
         case "void":
-        case "regular": {
-            const element = document.createElement(node.tag);
+        case "regular":
+        case "ns-void":
+        case "ns-regular": {
+            let element: HTMLElement;
+            if (node.kind === "ns-regular" || node.kind === "ns-void") {
+                element = document.createElementNS(
+                    node.namespace,
+                    node.tag,
+                ) as HTMLElement;
+            } else {
+                element = document.createElement(node.tag);
+            }
 
             node.attributes.forEach((attribute: Attribute) => {
                 setAttributeOnElement(element, attribute);
@@ -601,7 +720,7 @@ export function buildTree<Msg>(
                 });
             });
 
-            if (node.kind === "regular") {
+            if (node.kind === "regular" || node.kind === "ns-regular") {
                 const children = node.children.map((child) =>
                     buildTree(listener, child),
                 );
@@ -612,12 +731,19 @@ export function buildTree<Msg>(
 
             return element;
         }
+        case "html-string": {
+            const parser = new DOMParser();
+            const parsed = parser.parseFromString(node.content, "text/html");
+            if (!parsed.body.firstElementChild)
+                return document.createTextNode("Failed to parse");
+            return parsed.body.firstElementChild as HTMLElement;
+        }
     }
 }
 
 /**
-Triggers the event by name, passing it the payload provided.
-This function is useful for testing but not much else
+ * Triggers the event by name, passing it the payload provided.
+ * This function is useful for testing but not much else
  */
 export function triggerEvent<Msg>(
     eventName: string,
@@ -630,10 +756,13 @@ export function triggerEvent<Msg>(
         ...payload,
     };
     switch (node.kind) {
-        case "text":
+        case "text": {
             return Maybe.Nothing();
+        }
         case "void":
         case "regular":
+        case "ns-void":
+        case "ns-regular": {
             const events = node.events.filter(
                 (event) => event.name === eventName,
             );
@@ -642,6 +771,10 @@ export function triggerEvent<Msg>(
             } else {
                 return Maybe.Nothing();
             }
+        }
+        case "html-string": {
+            return Maybe.Nothing();
+        }
     }
 }
 
@@ -650,9 +783,11 @@ Converts a `HtmlNode` of type `A` to a `HtmlNode` of type `B`, including childre
 */
 export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
     switch (tree.kind) {
-        case "text":
+        case "text": {
             return tree as HtmlNode<B>;
+        }
         case "void":
+        case "ns-void": {
             return voidNode(
                 tree.tag,
                 tree.events.map((event: Event<A>) => {
@@ -662,7 +797,9 @@ export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
                 }),
                 tree.attributes,
             );
+        }
         case "regular":
+        case "ns-regular": {
             return node(
                 tree.tag,
                 tree.events.map((event: Event<A>) => {
@@ -675,6 +812,10 @@ export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
                     return map(tagger, child);
                 }),
             );
+        }
+        case "html-string": {
+            return tree;
+        }
     }
 }
 
@@ -707,7 +848,7 @@ function setAttributeOnElement(
 ): boolean {
     switch (attribute.kind) {
         case "string":
-        case "number":
+        case "number": {
             if (isProperty(element.tagName, attribute.key)) {
                 (element as any)[attribute.key] = attribute.value;
                 return true;
@@ -715,7 +856,8 @@ function setAttributeOnElement(
                 element.setAttribute(attribute.key, attribute.value);
                 return true;
             }
-        case "style":
+        }
+        case "style": {
             element.removeAttribute("style");
             const styles = attribute.value.split(";");
 
@@ -725,6 +867,7 @@ function setAttributeOnElement(
                 element.style[styleName as any] = styleValue;
             }
             return true;
+        }
         case "boolean": {
             if (attribute.value) {
                 if (isProperty(element.tagName, attribute.key)) {
@@ -748,10 +891,13 @@ function patchFacts<Msg>(
     previousTree: HtmlNode<Msg>,
     nextTree: HtmlNode<Msg>,
     elements: HTMLElement,
-) {
+): boolean {
     switch (nextTree.kind) {
         case "void":
-        case "regular": {
+        case "regular":
+
+        case "ns-void":
+        case "ns-regular": {
             // remove previous attributes that no longer exist on the next dom version
 
             if (previousTree.kind === nextTree.kind) {
@@ -783,10 +929,14 @@ function patchFacts<Msg>(
             nextTree.attributes.forEach((attribute: Attribute) => {
                 setAttributeOnElement(elements, attribute);
             });
-            return;
+            return true;
         }
-        case "text":
-            return;
+        case "text": {
+            return true;
+        }
+        case "html-string": {
+            return true;
+        }
     }
 }
 
@@ -795,12 +945,18 @@ function patchEvents<Msg>(
     previousTree: HtmlNode<Msg>,
     nextTree: HtmlNode<Msg>,
     elements: HTMLElement,
-) {
+): boolean {
     switch (nextTree.kind) {
         case "void":
         case "regular":
+        case "ns-void":
+        case "ns-regular":
             (
-                previousTree as RegularNode<Msg> | VoidNode<Msg>
+                previousTree as
+                    | RegularNode<Msg>
+                    | VoidNode<Msg>
+                    | NamespacedRegularNode<Msg>
+                    | NamespacedVoidNode<Msg>
             )._eventListeners.forEach((eventListeners) => {
                 elements.removeEventListener(
                     eventListeners.event.name,
@@ -808,25 +964,30 @@ function patchEvents<Msg>(
                 );
             });
 
-            (nextTree as RegularNode<Msg> | VoidNode<Msg>).events.forEach(
-                (event: Event<Msg>) => {
-                    const listenerFunction = (data: globalThis.Event) => {
-                        listener(event.tagger(data));
-                    };
+            (
+                nextTree as
+                    | RegularNode<Msg>
+                    | VoidNode<Msg>
+                    | NamespacedRegularNode<Msg>
+                    | NamespacedVoidNode<Msg>
+            ).events.forEach((event: Event<Msg>) => {
+                const listenerFunction = (data: globalThis.Event) => {
+                    listener(event.tagger(data));
+                };
 
-                    elements.addEventListener(event.name, listenerFunction, {
-                        once: true,
-                    });
+                elements.addEventListener(event.name, listenerFunction, {
+                    once: true,
+                });
 
-                    nextTree._eventListeners.push({
-                        event: event,
-                        listener: listenerFunction,
-                    });
-                },
-            );
-            return;
+                nextTree._eventListeners.push({
+                    event: event,
+                    listener: listenerFunction,
+                });
+            });
+            return true;
         case "text":
-            return;
+        case "html-string":
+            return true;
     }
 }
 
@@ -842,7 +1003,7 @@ function patch<Msg>(
     }
 
     switch (currentTree.kind) {
-        case "text":
+        case "text": {
             nextTree = nextTree as TextNode;
             elements = elements as Text;
 
@@ -852,8 +1013,9 @@ function patch<Msg>(
                 elements.replaceWith(document.createTextNode(nextTree.text));
                 return nextTree;
             }
-
-        case "void": {
+        }
+        case "void":
+        case "ns-void": {
             currentTree = currentTree as VoidNode<Msg>;
             nextTree = nextTree as VoidNode<Msg>;
 
@@ -872,8 +1034,8 @@ function patch<Msg>(
             }
             return nextTree;
         }
-
         case "regular":
+        case "ns-regular": {
             currentTree = currentTree as RegularNode<Msg>;
             nextTree = nextTree as RegularNode<Msg>;
 
@@ -940,6 +1102,18 @@ function patch<Msg>(
                 }
             }
             return nextTree;
+        }
+        case "html-string": {
+            currentTree = currentTree as HtmlStringNode;
+            nextTree = nextTree as HtmlStringNode;
+
+            if (currentTree.content === nextTree.content) {
+                return currentTree;
+            }
+            elements.replaceWith(buildTree(listener, nextTree));
+
+            return nextTree;
+        }
     }
 }
 
@@ -963,17 +1137,17 @@ export type Program<Model, Msg> = {
 };
 
 /**
-Every running program can be interacted with via `send`.
-For example you may want to start a program but send some data to it after loading a network request.
-*/
+ * Every running program can be interacted with via `send`.
+ * For example you may want to start a program but send some data to it after loading a *network request.
+ */
 export type RunningProgram<Model, Msg> = {
     program: Program<Model, Msg>;
     send: (msg: Msg) => void;
 };
 
 /**
-Takes in a program, sets it up and runs it as a main loop
-*/
+ * Takes in a program, sets it up and runs it as a main loop
+ */
 export function program<Model, Msg>(
     program: Program<Model, Msg>,
 ): RunningProgram<Model, Msg> {

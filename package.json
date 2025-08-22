@@ -3,6 +3,24 @@
     "version": "0.3.1",
     "description": "Write HTML in pure TS",
     "main": "build/coed.js",
+    "files": [
+        "./build/coed.js",
+        "./build/coed.d.ts",
+        "./build/svg.js",
+        "./build/svg.d.ts"
+    ],
+    "exports": {
+        ".": {
+            "types": "./build/coed.d.ts",
+            "import": "./build/coed.js",
+            "default": "./build/coed.js"
+        },
+        "./svg": {
+            "types": "./build/svg.d.ts",
+            "import": "./build/svg.js",
+            "default": "./build/svg.js"
+        }
+    },
     "typings": "build/coed.d.ts",
     "scripts": {
         "build": "tsc -p tsconfig.json",
