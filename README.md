@@ -12,7 +12,7 @@ npm install --save @eeue56/coed
 
 ## Usage
 
-[API docs](docs/src/html.md)
+[API docs](docs/src/coed.md)
 
 Like Elm, everything is built around functions. There's no JSX to be seen - writing html is done via functions that take three arguments: events, attributes, and children. There's also `html.text` which simply takes a string to be rendered.
 
