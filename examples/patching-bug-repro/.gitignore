@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.cache/
+.parcel-cache/
+playwright-report/
+test-results/
+tests/screenshots/
+*.log

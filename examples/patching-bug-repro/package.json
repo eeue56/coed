@@ -1,0 +1,23 @@
+{
+    "name": "patching-bug-repro",
+    "version": "1.0.0",
+    "description": "Minimal reproducible example for issue #3 - tree nodes getting combined when too similar",
+    "main": "src/index.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "serve": "npx parcel index.html",
+        "test": "npx playwright test",
+        "test:headed": "npx playwright test --headed",
+        "test:debug": "npx playwright test --debug"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@playwright/test": "^1.40.0",
+        "parcel-bundler": "^1.12.3",
+        "typescript": "^4.2.3"
+    },
+    "dependencies": {
+        "@eeue56/coed": "file:../.."
+    }
+}
