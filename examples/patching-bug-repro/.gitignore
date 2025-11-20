@@ -6,3 +6,5 @@ playwright-report/
 test-results/
 tests/screenshots/
 *.log
+src/*.js
+src/*.js.map
