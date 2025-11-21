@@ -33,7 +33,10 @@ function update(msg: Msg, model: Model): Model {
                 ...model,
                 queries: [
                     ...model.queries,
-                    { field: "test", value: "value" },
+                    {
+                        field: "test" + Math.random(),
+                        value: "value" + Math.random(),
+                    },
                 ],
             };
         }
@@ -118,7 +121,11 @@ function view(model: Model): HtmlNode<Msg> {
         [],
         [],
         [
-            coed.h1([], [], [coed.text("Patching Bug Reproduction - Issue #3")]),
+            coed.h1(
+                [],
+                [],
+                [coed.text("Patching Bug Reproduction - Issue #3")]
+            ),
             coed.p(
                 [],
                 [],
@@ -160,7 +167,11 @@ function view(model: Model): HtmlNode<Msg> {
                             coed.li(
                                 [],
                                 [],
-                                [coed.text('Click "Add Query" multiple times to add several queries')]
+                                [
+                                    coed.text(
+                                        'Click "Add Query" multiple times to add several queries'
+                                    ),
+                                ]
                             ),
                             coed.li(
                                 [],
