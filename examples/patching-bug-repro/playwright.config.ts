@@ -8,7 +8,7 @@ export default defineConfig({
     workers: 1,
     reporter: "html",
     use: {
-        baseURL: "http://localhost:1234",
+        baseURL: "http://localhost:8000",
         trace: "on-first-retry",
         screenshot: "on",
     },
@@ -21,5 +21,5 @@ export default defineConfig({
     ],
 
     // Don't start a web server automatically - user should start it manually
-    // or we can document how to do it
+    // Run: npm run serve in one terminal, then npm test in another
 });
