@@ -189,7 +189,11 @@ function renderRemoveQueryButton(index: number): HtmlNode<Msg> {
 
 // Helper to render query result display
 function renderQueryResult(query: Query, index: number): HtmlNode<Msg> {
-    const days = Math.floor(Math.random() * 100) + 1; // Simulate some result
+    // Use a deterministic "result" based on the query properties
+    // This simulates a query result without causing unnecessary re-renders
+    const fieldHash = query.field.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const valueHash = query.value.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const days = ((fieldHash + valueHash + index) % 90) + 10; // Deterministic value between 10-99
     
     return coed.div(
         [],

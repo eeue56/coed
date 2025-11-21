@@ -39,9 +39,6 @@ test.describe("Patching Bug Reproduction - Issue #3", () => {
         const query3FieldBefore = await page.locator(".filter-query").nth(2).locator(".field-input").inputValue();
         console.log(`Query 2 field before removal: ${query2FieldBefore}`);
         console.log(`Query 3 field before removal: ${query3FieldBefore}`);
-            .locator(".filter-query .filter-query-result strong")
-            .allTextContents();
-        console.log("Query texts before removal:", queryTexts);
 
         // Click the second remove button (Remove Query 2)
         const removeButtons = page.locator(".remove-button");
