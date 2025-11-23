@@ -4,29 +4,35 @@ This is a minimal reproducible example for [Issue #3](https://github.com/eeue56/
 
 ## The Bug
 
-When using `@eeue56/coed`, tree nodes without unique `id` attributes can get incorrectly combined or confused during DOM patching. This is particularly evident with **RECURSIVE tree structures** like those in [gobaith](https://github.com/eeue56/gobaith), where:
+When using `@eeue56/coed`, tree nodes without unique `id` attributes can get incorrectly combined or confused during DOM patching. This is particularly evident with **RECURSIVE tree structures with IDENTICAL patterns**, like those in [gobaith](https://github.com/eeue56/gobaith), where:
 
 1. **Recursive/infinitely nested DOM structures** - Queries that contain other queries (And/Or/Filter patterns)
-2. **Similar sibling nodes** - Multiple nodes with identical structures at the same level
+2. **IDENTICAL sibling structures** - Multiple nodes with the EXACT SAME recursive pattern (all use And, or all use Or)
 3. **Deep nesting (6-7+ levels)** - Multiple wrapper divs at each recursive level
 4. **Dynamic content** - When nodes are added or removed from the middle of a list
 
-The patching algorithm compares nodes by tag name and ID. Without unique IDs, similar deeply-nested **recursive** structures become indistinguishable, causing:
-- Wrong nodes to be removed
-- Content from different nodes to get mixed up (input values appear in wrong queries)
-- Children to be patched into incorrect parents
+The patching algorithm (lines 1042-1059 in src/coed.ts) compares nodes by tag name and ID. When removing a middle item:
+1. Old state: [Query1, Query2, Query3, Query4] at indices [0, 1, 2, 3]
+2. New state: [Query1, Query3, Query4] at indices [0, 1, 2]
+3. The algorithm patches old-index-1 (Query2's DOM) with new-index-1 (Query3's virtual tree)
+4. Since they have the SAME structure and NO IDs, it patches children in place instead of replacing
+5. Result: Query3's content appears in Query2's DOM location!
+
+## Key Insight
+
+**All queries must have the SAME recursive structure** for the bug to manifest consistently. In this example, all queries use `And(Filter, Filter)` - the same pattern. This makes them indistinguishable to the patching algorithm.
 
 ## Example Structure
 
-Each query in this example has a **RECURSIVE structure** modeled after gobaith's query builder:
+Each query in this example has the **SAME recursive structure** (`And(Filter, Filter)`):
 
 ```
-Query = Filter | And(Query, Query) | Or(Query, Query)
-
-For example: And(Filter, Or(Filter, Filter))
+Query 1: And(Filter(status, active), Filter(priority, high))
+Query 2: And(Filter(category, bug), Filter(severity, critical))
+Query 3: And(Filter(type, feature), Filter(phase, development))
 ```
 
-This creates structures like:
+All queries render as:
 
 ```
 div.filter-query (no ID - causes the bug!)
@@ -35,38 +41,24 @@ div.filter-query (no ID - causes the bug!)
   │   └─ button (Remove)
   ├─ div.query-builder-wrapper
   │   └─ div.builder-container
-  │       └─ RECURSIVE QUERY BUILDER
-  │           ├─ div.combinator-container (if And/Or)
-  │           │   ├─ div.left-branch
-  │           │   │   └─ div.branch-wrapper
-  │           │   │       └─ div.indent
-  │           │   │           └─ [RECURSIVE: nested query]
-  │           │   ├─ div.combinator-selector
-  │           │   │   └─ div.combinator-wrapper
-  │           │   │       └─ div.combinator-label
-  │           │   │           └─ span "AND" or "OR"
-  │           │   └─ div.right-branch
-  │           │       └─ div.branch-wrapper
-  │           │           └─ div.indent
-  │           │               └─ [RECURSIVE: another nested query]
-  │           └─ div.filter-builder (if Filter)
-  │               └─ div.filter-row
-  │                   ├─ div.filter-field
-  │                   │   └─ div.field-container
-  │                   │       ├─ label
-  │                   │       └─ div.input-wrapper
-  │                   │           └─ div.input-container
-  │                   │               └─ input
-  │                   ├─ div.filter-operator (similar nesting)
-  │                   └─ div.filter-value (similar nesting)
+  │       └─ div.combinator-container
+  │           ├─ div.left-branch
+  │           │   └─ div.branch-wrapper
+  │           │       └─ div.indent
+  │           │           └─ div.filter-builder (LEFT FILTER)
+  │           │               └─ ... (6+ levels of nesting)
+  │           ├─ div.combinator-selector
+  │           │   └─ ... → span "AND"
+  │           └─ div.right-branch
+  │               └─ div.branch-wrapper
+  │                   └─ div.indent
+  │                       └─ div.filter-builder (RIGHT FILTER)
+  │                           └─ ... (6+ levels of nesting)
   └─ div.query-result-wrapper
-      └─ div.result-container
-          └─ div.filter-query-result
-              ├─ div.result-header
-              └─ div.result-content
+      └─ ... (result display)
 ```
 
-This **6-7+ levels of nesting WITH recursion** makes the patching bug much easier to reproduce, matching the complexity in gobaith.
+Since all queries have this IDENTICAL structure (tag sequences, classes, nesting depth), the patching algorithm cannot tell them apart without unique IDs.
 
 Add a unique `id` attribute to each node that needs to be distinguished:
 

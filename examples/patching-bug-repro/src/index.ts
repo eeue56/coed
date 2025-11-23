@@ -111,13 +111,10 @@ function updateQueryAtPath(
 function update(msg: Msg, model: Model): Model {
     switch (msg.kind) {
         case "AddQuery": {
-            // Create nested query: And(Filter, Or(Filter, Filter))
+            // Create a simple And(Filter, Filter) query to match the others
             const newQuery: Query = createAndQuery(
-                createFilterQuery("field1", "value1"),
-                createOrQuery(
-                    createFilterQuery("field2", "value2"),
-                    createFilterQuery("field3", "value3")
-                )
+                createFilterQuery("field", "value"),
+                createFilterQuery("status", "active")
             );
             return {
                 ...model,
@@ -753,23 +750,19 @@ function main() {
 
     const initialModel: Model = {
         queries: [
+            // All queries use the same And(Filter, Filter) structure
+            // This makes them VERY similar and harder to distinguish during patching
             createAndQuery(
                 createFilterQuery("status", "active"),
                 createFilterQuery("priority", "high")
             ),
-            createOrQuery(
+            createAndQuery(
                 createFilterQuery("category", "bug"),
-                createAndQuery(
-                    createFilterQuery("severity", "critical"),
-                    createFilterQuery("assigned", "true")
-                )
+                createFilterQuery("severity", "critical")
             ),
             createAndQuery(
                 createFilterQuery("type", "feature"),
-                createOrQuery(
-                    createFilterQuery("phase", "development"),
-                    createFilterQuery("phase", "testing")
-                )
+                createFilterQuery("phase", "development")
             ),
         ],
     };
