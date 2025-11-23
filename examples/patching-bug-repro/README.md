@@ -4,48 +4,69 @@ This is a minimal reproducible example for [Issue #3](https://github.com/eeue56/
 
 ## The Bug
 
-When using `@eeue56/coed`, tree nodes without unique `id` attributes can get incorrectly combined or confused during DOM patching. This is particularly evident with:
+When using `@eeue56/coed`, tree nodes without unique `id` attributes can get incorrectly combined or confused during DOM patching. This is particularly evident with **RECURSIVE tree structures** like those in [gobaith](https://github.com/eeue56/gobaith), where:
 
-1. **Deeply nested DOM structures** - Multiple levels of divs, labels, inputs, etc.
-2. **Similar sibling nodes** - Multiple nodes with the same structure (e.g., query builders in a list)
-3. **Dynamic content** - When nodes are added or removed from the middle of a list
+1. **Recursive/infinitely nested DOM structures** - Queries that contain other queries (And/Or/Filter patterns)
+2. **Similar sibling nodes** - Multiple nodes with identical structures at the same level
+3. **Deep nesting (6-7+ levels)** - Multiple wrapper divs at each recursive level
+4. **Dynamic content** - When nodes are added or removed from the middle of a list
 
-The patching algorithm compares nodes by tag name and ID. Without unique IDs, similar deeply-nested structures become indistinguishable, causing:
+The patching algorithm compares nodes by tag name and ID. Without unique IDs, similar deeply-nested **recursive** structures become indistinguishable, causing:
 - Wrong nodes to be removed
 - Content from different nodes to get mixed up (input values appear in wrong queries)
 - Children to be patched into incorrect parents
 
 ## Example Structure
 
-Each query in this example has a **deeply nested structure**:
+Each query in this example has a **RECURSIVE structure** modeled after gobaith's query builder:
 
 ```
-div.filter-query (no ID - this causes the bug!)
+Query = Filter | And(Query, Query) | Or(Query, Query)
+
+For example: And(Filter, Or(Filter, Filter))
+```
+
+This creates structures like:
+
+```
+div.filter-query (no ID - causes the bug!)
   ├─ div.query-header
   │   ├─ h3 (Query title)
-  │   └─ div (Remove button)
-  ├─ div (Query builder wrapper)
-  │   └─ div.query-builder
-  │       └─ div.query-builder-row
-  │           ├─ div.query-builder-field
-  │           │   ├─ label
-  │           │   └─ div.input-wrapper
-  │           │       └─ input (field name)
-  │           ├─ div.query-builder-operator
-  │           │   ├─ label
-  │           │   └─ div.operator-wrapper
-  │           │       └─ select (operator dropdown)
-  │           └─ div.query-builder-value
-  │               ├─ label
-  │               └─ div.input-wrapper
-  │                   └─ input (value)
-  └─ div (Result display)
-      └─ div.filter-query-result
-          ├─ div.result-header
-          └─ div.result-content (with strong, code, em elements)
+  │   └─ button (Remove)
+  ├─ div.query-builder-wrapper
+  │   └─ div.builder-container
+  │       └─ RECURSIVE QUERY BUILDER
+  │           ├─ div.combinator-container (if And/Or)
+  │           │   ├─ div.left-branch
+  │           │   │   └─ div.branch-wrapper
+  │           │   │       └─ div.indent
+  │           │   │           └─ [RECURSIVE: nested query]
+  │           │   ├─ div.combinator-selector
+  │           │   │   └─ div.combinator-wrapper
+  │           │   │       └─ div.combinator-label
+  │           │   │           └─ span "AND" or "OR"
+  │           │   └─ div.right-branch
+  │           │       └─ div.branch-wrapper
+  │           │           └─ div.indent
+  │           │               └─ [RECURSIVE: another nested query]
+  │           └─ div.filter-builder (if Filter)
+  │               └─ div.filter-row
+  │                   ├─ div.filter-field
+  │                   │   └─ div.field-container
+  │                   │       ├─ label
+  │                   │       └─ div.input-wrapper
+  │                   │           └─ div.input-container
+  │                   │               └─ input
+  │                   ├─ div.filter-operator (similar nesting)
+  │                   └─ div.filter-value (similar nesting)
+  └─ div.query-result-wrapper
+      └─ div.result-container
+          └─ div.filter-query-result
+              ├─ div.result-header
+              └─ div.result-content
 ```
 
-This deeply nested structure with similar siblings makes it much easier to reproduce the patching bug.
+This **6-7+ levels of nesting WITH recursion** makes the patching bug much easier to reproduce, matching the complexity in gobaith.
 
 Add a unique `id` attribute to each node that needs to be distinguished:
 
