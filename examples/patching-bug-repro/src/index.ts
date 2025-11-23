@@ -482,6 +482,10 @@ function renderQueryBuilder(
             );
         }
     }
+    
+    // TypeScript exhaustiveness check
+    const _exhaustive: never = query;
+    return _exhaustive;
 }
 
 // Helper to extract field/value for display
