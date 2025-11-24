@@ -4,15 +4,12 @@
     "description": "",
     "main": "index.ts",
     "scripts": {
-        "build": "tsc -p tsconfig.json",
+        "build": "esbuild --bundle src/index.ts --outfile=src/index.js --format=esm",
         "test": "echo \"Error: no test specified\" && exit 1",
         "serve": "npx @eeue56/gweld ./ 3000"
     },
     "author": "",
     "license": "ISC",
-    "devDependencies": {
-        "typescript": "^5.8.3"
-    },
     "dependencies": {
         "@eeue56/coed": "file:../.."
     }

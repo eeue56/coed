@@ -3,23 +3,17 @@ import { test, expect } from "@playwright/test";
 test("text-fields example loads and works", async ({ page }) => {
     await page.goto("/examples/text-fields/");
 
-    // Wait for the root element to be populated
-    await page.waitForSelector("#root", { state: "attached", timeout: 10000 });
+    // Wait for the input element to be populated
+    await page.waitForSelector("#root input", { state: "attached", timeout: 10000 });
 
-    // Check that the page loaded
+    // Check that the page has an input field
+    const inputCount = await page.locator('input').count();
+    expect(inputCount).toBeGreaterThan(0);
+
+    // Try to interact with the input
+    await page.fill('input', "Hello");
+    
+    // The reversed text should appear
     const content = await page.locator("#root").textContent();
-    expect(content).toBeTruthy();
-
-    // The text-fields example should display some content
-    const rootElement = await page.locator("#root");
-    const childCount = await rootElement.locator("*").count();
-    expect(childCount).toBeGreaterThan(0);
-
-    // Try to find and interact with text inputs if they exist
-    const inputCount = await page.locator('input[type="text"]').count();
-    if (inputCount > 0) {
-        await page.fill('input[type="text"]', "Test input");
-        const afterInput = await page.locator("#root").textContent();
-        expect(afterInput).toContain("Test input");
-    }
+    expect(content).toContain("olleH");
 });

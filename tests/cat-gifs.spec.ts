@@ -10,12 +10,10 @@ test("cat-gifs example loads", async ({ page }) => {
     const content = await page.locator("#root").textContent();
     expect(content).toBeTruthy();
 
-    // The cat-gifs example should display some content (may have loading state or button)
-    const rootElement = await page.locator("#root");
-    const childCount = await rootElement.locator("*").count();
-    expect(childCount).toBeGreaterThan(0);
+    // The cat-gifs example should display "Random cats" heading
+    expect(content).toContain("Random cats");
 
-    // Try to find the "More Please" button if it exists
-    const buttonCount = await page.locator("button").count();
-    expect(buttonCount).toBeGreaterThan(0);
+    // The page should have an h2 element
+    const h2Count = await page.locator("h2").count();
+    expect(h2Count).toBeGreaterThan(0);
 });
