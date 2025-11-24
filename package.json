@@ -27,6 +27,8 @@
         "watch": "tsc -w -p tsconfig.json",
         "format": "npx prettier --write .",
         "test": "npx @eeue56/bach",
+        "test:playwright": "playwright test",
+        "test:serve": "npx @eeue56/gweld ./ 3000",
         "docs": "npx @eeue56/geiriadur"
     },
     "repository": {
@@ -51,7 +53,10 @@
     "devDependencies": {
         "@eeue56/bach": "^0.2.1",
         "@eeue56/geiriadur": "^0.0.3",
+        "@eeue56/gweld": "^1.2.0",
+        "@playwright/test": "^1.56.1",
         "@types/node": "^24.0.3",
+        "playwright": "^1.56.1",
         "ts-node": "^10.9.2",
         "typescript": "^5.8.3"
     }
