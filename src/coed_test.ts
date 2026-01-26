@@ -2,6 +2,7 @@ import { Maybe } from "@eeue56/ts-core";
 import { strict as assert } from "assert";
 import * as coed from "./coed";
 import { booleanAttribute } from "./coed";
+import * as svg from "./svg";
 
 // text nodes
 
@@ -364,5 +365,68 @@ export function testEmptyDivWithTwoValidEventsOfTheDifferentListeners() {
     assert.deepStrictEqual(
         coed.triggerEvent("mousemove", {}, emptyText),
         Maybe.Just("goodbye"),
+    );
+}
+
+// SVG text elements
+
+export function testSvgTextWithChildren() {
+    const textElement = svg.text(
+        [],
+        [coed.attribute("x", "10"), coed.attribute("y", "20")],
+        [coed.text("Hello SVG")],
+    );
+
+    assert.deepStrictEqual(
+        coed.render(textElement),
+        '<text x="10" y="20" xmlns="http://www.w3.org/2000/svg">\n    Hello SVG\n</text>',
+    );
+}
+
+export function testSvgTextWithTspanChildren() {
+    const textElement = svg.text(
+        [],
+        [coed.attribute("x", "10"), coed.attribute("y", "20")],
+        [
+            svg.tspan([], [coed.attribute("fill", "red")], [
+                coed.text("Hello"),
+            ]),
+            coed.text(" "),
+            svg.tspan([], [coed.attribute("fill", "blue")], [
+                coed.text("World"),
+            ]),
+        ],
+    );
+
+    const rendered = coed.render(textElement);
+    assert.ok(rendered.includes("Hello"));
+    assert.ok(rendered.includes("World"));
+    assert.ok(rendered.includes('fill="red"'));
+    assert.ok(rendered.includes('fill="blue"'));
+}
+
+export function testSvgTspanWithChildren() {
+    const tspanElement = svg.tspan(
+        [],
+        [coed.attribute("fill", "green")],
+        [coed.text("Colored text")],
+    );
+
+    assert.deepStrictEqual(
+        coed.render(tspanElement),
+        '<tspan fill="green" xmlns="http://www.w3.org/2000/svg">\n    Colored text\n</tspan>',
+    );
+}
+
+export function testSvgTextPathWithChildren() {
+    const textPathElement = svg.textPath(
+        [],
+        [coed.attribute("href", "#path1")],
+        [coed.text("Text along a path")],
+    );
+
+    assert.deepStrictEqual(
+        coed.render(textPathElement),
+        '<textPath href="#path1" xmlns="http://www.w3.org/2000/svg">\n    Text along a path\n</textPath>',
     );
 }
