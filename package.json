@@ -51,7 +51,7 @@
     "devDependencies": {
         "@types/node": "^24.0.3",
         "typescript": "^5.8.3",
-        "@eeue56/bach": "^0.2.1",
+        "@eeue56/bach": "^1.0.1",
         "@eeue56/geiriadur": "^0.0.3"
     }
 }
