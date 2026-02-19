@@ -1,0 +1,9 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/" # Base directory for the package manager
+    schedule:
+      interval: "daily"
+    # Add the exclude-patterns option
+    exclude-patterns:
+      - "examples/**"
