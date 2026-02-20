@@ -49,7 +49,7 @@
         "@eeue56/ts-core": "^3.0.1"
     },
     "devDependencies": {
-        "@types/node": "^24.0.3",
+        "@types/node": "^25.3.0",
         "typescript": "^5.8.3",
         "@eeue56/bach": "^0.2.1",
         "@eeue56/geiriadur": "^0.0.3"
