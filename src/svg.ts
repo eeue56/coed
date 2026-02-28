@@ -167,22 +167,31 @@ export function image<Msg>(
 export function text<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("text" as Tag, SVG_NAMESPACE, events, attributes);
+    return nodeNS("text" as Tag, SVG_NAMESPACE, events, attributes, children);
 }
 
 export function tspan<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("tspan" as Tag, SVG_NAMESPACE, events, attributes);
+    return nodeNS("tspan" as Tag, SVG_NAMESPACE, events, attributes, children);
 }
 
 export function textPath<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
+    children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("textPath" as Tag, SVG_NAMESPACE, events, attributes);
+    return nodeNS(
+        "textPath" as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+        children,
+    );
 }
 
 export function use<Msg>(
