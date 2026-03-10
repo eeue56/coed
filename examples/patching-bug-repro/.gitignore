@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.cache/
+.parcel-cache/
+playwright-report/
+test-results/
+tests/screenshots/
+*.log
+src/*.js
+src/*.js.map
