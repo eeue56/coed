@@ -1,0 +1,17 @@
+import { test, expect } from "@playwright/test";
+
+test("positions example loads and works", async ({ page }) => {
+    await page.goto("/examples/positions/");
+
+    // Wait for the root element to be populated
+    await page.waitForSelector("#root", { state: "attached", timeout: 10000 });
+
+    // Check that the page loaded
+    const content = await page.locator("#root").textContent();
+    expect(content).toBeTruthy();
+
+    // The positions example should display some content
+    const rootElement = await page.locator("#root");
+    const childCount = await rootElement.locator("*").count();
+    expect(childCount).toBeGreaterThan(0);
+});
