@@ -1,4 +1,4 @@
-import { Attribute, Event, HtmlNode, nodeNS, Tag, voidNodeNS } from "./coed";
+import { Attribute, Event, HtmlNode, nodeNS, Tag, voidNodeNS } from "./coed.ts";
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
