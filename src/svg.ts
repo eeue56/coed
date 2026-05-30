@@ -1,13 +1,63 @@
-import { Attribute, Event, HtmlNode, nodeNS, Tag, voidNodeNS } from "./coed.ts";
+import {
+    type Attribute,
+    type Event,
+    type HtmlNode,
+    nodeNS,
+    type Tag,
+    voidNodeNS,
+} from "./coed.ts";
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+
+export type SvgTag =
+    | "svg"
+    | "g"
+    | "a"
+    | "defs"
+    | "symbol"
+    | "marker"
+    | "mask"
+    | "pattern"
+    | "clipPath"
+    | "foreignObject"
+    | "switch"
+    | "circle"
+    | "ellipse"
+    | "line"
+    | "path"
+    | "polygon"
+    | "polyline"
+    | "rect"
+    | "image"
+    | "text"
+    | "tspan"
+    | "textPath"
+    | "use"
+    | "linearGradient"
+    | "radialGradient"
+    | "stop"
+    | "filter"
+    | "feBlend"
+    | "feColorMatrix"
+    | "feComponentTransfer"
+    | "feComposite"
+    | "feConvolveMatrix"
+    | "feDiffuseLighting"
+    | "feDisplacementMap"
+    | "feDropShadow";
 
 export function svg<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
     children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
-    return nodeNS("svg" as Tag, SVG_NAMESPACE, events, attributes, children);
+    return nodeNS(
+        "svg" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+        children,
+    );
 }
 
 export function g<Msg>(
@@ -15,7 +65,13 @@ export function g<Msg>(
     attributes: Attribute[],
     children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
-    return nodeNS("g" as Tag, SVG_NAMESPACE, events, attributes, children);
+    return nodeNS(
+        "g" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+        children,
+    );
 }
 
 export function a<Msg>(
@@ -23,7 +79,13 @@ export function a<Msg>(
     attributes: Attribute[],
     children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
-    return nodeNS("a" as Tag, SVG_NAMESPACE, events, attributes, children);
+    return nodeNS(
+        "a" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+        children,
+    );
 }
 
 export function defs<Msg>(
@@ -31,7 +93,13 @@ export function defs<Msg>(
     attributes: Attribute[],
     children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
-    return nodeNS("defs" as Tag, SVG_NAMESPACE, events, attributes, children);
+    return nodeNS(
+        "defs" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+        children,
+    );
 }
 
 export function symbol<Msg>(
@@ -39,7 +107,13 @@ export function symbol<Msg>(
     attributes: Attribute[],
     children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
-    return nodeNS("symbol" as Tag, SVG_NAMESPACE, events, attributes, children);
+    return nodeNS(
+        "symbol" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+        children,
+    );
 }
 
 export function marker<Msg>(
@@ -47,7 +121,13 @@ export function marker<Msg>(
     attributes: Attribute[],
     children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
-    return nodeNS("marker" as Tag, SVG_NAMESPACE, events, attributes, children);
+    return nodeNS(
+        "marker" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+        children,
+    );
 }
 
 export function mask<Msg>(
@@ -55,7 +135,13 @@ export function mask<Msg>(
     attributes: Attribute[],
     children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
-    return nodeNS("mask" as Tag, SVG_NAMESPACE, events, attributes, children);
+    return nodeNS(
+        "mask" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+        children,
+    );
 }
 
 export function pattern<Msg>(
@@ -64,7 +150,7 @@ export function pattern<Msg>(
     children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return nodeNS(
-        "pattern" as Tag,
+        "pattern" as SvgTag as Tag,
         SVG_NAMESPACE,
         events,
         attributes,
@@ -78,7 +164,7 @@ export function clipPath<Msg>(
     children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return nodeNS(
-        "clipPath" as Tag,
+        "clipPath" as SvgTag as Tag,
         SVG_NAMESPACE,
         events,
         attributes,
@@ -92,7 +178,7 @@ export function foreignObject<Msg>(
     children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
     return nodeNS(
-        "foreignObject" as Tag,
+        "foreignObject" as SvgTag as Tag,
         SVG_NAMESPACE,
         events,
         attributes,
@@ -105,91 +191,157 @@ export function svgSwitch<Msg>(
     attributes: Attribute[],
     children: HtmlNode<Msg>[],
 ): HtmlNode<Msg> {
-    return nodeNS("switch" as Tag, SVG_NAMESPACE, events, attributes, children);
+    return nodeNS(
+        "switch" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+        children,
+    );
 }
 
 export function circle<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("circle" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "circle" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function ellipse<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("ellipse" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "ellipse" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function line<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("line" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "line" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function path<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("path" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "path" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function polygon<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("polygon" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "polygon" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function polyline<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("polyline" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "polyline" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function rect<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("rect" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "rect" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function image<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("image" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "image" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function text<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("text" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "text" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function tspan<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("tspan" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "tspan" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function textPath<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("textPath" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "textPath" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function use<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("use" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "use" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function linearGradient<Msg>(
@@ -197,7 +349,7 @@ export function linearGradient<Msg>(
     attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNodeNS(
-        "linearGradient" as Tag,
+        "linearGradient" as SvgTag as Tag,
         SVG_NAMESPACE,
         events,
         attributes,
@@ -209,7 +361,7 @@ export function radialGradient<Msg>(
     attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNodeNS(
-        "radialGradient" as Tag,
+        "radialGradient" as SvgTag as Tag,
         SVG_NAMESPACE,
         events,
         attributes,
@@ -220,21 +372,36 @@ export function stop<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("stop" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "stop" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function filter<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("filter" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "filter" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function feBlend<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("feBlend" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "feBlend" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function feColorMatrix<Msg>(
@@ -242,7 +409,7 @@ export function feColorMatrix<Msg>(
     attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNodeNS(
-        "feColorMatrix" as Tag,
+        "feColorMatrix" as SvgTag as Tag,
         SVG_NAMESPACE,
         events,
         attributes,
@@ -254,7 +421,7 @@ export function feComponentTransfer<Msg>(
     attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNodeNS(
-        "feComponentTransfer" as Tag,
+        "feComponentTransfer" as SvgTag as Tag,
         SVG_NAMESPACE,
         events,
         attributes,
@@ -265,7 +432,12 @@ export function feComposite<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("feComposite" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "feComposite" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function feConvolveMatrix<Msg>(
@@ -273,7 +445,7 @@ export function feConvolveMatrix<Msg>(
     attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNodeNS(
-        "feConvolveMatrix" as Tag,
+        "feConvolveMatrix" as SvgTag as Tag,
         SVG_NAMESPACE,
         events,
         attributes,
@@ -285,7 +457,7 @@ export function feDiffuseLighting<Msg>(
     attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNodeNS(
-        "feDiffuseLighting" as Tag,
+        "feDiffuseLighting" as SvgTag as Tag,
         SVG_NAMESPACE,
         events,
         attributes,
@@ -297,7 +469,7 @@ export function feDisplacementMap<Msg>(
     attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNodeNS(
-        "feDisplacementMap" as Tag,
+        "feDisplacementMap" as SvgTag as Tag,
         SVG_NAMESPACE,
         events,
         attributes,
@@ -308,14 +480,24 @@ export function feDropShadow<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("feDropShadow" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "feDropShadow" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function feFlood<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("feFlood" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "feFlood" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function feGaussianBlur<Msg>(
@@ -323,7 +505,7 @@ export function feGaussianBlur<Msg>(
     attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNodeNS(
-        "feGaussianBlur" as Tag,
+        "feGaussianBlur" as SvgTag as Tag,
         SVG_NAMESPACE,
         events,
         attributes,
@@ -334,28 +516,48 @@ export function feImage<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("feImage" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "feImage" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function feMerge<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("feMerge" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "feMerge" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function feMorphology<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("feMorphology" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "feMorphology" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function feOffset<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("feOffset" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "feOffset" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function feSpecularLighting<Msg>(
@@ -363,7 +565,7 @@ export function feSpecularLighting<Msg>(
     attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNodeNS(
-        "feSpecularLighting" as Tag,
+        "feSpecularLighting" as SvgTag as Tag,
         SVG_NAMESPACE,
         events,
         attributes,
@@ -374,21 +576,36 @@ export function feTile<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("feTile" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "feTile" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function feTurbulence<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("feTurbulence" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "feTurbulence" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function animate<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("animate" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "animate" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function animateMotion<Msg>(
@@ -396,7 +613,7 @@ export function animateMotion<Msg>(
     attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNodeNS(
-        "animateMotion" as Tag,
+        "animateMotion" as SvgTag as Tag,
         SVG_NAMESPACE,
         events,
         attributes,
@@ -408,7 +625,7 @@ export function animateTransform<Msg>(
     attributes: Attribute[],
 ): HtmlNode<Msg> {
     return voidNodeNS(
-        "animateTransform" as Tag,
+        "animateTransform" as SvgTag as Tag,
         SVG_NAMESPACE,
         events,
         attributes,
@@ -419,40 +636,70 @@ export function svgSet<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("set" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "set" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function mpath<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("mpath" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "mpath" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function styleEl<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("style" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "style" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function scriptEl<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("script" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "script" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function desc<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("desc" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "desc" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }
 
 export function title<Msg>(
     events: Event<Msg>[],
     attributes: Attribute[],
 ): HtmlNode<Msg> {
-    return voidNodeNS("title" as Tag, SVG_NAMESPACE, events, attributes);
+    return voidNodeNS(
+        "title" as SvgTag as Tag,
+        SVG_NAMESPACE,
+        events,
+        attributes,
+    );
 }

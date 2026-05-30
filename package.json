@@ -8,7 +8,9 @@
         "./build/coed.js",
         "./build/coed.d.ts",
         "./build/svg.js",
-        "./build/svg.d.ts"
+        "./build/svg.d.ts",
+        "./build/parse.js",
+        "./build/parse.d.ts"
     ],
     "exports": {
         ".": {
@@ -20,6 +22,11 @@
             "types": "./build/svg.d.ts",
             "import": "./build/svg.js",
             "default": "./build/svg.js"
+        },
+        "./parse": {
+            "types": "./build/parse.d.ts",
+            "import": "./build/parse.js",
+            "default": "./build/parse.js"
         }
     },
     "typings": "build/coed.d.ts",
@@ -50,9 +57,14 @@
         "@eeue56/ts-core": "^3.0.1"
     },
     "devDependencies": {
-        "@types/node": "^24.0.3",
-        "typescript": "^5.8.3",
         "@eeue56/bach": "^1.0.1",
-        "@eeue56/geiriadur": "^0.0.3"
+        "@eeue56/geiriadur": "^0.0.3",
+        "@types/jsdom": "^28.0.3",
+        "@types/node": "^24.0.3",
+        "typescript": "^5.8.3"
+    },
+    "optionalDependencies": {
+        "@types/jsdom": "^28.0.3",
+        "jsdom": "^29.1.1"
     }
 }

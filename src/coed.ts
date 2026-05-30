@@ -153,6 +153,8 @@ export type Attribute =
     | StyleAttribute
     | BooleanAttribute;
 
+export type AttributeKind = Attribute["kind"];
+
 /**
 Creates a class attribute - classes are combined by the html creator, so you can use it like:
 ```
@@ -338,6 +340,8 @@ export type HtmlNode<Msg> =
     | NamespacedRegularNode<Msg>
     | NamespacedVoidNode<Msg>
     | HtmlStringNode;
+
+export type HtmlNodeKind = HtmlNode<never>["kind"];
 
 /**
 Creates a text node
