@@ -15,6 +15,11 @@ import {
 } from "./coed.ts";
 import { type SvgTag } from "./svg.ts";
 
+/**
+ * Parse a fragment of html string into Coed.
+ *
+ * e.g `<div>hello world</div>`
+ */
 export function parseFragment(string: string): HtmlNode<never>[] {
     const parser = new jsdom.JSDOM();
     const parsed = parser.window.document;
@@ -22,6 +27,11 @@ export function parseFragment(string: string): HtmlNode<never>[] {
     return [...parsed.body.childNodes].flatMap((child) => walk(child)).flat();
 }
 
+/**
+ * parse html into a coed tree.
+ *
+ * e.g `<html><body><div>hello world</div></body></html>`
+ */
 export function parse(string: string): HtmlNode<never> {
     const parser = new jsdom.JSDOM(string, { contentType: "text/html" });
 

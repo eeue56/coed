@@ -417,7 +417,7 @@ export function triggerEvent<Msg>(
     eventName: string,
     payload: any,
     node: HtmlNode<Msg>,
-): Maybe.Maybe<Msg> {
+): Maybe<Msg> {
 ```
 
 Triggers the event by name, passing it the payload provided.

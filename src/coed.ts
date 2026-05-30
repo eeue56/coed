@@ -1041,10 +1041,10 @@ function patchFacts<Msg>(
                         nextAttributes.indexOf(
                             (
                                 attribute as
-                                | StringAttribute
-                                | NumberAttribute
-                                | BooleanAttribute
-                                | StyleAttribute
+                                    | StringAttribute
+                                    | NumberAttribute
+                                    | BooleanAttribute
+                                    | StyleAttribute
                             ).key,
                         ) === -1
                     ) {
@@ -1080,10 +1080,10 @@ function patchEvents<Msg>(
         case "ns-regular":
             (
                 previousTree as
-                | RegularNode<Msg>
-                | VoidNode<Msg>
-                | NamespacedRegularNode<Msg>
-                | NamespacedVoidNode<Msg>
+                    | RegularNode<Msg>
+                    | VoidNode<Msg>
+                    | NamespacedRegularNode<Msg>
+                    | NamespacedVoidNode<Msg>
             )._eventListeners.forEach((eventListeners) => {
                 elements.removeEventListener(
                     eventListeners.event.name,
@@ -1093,10 +1093,10 @@ function patchEvents<Msg>(
 
             (
                 nextTree as
-                | RegularNode<Msg>
-                | VoidNode<Msg>
-                | NamespacedRegularNode<Msg>
-                | NamespacedVoidNode<Msg>
+                    | RegularNode<Msg>
+                    | VoidNode<Msg>
+                    | NamespacedRegularNode<Msg>
+                    | NamespacedVoidNode<Msg>
             ).events.forEach((event: Event<Msg>) => {
                 const listenerFunction = (data: globalThis.Event) => {
                     listener(event.tagger(data));
