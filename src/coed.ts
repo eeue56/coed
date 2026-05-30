@@ -1,4 +1,4 @@
-import { Maybe } from "@eeue56/ts-core";
+import { Just, type Maybe, Nothing } from "./types.ts";
 
 export type Tag =
     | "a"
@@ -753,7 +753,7 @@ export function triggerEvent<Msg>(
     eventName: string,
     payload: any,
     node: HtmlNode<Msg>,
-): Maybe.Maybe<Msg> {
+): Maybe<Msg> {
     payload = {
         stopPropagation: () => undefined,
         preventDefault: () => undefined,
@@ -761,7 +761,7 @@ export function triggerEvent<Msg>(
     };
     switch (node.kind) {
         case "text": {
-            return Maybe.Nothing();
+            return Nothing();
         }
         case "void":
         case "regular":
@@ -771,13 +771,13 @@ export function triggerEvent<Msg>(
                 (event) => event.name === eventName,
             );
             if (events.length > 0) {
-                return Maybe.Just(events[0].tagger(payload));
+                return Just(events[0].tagger(payload));
             } else {
-                return Maybe.Nothing();
+                return Nothing();
             }
         }
         case "html-string": {
-            return Maybe.Nothing();
+            return Nothing();
         }
     }
 }
@@ -1041,10 +1041,10 @@ function patchFacts<Msg>(
                         nextAttributes.indexOf(
                             (
                                 attribute as
-                                    | StringAttribute
-                                    | NumberAttribute
-                                    | BooleanAttribute
-                                    | StyleAttribute
+                                | StringAttribute
+                                | NumberAttribute
+                                | BooleanAttribute
+                                | StyleAttribute
                             ).key,
                         ) === -1
                     ) {
@@ -1080,10 +1080,10 @@ function patchEvents<Msg>(
         case "ns-regular":
             (
                 previousTree as
-                    | RegularNode<Msg>
-                    | VoidNode<Msg>
-                    | NamespacedRegularNode<Msg>
-                    | NamespacedVoidNode<Msg>
+                | RegularNode<Msg>
+                | VoidNode<Msg>
+                | NamespacedRegularNode<Msg>
+                | NamespacedVoidNode<Msg>
             )._eventListeners.forEach((eventListeners) => {
                 elements.removeEventListener(
                     eventListeners.event.name,
@@ -1093,10 +1093,10 @@ function patchEvents<Msg>(
 
             (
                 nextTree as
-                    | RegularNode<Msg>
-                    | VoidNode<Msg>
-                    | NamespacedRegularNode<Msg>
-                    | NamespacedVoidNode<Msg>
+                | RegularNode<Msg>
+                | VoidNode<Msg>
+                | NamespacedRegularNode<Msg>
+                | NamespacedVoidNode<Msg>
             ).events.forEach((event: Event<Msg>) => {
                 const listenerFunction = (data: globalThis.Event) => {
                     listener(event.tagger(data));

@@ -1,7 +1,7 @@
-import { Maybe } from "@eeue56/ts-core";
 import { strict as assert } from "assert";
 import * as coed from "../coed.ts";
-import { type Attribute, booleanAttribute, text } from "../coed.ts";
+import { booleanAttribute, text, type Attribute } from "../coed.ts";
+import { Just, Nothing } from "../types.ts";
 
 // text nodes
 
@@ -304,7 +304,7 @@ export function testEmptyStringEvent() {
 
     assert.deepStrictEqual(
         coed.triggerEvent("click", {}, emptyText),
-        Maybe.Nothing(),
+        Nothing(),
     );
 }
 
@@ -313,7 +313,7 @@ export function testEmptyDivEvent() {
 
     assert.deepStrictEqual(
         coed.triggerEvent("click", {}, emptyText),
-        Maybe.Nothing(),
+        Nothing(),
     );
 }
 
@@ -327,7 +327,7 @@ export function testEmptyDivWithValidEvent() {
 
     assert.deepStrictEqual(
         coed.triggerEvent("click", {}, emptyText),
-        Maybe.Just("hello"),
+        Just("hello"),
     );
 }
 
@@ -341,7 +341,7 @@ export function testEmptyDivWithTwoValidEventsOfTheSameListener() {
 
     assert.deepStrictEqual(
         coed.triggerEvent("click", {}, emptyText),
-        Maybe.Just("hello"),
+        Just("hello"),
     );
 }
 
@@ -358,12 +358,12 @@ export function testEmptyDivWithTwoValidEventsOfTheDifferentListeners() {
 
     assert.deepStrictEqual(
         coed.triggerEvent("click", {}, emptyText),
-        Maybe.Just("hello"),
+        Just("hello"),
     );
 
     assert.deepStrictEqual(
         coed.triggerEvent("mousemove", {}, emptyText),
-        Maybe.Just("goodbye"),
+        Just("goodbye"),
     );
 }
 
@@ -520,12 +520,12 @@ export function testFilterEvents() {
 
     assert.deepStrictEqual(
         coed.triggerEvent("click", {}, filtered),
-        Maybe.Just("keep"),
+        Just("keep"),
     );
 
     assert.deepStrictEqual(
         coed.triggerEvent("mousemove", {}, filtered),
-        Maybe.Nothing(),
+        Nothing(),
     );
 }
 
@@ -544,11 +544,11 @@ export function testFilterEventsWithMultipleListeners() {
 
     assert.deepStrictEqual(
         coed.triggerEvent("click", {}, filtered),
-        Maybe.Just("keep"),
+        Just("keep"),
     );
 
     assert.deepStrictEqual(
         coed.triggerEvent("click", {}, filtered),
-        Maybe.Just("keep"),
+        Just("keep"),
     );
 }
