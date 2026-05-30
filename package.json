@@ -61,7 +61,7 @@
         "@eeue56/geiriadur": "^0.0.3",
         "@types/jsdom": "^28.0.3",
         "@types/node": "^24.0.3",
-        "typescript": "^5.8.3"
+        "typescript": "^6.0.3"
     },
     "optionalDependencies": {
         "@types/jsdom": "^28.0.3",
