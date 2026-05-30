@@ -1,7 +1,7 @@
 import { Maybe } from "@eeue56/ts-core";
 import { strict as assert } from "assert";
-import * as coed from "./coed.ts";
-import { type Attribute, booleanAttribute, text } from "./coed.ts";
+import * as coed from "../coed.ts";
+import { type Attribute, booleanAttribute, text } from "../coed.ts";
 
 // text nodes
 

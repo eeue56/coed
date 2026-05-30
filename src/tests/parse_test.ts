@@ -31,9 +31,9 @@ import {
     text,
     title,
     u,
-} from "./coed.ts";
-import { parse } from "./parse.ts";
-import { circle, svg } from "./svg.ts";
+} from "../coed.ts";
+import { parse } from "../parse.ts";
+import { circle, svg } from "../svg.ts";
 
 export function testParseText() {
     const rawHtml = `<!doctype html><html><body>Hello world!</body></html>`;
