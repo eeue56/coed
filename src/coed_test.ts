@@ -1,7 +1,7 @@
 import { Maybe } from "@eeue56/ts-core";
 import { strict as assert } from "assert";
 import * as coed from "./coed.ts";
-import { booleanAttribute } from "./coed.ts";
+import { type Attribute, booleanAttribute, text } from "./coed.ts";
 
 // text nodes
 
@@ -364,5 +364,181 @@ export function testEmptyDivWithTwoValidEventsOfTheDifferentListeners() {
     assert.deepStrictEqual(
         coed.triggerEvent("mousemove", {}, emptyText),
         Maybe.Just("goodbye"),
+    );
+}
+
+export function testFilterNodes() {
+    const tree = coed.node(
+        "div",
+        [],
+        [],
+        [
+            coed.node("div", [], [coed.class_("keep")], [coed.text("hello")]),
+            coed.node("div", [], [coed.class_("remove")], [coed.text("world")]),
+        ],
+    );
+
+    const filtered = coed.filter((leaf) => {
+        if (leaf.kind === "text") return true;
+        if (
+            leaf.kind === "regular" &&
+            leaf.attributes.some(
+                (attr) =>
+                    attr.kind === "string" &&
+                    attr.key === "class" &&
+                    attr.value === "remove",
+            )
+        ) {
+            return false;
+        }
+        return true;
+    }, tree);
+
+    assert.deepStrictEqual(
+        filtered,
+        coed.node(
+            "div",
+            [],
+            [],
+            [
+                coed.node("div", [], [coed.class_("keep")], [coed.text("hello")]),
+                text(""),
+            ],
+        ),
+    );
+}
+
+export function testFilterNodesRemoveScriptTag() {
+    const tree = coed.node(
+        "div",
+        [],
+        [],
+        [
+            coed.node("script", [], [], [coed.text("alert('hello world');")]),
+            coed.node("div", [], [coed.class_("keep")], [coed.text("hello")]),
+        ],
+    );
+
+    const filtered = coed.filter((leaf) => {
+        if (leaf.kind === "text") return true;
+        if (leaf.kind === "regular" && leaf.tag === "script") return false;
+        return true;
+    }, tree);
+
+    assert.deepStrictEqual(
+        filtered,
+        coed.node(
+            "div",
+            [],
+            [],
+            [
+                text(""),
+                coed.node("div", [], [coed.class_("keep")], [coed.text("hello")]),
+            ],
+        ),
+    );
+}
+
+export function testFilterAttributes() {
+    const tree = coed.node(
+        "div",
+        [],
+        [
+            coed.class_("keep"),
+            coed.class_("remove"),
+            coed.attribute("data-keep", "keep"),
+            coed.attribute("data-remove", "remove"),
+        ],
+        [coed.text("hello")],
+    );
+
+    const filtered = coed.filterAttributes((attr: Attribute) => {
+        if (attr.kind === "string" && attr.key === "class") {
+            return attr.value === "keep";
+        }
+        if (attr.kind === "string" && attr.key === "data-keep") {
+            return true;
+        }
+        return false;
+    }, tree);
+
+    assert.deepStrictEqual(
+        coed.render(filtered),
+        `
+<div class="keep" data-keep="keep">
+    hello
+</div>`.trim(),
+    );
+}
+
+export function testFilterBooleanAttributes() {
+    const tree = coed.node(
+        "input",
+        [],
+        [
+            booleanAttribute("checked", true),
+            booleanAttribute("disabled", false),
+        ],
+        [],
+    );
+
+    const filtered = coed.filterAttributes((attr: Attribute) => {
+        if (attr.kind === "boolean" && attr.key === "checked") {
+            return true;
+        }
+        return false;
+    }, tree);
+
+    assert.deepStrictEqual(
+        coed.render(filtered),
+        `<input checked="checked"></input>`.trim(),
+    );
+}
+
+export function testFilterEvents() {
+    const tree = coed.node(
+        "div",
+        [coed.on("click", () => "keep"), coed.on("mousemove", () => "remove")],
+        [],
+        [coed.text("hello")],
+    );
+
+    const filtered = coed.filterEvents((event) => {
+        if (event.name === "click") return true;
+        return false;
+    }, tree);
+
+    assert.deepStrictEqual(
+        coed.triggerEvent("click", {}, filtered),
+        Maybe.Just("keep"),
+    );
+
+    assert.deepStrictEqual(
+        coed.triggerEvent("mousemove", {}, filtered),
+        Maybe.Nothing(),
+    );
+}
+
+export function testFilterEventsWithMultipleListeners() {
+    const tree = coed.node(
+        "div",
+        [coed.on("click", () => "keep"), coed.on("click", () => "also keep")],
+        [],
+        [coed.text("hello")],
+    );
+
+    const filtered = coed.filterEvents((event) => {
+        if (event.name === "click") return true;
+        return false;
+    }, tree);
+
+    assert.deepStrictEqual(
+        coed.triggerEvent("click", {}, filtered),
+        Maybe.Just("keep"),
+    );
+
+    assert.deepStrictEqual(
+        coed.triggerEvent("click", {}, filtered),
+        Maybe.Just("keep"),
     );
 }

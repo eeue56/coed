@@ -823,6 +823,117 @@ export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
     }
 }
 
+export function filter<A>(
+    shouldKeep: (leaf: HtmlNode<A>) => boolean,
+    tree: HtmlNode<A>,
+): HtmlNode<A> {
+    if (tree.kind === "text" || tree.kind === "html-string") {
+        return shouldKeep(tree) ? tree : text("");
+    }
+
+    const treeWithSplitClasses: Exclude<HtmlNode<A>, { kind: "text" } | { kind: "html-string" }> = {
+        ...tree, attributes: tree.attributes.flatMap((attr) => {
+            if (attr.kind === "string" && attr.key === "class") {
+                return splitClassAttribute(attr as StringAttributeWithClass);
+            }
+            return [attr];
+        })
+    };
+
+    if (!shouldKeep(treeWithSplitClasses)) {
+        return text("");
+    }
+
+    switch (treeWithSplitClasses.kind) {
+        case "void":
+        case "ns-void": {
+            return tree;
+        }
+        case "regular":
+        case "ns-regular": {
+            const children = treeWithSplitClasses.children.map((child) => filter(shouldKeep, child));
+            return {
+                ...treeWithSplitClasses,
+                children,
+            };
+        };
+    }
+}
+
+type StringAttributeWithClass = StringAttribute & { key: "class" };
+
+/**
+ * since classnames are joined into one string, we need to split when filtering
+ */
+function splitClassAttribute(attribute: StringAttributeWithClass): StringAttributeWithClass[] {
+    return attribute.value.split(" ").map((className: string) => ({ ...attribute, value: className }));
+}
+
+export function filterAttributes<A>(
+    shouldKeep: (attribute: Attribute) => boolean,
+    tree: HtmlNode<A>,
+): HtmlNode<A> {
+    if (tree.kind === "text" || tree.kind === "html-string") {
+        return tree;
+    }
+
+    const attributes = tree.attributes.flatMap((attribute) => {
+        if (attribute.kind === "string" && attribute.key === "class") {
+            return splitClassAttribute(attribute as StringAttributeWithClass).filter(shouldKeep);
+        }
+        return shouldKeep(attribute) ? [attribute] : [];
+    });
+
+    switch (tree.kind) {
+        case "void":
+        case "ns-void": {
+            return { ...tree, attributes };
+        }
+        case "regular":
+        case "ns-regular": {
+            const children = tree.children.map((child) =>
+                filterAttributes(shouldKeep, child),
+            );
+
+            return {
+                ...tree,
+                attributes,
+                children,
+            };
+        }
+    }
+}
+
+export function filterEvents<A>(
+    shouldKeep: (event: Event<A>) => boolean,
+    tree: HtmlNode<A>,
+): HtmlNode<A> {
+    if (tree.kind === "text" || tree.kind === "html-string") {
+        return tree;
+    }
+
+    const events = tree.events.filter(shouldKeep);
+
+    switch (tree.kind) {
+        case "void":
+        case "ns-void": {
+            return { ...tree, events };
+        }
+        case "regular":
+        case "ns-regular": {
+            const children = tree.children.map((child) =>
+                filterEvents(shouldKeep, child),
+            );
+
+            return {
+                ...tree,
+                events,
+                children,
+            };
+        }
+    }
+}
+
 function isProperty(tag: string, key: string): boolean {
     switch (tag) {
         case "INPUT":
@@ -918,10 +1029,10 @@ function patchFacts<Msg>(
                         nextAttributes.indexOf(
                             (
                                 attribute as
-                                    | StringAttribute
-                                    | NumberAttribute
-                                    | BooleanAttribute
-                                    | StyleAttribute
+                                | StringAttribute
+                                | NumberAttribute
+                                | BooleanAttribute
+                                | StyleAttribute
                             ).key,
                         ) === -1
                     ) {
@@ -957,10 +1068,10 @@ function patchEvents<Msg>(
         case "ns-regular":
             (
                 previousTree as
-                    | RegularNode<Msg>
-                    | VoidNode<Msg>
-                    | NamespacedRegularNode<Msg>
-                    | NamespacedVoidNode<Msg>
+                | RegularNode<Msg>
+                | VoidNode<Msg>
+                | NamespacedRegularNode<Msg>
+                | NamespacedVoidNode<Msg>
             )._eventListeners.forEach((eventListeners) => {
                 elements.removeEventListener(
                     eventListeners.event.name,
@@ -970,10 +1081,10 @@ function patchEvents<Msg>(
 
             (
                 nextTree as
-                    | RegularNode<Msg>
-                    | VoidNode<Msg>
-                    | NamespacedRegularNode<Msg>
-                    | NamespacedVoidNode<Msg>
+                | RegularNode<Msg>
+                | VoidNode<Msg>
+                | NamespacedRegularNode<Msg>
+                | NamespacedVoidNode<Msg>
             ).events.forEach((event: Event<Msg>) => {
                 const listenerFunction = (data: globalThis.Event) => {
                     listener(event.tagger(data));
