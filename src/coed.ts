@@ -831,13 +831,17 @@ export function filter<A>(
         return shouldKeep(tree) ? tree : text("");
     }
 
-    const treeWithSplitClasses: Exclude<HtmlNode<A>, { kind: "text" } | { kind: "html-string" }> = {
-        ...tree, attributes: tree.attributes.flatMap((attr) => {
+    const treeWithSplitClasses: Exclude<
+        HtmlNode<A>,
+        { kind: "text" } | { kind: "html-string" }
+    > = {
+        ...tree,
+        attributes: tree.attributes.flatMap((attr) => {
             if (attr.kind === "string" && attr.key === "class") {
                 return splitClassAttribute(attr as StringAttributeWithClass);
             }
             return [attr];
-        })
+        }),
     };
 
     if (!shouldKeep(treeWithSplitClasses)) {
@@ -851,12 +855,14 @@ export function filter<A>(
         }
         case "regular":
         case "ns-regular": {
-            const children = treeWithSplitClasses.children.map((child) => filter(shouldKeep, child));
+            const children = treeWithSplitClasses.children.map((child) =>
+                filter(shouldKeep, child),
+            );
             return {
                 ...treeWithSplitClasses,
                 children,
             };
-        };
+        }
     }
 }
 
@@ -865,8 +871,12 @@ type StringAttributeWithClass = StringAttribute & { key: "class" };
 /**
  * since classnames are joined into one string, we need to split when filtering
  */
-function splitClassAttribute(attribute: StringAttributeWithClass): StringAttributeWithClass[] {
-    return attribute.value.split(" ").map((className: string) => ({ ...attribute, value: className }));
+function splitClassAttribute(
+    attribute: StringAttributeWithClass,
+): StringAttributeWithClass[] {
+    return attribute.value
+        .split(" ")
+        .map((className: string) => ({ ...attribute, value: className }));
 }
 
 export function filterAttributes<A>(
@@ -879,7 +889,9 @@ export function filterAttributes<A>(
 
     const attributes = tree.attributes.flatMap((attribute) => {
         if (attribute.kind === "string" && attribute.key === "class") {
-            return splitClassAttribute(attribute as StringAttributeWithClass).filter(shouldKeep);
+            return splitClassAttribute(
+                attribute as StringAttributeWithClass,
+            ).filter(shouldKeep);
         }
         return shouldKeep(attribute) ? [attribute] : [];
     });
@@ -1029,10 +1041,10 @@ function patchFacts<Msg>(
                         nextAttributes.indexOf(
                             (
                                 attribute as
-                                | StringAttribute
-                                | NumberAttribute
-                                | BooleanAttribute
-                                | StyleAttribute
+                                    | StringAttribute
+                                    | NumberAttribute
+                                    | BooleanAttribute
+                                    | StyleAttribute
                             ).key,
                         ) === -1
                     ) {
@@ -1068,10 +1080,10 @@ function patchEvents<Msg>(
         case "ns-regular":
             (
                 previousTree as
-                | RegularNode<Msg>
-                | VoidNode<Msg>
-                | NamespacedRegularNode<Msg>
-                | NamespacedVoidNode<Msg>
+                    | RegularNode<Msg>
+                    | VoidNode<Msg>
+                    | NamespacedRegularNode<Msg>
+                    | NamespacedVoidNode<Msg>
             )._eventListeners.forEach((eventListeners) => {
                 elements.removeEventListener(
                     eventListeners.event.name,
@@ -1081,10 +1093,10 @@ function patchEvents<Msg>(
 
             (
                 nextTree as
-                | RegularNode<Msg>
-                | VoidNode<Msg>
-                | NamespacedRegularNode<Msg>
-                | NamespacedVoidNode<Msg>
+                    | RegularNode<Msg>
+                    | VoidNode<Msg>
+                    | NamespacedRegularNode<Msg>
+                    | NamespacedVoidNode<Msg>
             ).events.forEach((event: Event<Msg>) => {
                 const listenerFunction = (data: globalThis.Event) => {
                     listener(event.tagger(data));

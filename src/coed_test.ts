@@ -401,7 +401,12 @@ export function testFilterNodes() {
             [],
             [],
             [
-                coed.node("div", [], [coed.class_("keep")], [coed.text("hello")]),
+                coed.node(
+                    "div",
+                    [],
+                    [coed.class_("keep")],
+                    [coed.text("hello")],
+                ),
                 text(""),
             ],
         ),
@@ -433,7 +438,12 @@ export function testFilterNodesRemoveScriptTag() {
             [],
             [
                 text(""),
-                coed.node("div", [], [coed.class_("keep")], [coed.text("hello")]),
+                coed.node(
+                    "div",
+                    [],
+                    [coed.class_("keep")],
+                    [coed.text("hello")],
+                ),
             ],
         ),
     );

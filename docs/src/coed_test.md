@@ -118,13 +118,29 @@ export function testNegativeBooleanAttribute() {
 
 [View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L228-L228)
 
+## testCaseSensitiveAttribute
+
+```javascript
+export function testCaseSensitiveAttribute() {
+```
+
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L238-L238)
+
+## testFromString
+
+```javascript
+export function testFromString() {
+```
+
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L283-L283)
+
 ## testEmptyStringEvent
 
 ```javascript
 export function testEmptyStringEvent() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L240-L240)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L301-L301)
 
 ## testEmptyDivEvent
 
@@ -132,7 +148,7 @@ export function testEmptyStringEvent() {
 export function testEmptyDivEvent() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L249-L249)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L310-L310)
 
 ## testEmptyDivWithValidEvent
 
@@ -140,7 +156,7 @@ export function testEmptyDivEvent() {
 export function testEmptyDivWithValidEvent() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L258-L258)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L319-L319)
 
 ## testEmptyDivWithTwoValidEventsOfTheSameListener
 
@@ -148,7 +164,7 @@ export function testEmptyDivWithValidEvent() {
 export function testEmptyDivWithTwoValidEventsOfTheSameListener() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L272-L272)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L333-L333)
 
 ## testEmptyDivWithTwoValidEventsOfTheDifferentListeners
 
@@ -156,4 +172,52 @@ export function testEmptyDivWithTwoValidEventsOfTheSameListener() {
 export function testEmptyDivWithTwoValidEventsOfTheDifferentListeners() {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L286-L286)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L347-L347)
+
+## testFilterNodes
+
+```javascript
+export function testFilterNodes() {
+```
+
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L369-L369)
+
+## testFilterNodesRemoveScriptTag
+
+```javascript
+export function testFilterNodesRemoveScriptTag() {
+```
+
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L415-L415)
+
+## testFilterAttributes
+
+```javascript
+export function testFilterAttributes() {
+```
+
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L451-L451)
+
+## testFilterBooleanAttributes
+
+```javascript
+export function testFilterBooleanAttributes() {
+```
+
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L483-L483)
+
+## testFilterEvents
+
+```javascript
+export function testFilterEvents() {
+```
+
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L507-L507)
+
+## testFilterEventsWithMultipleListeners
+
+```javascript
+export function testFilterEventsWithMultipleListeners() {
+```
+
+[View source](https://github.com/eeue56/coed/blob/main/src/coed_test.ts#L531-L531)
