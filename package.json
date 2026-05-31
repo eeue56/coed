@@ -10,7 +10,9 @@
         "./build/svg.js",
         "./build/svg.d.ts",
         "./build/parse.js",
-        "./build/parse.d.ts"
+        "./build/parse.d.ts",
+        "./build/types.d.ts",
+        "./build/types.js"
     ],
     "exports": {
         ".": {
@@ -27,6 +29,11 @@
             "types": "./build/parse.d.ts",
             "import": "./build/parse.js",
             "default": "./build/parse.js"
+        },
+        "./types": {
+            "types": "./build/types.d.ts",
+            "import": "./build/types.js",
+            "default": "./build/types.js"
         }
     },
     "typings": "build/coed.d.ts",
