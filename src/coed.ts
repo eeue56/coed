@@ -823,6 +823,9 @@ export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
     }
 }
 
+/**
+ * filters a tree, removing any nodes that don't match. Replaces nodes which don't match with empty text nodes.
+ */
 export function filter<A>(
     shouldKeep: (leaf: HtmlNode<A>) => boolean,
     tree: HtmlNode<A>,
@@ -879,6 +882,9 @@ function splitClassAttribute(
         .map((className: string) => ({ ...attribute, value: className }));
 }
 
+/**
+ * filters a tree, removing any attributes that don't match.
+ */
 export function filterAttributes<A>(
     shouldKeep: (attribute: Attribute) => boolean,
     tree: HtmlNode<A>,
@@ -916,6 +922,9 @@ export function filterAttributes<A>(
     }
 }
 
+/**
+ * filters a tree, removing any events that don't match.
+ */
 export function filterEvents<A>(
     shouldKeep: (event: Event<A>) => boolean,
     tree: HtmlNode<A>,

@@ -442,7 +442,8 @@ export function filter<A>(
 ): HtmlNode<A> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L825-L828)
+filters a tree, removing any nodes that don't match. Replaces nodes which don't match with empty text nodes.
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L828-L831)
 
 ## filterAttributes
 
@@ -454,7 +455,9 @@ export function filterAttributes<A>(
 ```
 
 since classnames are joined into one string, we need to split when filtering
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L881-L884)
+
+filters a tree, removing any attributes that don't match.
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L887-L890)
 
 ## filterEvents
 
@@ -465,7 +468,8 @@ export function filterEvents<A>(
 ): HtmlNode<A> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L918-L921)
+filters a tree, removing any events that don't match.
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L927-L930)
 
 ## type Program<Model, Msg>
 
@@ -489,7 +493,7 @@ An initial model is given, which is passed to the view function which then popul
 Any events triggered within the view will use the `update` function to create a new model.
 Async updates can be handled via the optional `send` callback within the update function.
 `postRender`, if it exists, will be called after rendering and patching the DOM (useful for attaching things to the DOM after the main render)
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1253-L1264)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1262-L1273)
 
 ## type RunningProgram<Model, Msg>
 
@@ -503,7 +507,7 @@ export type RunningProgram<Model, Msg> = {
 
 Every running program can be interacted with via `send`.
 For example you may want to start a program but send some data to it after loading a \*network request.
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1269-L1273)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1278-L1282)
 
 ## program
 
@@ -514,7 +518,7 @@ export function program<Model, Msg>(
 ```
 
 Takes in a program, sets it up and runs it as a main loop
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1277-L1279)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1286-L1288)
 
 ## a
 
@@ -526,7 +530,7 @@ export function a<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1317-L1321)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1326-L1330)
 
 ## abbr
 
@@ -538,7 +542,7 @@ export function abbr<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1325-L1329)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1334-L1338)
 
 ## address
 
@@ -550,7 +554,7 @@ export function address<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1333-L1337)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1342-L1346)
 
 ## area
 
@@ -561,7 +565,7 @@ export function area<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1341-L1344)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1350-L1353)
 
 ## article
 
@@ -573,7 +577,7 @@ export function article<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1348-L1352)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1357-L1361)
 
 ## aside
 
@@ -585,7 +589,7 @@ export function aside<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1356-L1360)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1365-L1369)
 
 ## audio
 
@@ -597,7 +601,7 @@ export function audio<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1364-L1368)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1373-L1377)
 
 ## b
 
@@ -609,7 +613,7 @@ export function b<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1372-L1376)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1381-L1385)
 
 ## base
 
@@ -620,7 +624,7 @@ export function base<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1380-L1383)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1389-L1392)
 
 ## bdi
 
@@ -632,7 +636,7 @@ export function bdi<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1387-L1391)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1396-L1400)
 
 ## bdo
 
@@ -644,7 +648,7 @@ export function bdo<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1395-L1399)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1404-L1408)
 
 ## blockquote
 
@@ -656,7 +660,7 @@ export function blockquote<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1403-L1407)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1412-L1416)
 
 ## body
 
@@ -668,7 +672,7 @@ export function body<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1411-L1415)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1420-L1424)
 
 ## br
 
@@ -679,7 +683,7 @@ export function br<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1419-L1422)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1428-L1431)
 
 ## button
 
@@ -691,7 +695,7 @@ export function button<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1426-L1430)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1435-L1439)
 
 ## canvas
 
@@ -703,7 +707,7 @@ export function canvas<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1434-L1438)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1443-L1447)
 
 ## caption
 
@@ -715,7 +719,7 @@ export function caption<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1442-L1446)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1451-L1455)
 
 ## cite
 
@@ -727,7 +731,7 @@ export function cite<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1450-L1454)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1459-L1463)
 
 ## code
 
@@ -739,7 +743,7 @@ export function code<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1458-L1462)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1467-L1471)
 
 ## col
 
@@ -750,7 +754,7 @@ export function col<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1466-L1469)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1475-L1478)
 
 ## colgroup
 
@@ -762,7 +766,7 @@ export function colgroup<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1473-L1477)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1482-L1486)
 
 ## data
 
@@ -774,7 +778,7 @@ export function data<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1481-L1485)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1490-L1494)
 
 ## datalist
 
@@ -786,7 +790,7 @@ export function datalist<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1489-L1493)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1498-L1502)
 
 ## dd
 
@@ -798,7 +802,7 @@ export function dd<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1497-L1501)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1506-L1510)
 
 ## del
 
@@ -810,7 +814,7 @@ export function del<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1505-L1509)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1514-L1518)
 
 ## details
 
@@ -822,7 +826,7 @@ export function details<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1513-L1517)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1522-L1526)
 
 ## dfn
 
@@ -834,7 +838,7 @@ export function dfn<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1521-L1525)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1530-L1534)
 
 ## dialog
 
@@ -846,7 +850,7 @@ export function dialog<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1529-L1533)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1538-L1542)
 
 ## div
 
@@ -858,7 +862,7 @@ export function div<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1537-L1541)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1546-L1550)
 
 ## dl
 
@@ -870,7 +874,7 @@ export function dl<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1545-L1549)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1554-L1558)
 
 ## dt
 
@@ -882,7 +886,7 @@ export function dt<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1553-L1557)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1562-L1566)
 
 ## em
 
@@ -894,7 +898,7 @@ export function em<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1561-L1565)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1570-L1574)
 
 ## embed
 
@@ -905,7 +909,7 @@ export function embed<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1569-L1572)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1578-L1581)
 
 ## fieldset
 
@@ -917,7 +921,7 @@ export function fieldset<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1576-L1580)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1585-L1589)
 
 ## figure
 
@@ -929,7 +933,7 @@ export function figure<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1584-L1588)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1593-L1597)
 
 ## footer
 
@@ -941,7 +945,7 @@ export function footer<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1592-L1596)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1601-L1605)
 
 ## form
 
@@ -953,7 +957,7 @@ export function form<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1600-L1604)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1609-L1613)
 
 ## h1
 
@@ -965,7 +969,7 @@ export function h1<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1608-L1612)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1617-L1621)
 
 ## h2
 
@@ -977,7 +981,7 @@ export function h2<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1616-L1620)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1625-L1629)
 
 ## h3
 
@@ -989,7 +993,7 @@ export function h3<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1624-L1628)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1633-L1637)
 
 ## h4
 
@@ -1001,7 +1005,7 @@ export function h4<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1632-L1636)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1641-L1645)
 
 ## h5
 
@@ -1013,7 +1017,7 @@ export function h5<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1640-L1644)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1649-L1653)
 
 ## h6
 
@@ -1025,7 +1029,7 @@ export function h6<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1648-L1652)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1657-L1661)
 
 ## head
 
@@ -1037,7 +1041,7 @@ export function head<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1656-L1660)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1665-L1669)
 
 ## header
 
@@ -1049,7 +1053,7 @@ export function header<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1664-L1668)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1673-L1677)
 
 ## hgroup
 
@@ -1061,7 +1065,7 @@ export function hgroup<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1672-L1676)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1681-L1685)
 
 ## hr
 
@@ -1072,7 +1076,7 @@ export function hr<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1680-L1683)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1689-L1692)
 
 ## html
 
@@ -1084,7 +1088,7 @@ export function html<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1687-L1691)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1696-L1700)
 
 ## i
 
@@ -1096,7 +1100,7 @@ export function i<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1695-L1699)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1704-L1708)
 
 ## iframe
 
@@ -1108,7 +1112,7 @@ export function iframe<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1703-L1707)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1712-L1716)
 
 ## img
 
@@ -1119,7 +1123,7 @@ export function img<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1711-L1714)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1720-L1723)
 
 ## input
 
@@ -1130,7 +1134,7 @@ export function input<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1718-L1721)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1727-L1730)
 
 ## ins
 
@@ -1142,7 +1146,7 @@ export function ins<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1725-L1729)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1734-L1738)
 
 ## kbd
 
@@ -1154,7 +1158,7 @@ export function kbd<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1733-L1737)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1742-L1746)
 
 ## keygen
 
@@ -1166,7 +1170,7 @@ export function keygen<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1741-L1745)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1750-L1754)
 
 ## label
 
@@ -1178,7 +1182,7 @@ export function label<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1749-L1753)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1758-L1762)
 
 ## legend
 
@@ -1190,7 +1194,7 @@ export function legend<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1757-L1761)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1766-L1770)
 
 ## li
 
@@ -1202,7 +1206,7 @@ export function li<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1765-L1769)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1774-L1778)
 
 ## link
 
@@ -1213,7 +1217,7 @@ export function link<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1773-L1776)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1782-L1785)
 
 ## main
 
@@ -1225,7 +1229,7 @@ export function main<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1780-L1784)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1789-L1793)
 
 ## map\_
 
@@ -1237,7 +1241,7 @@ export function map_<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1788-L1792)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1797-L1801)
 
 ## mark
 
@@ -1249,7 +1253,7 @@ export function mark<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1796-L1800)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1805-L1809)
 
 ## menu
 
@@ -1261,7 +1265,7 @@ export function menu<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1804-L1808)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1813-L1817)
 
 ## menuitem
 
@@ -1273,7 +1277,7 @@ export function menuitem<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1812-L1816)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1821-L1825)
 
 ## meta
 
@@ -1284,7 +1288,7 @@ export function meta<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1820-L1823)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1829-L1832)
 
 ## meter
 
@@ -1296,7 +1300,7 @@ export function meter<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1827-L1831)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1836-L1840)
 
 ## nav
 
@@ -1308,7 +1312,7 @@ export function nav<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1835-L1839)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1844-L1848)
 
 ## noscript
 
@@ -1320,7 +1324,7 @@ export function noscript<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1843-L1847)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1852-L1856)
 
 ## object
 
@@ -1332,7 +1336,7 @@ export function object<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1851-L1855)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1860-L1864)
 
 ## ol
 
@@ -1344,7 +1348,7 @@ export function ol<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1859-L1863)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1868-L1872)
 
 ## optgroup
 
@@ -1356,7 +1360,7 @@ export function optgroup<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1867-L1871)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1876-L1880)
 
 ## option
 
@@ -1368,7 +1372,7 @@ export function option<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1875-L1879)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1884-L1888)
 
 ## output
 
@@ -1380,7 +1384,7 @@ export function output<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1883-L1887)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1892-L1896)
 
 ## p
 
@@ -1392,7 +1396,7 @@ export function p<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1891-L1895)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1900-L1904)
 
 ## param
 
@@ -1403,7 +1407,7 @@ export function param<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1899-L1902)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1908-L1911)
 
 ## pre
 
@@ -1415,7 +1419,7 @@ export function pre<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1906-L1910)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1915-L1919)
 
 ## progress
 
@@ -1427,7 +1431,7 @@ export function progress<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1914-L1918)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1923-L1927)
 
 ## q
 
@@ -1439,7 +1443,7 @@ export function q<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1922-L1926)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1931-L1935)
 
 ## rb
 
@@ -1451,7 +1455,7 @@ export function rb<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1930-L1934)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1939-L1943)
 
 ## rp
 
@@ -1463,7 +1467,7 @@ export function rp<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1938-L1942)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1947-L1951)
 
 ## rt
 
@@ -1475,7 +1479,7 @@ export function rt<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1946-L1950)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1955-L1959)
 
 ## rtc
 
@@ -1487,7 +1491,7 @@ export function rtc<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1954-L1958)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1963-L1967)
 
 ## ruby
 
@@ -1499,7 +1503,7 @@ export function ruby<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1962-L1966)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1971-L1975)
 
 ## s
 
@@ -1511,7 +1515,7 @@ export function s<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1970-L1974)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1979-L1983)
 
 ## samp
 
@@ -1523,7 +1527,7 @@ export function samp<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1978-L1982)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1987-L1991)
 
 ## script
 
@@ -1535,7 +1539,7 @@ export function script<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1986-L1990)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1995-L1999)
 
 ## section
 
@@ -1547,7 +1551,7 @@ export function section<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L1994-L1998)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2003-L2007)
 
 ## select
 
@@ -1559,7 +1563,7 @@ export function select<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2002-L2006)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2011-L2015)
 
 ## small
 
@@ -1571,7 +1575,7 @@ export function small<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2010-L2014)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2019-L2023)
 
 ## source
 
@@ -1582,7 +1586,7 @@ export function source<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2018-L2021)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2027-L2030)
 
 ## span
 
@@ -1594,7 +1598,7 @@ export function span<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2025-L2029)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2034-L2038)
 
 ## strong
 
@@ -1606,7 +1610,7 @@ export function strong<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2033-L2037)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2042-L2046)
 
 ## style
 
@@ -1618,7 +1622,7 @@ export function style<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2041-L2045)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2050-L2054)
 
 ## sub
 
@@ -1630,7 +1634,7 @@ export function sub<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2049-L2053)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2058-L2062)
 
 ## summary
 
@@ -1642,7 +1646,7 @@ export function summary<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2057-L2061)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2066-L2070)
 
 ## sup
 
@@ -1654,7 +1658,7 @@ export function sup<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2065-L2069)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2074-L2078)
 
 ## table
 
@@ -1666,7 +1670,7 @@ export function table<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2073-L2077)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2082-L2086)
 
 ## tbody
 
@@ -1678,7 +1682,7 @@ export function tbody<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2081-L2085)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2090-L2094)
 
 ## td
 
@@ -1690,7 +1694,7 @@ export function td<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2089-L2093)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2098-L2102)
 
 ## template
 
@@ -1702,7 +1706,7 @@ export function template<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2097-L2101)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2106-L2110)
 
 ## textarea
 
@@ -1714,7 +1718,7 @@ export function textarea<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2105-L2109)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2114-L2118)
 
 ## tfoot
 
@@ -1726,7 +1730,7 @@ export function tfoot<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2113-L2117)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2122-L2126)
 
 ## th
 
@@ -1738,7 +1742,7 @@ export function th<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2121-L2125)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2130-L2134)
 
 ## thead
 
@@ -1750,7 +1754,7 @@ export function thead<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2129-L2133)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2138-L2142)
 
 ## time
 
@@ -1762,7 +1766,7 @@ export function time<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2137-L2141)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2146-L2150)
 
 ## title
 
@@ -1774,7 +1778,7 @@ export function title<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2145-L2149)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2154-L2158)
 
 ## tr
 
@@ -1786,7 +1790,7 @@ export function tr<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2153-L2157)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2162-L2166)
 
 ## track
 
@@ -1797,7 +1801,7 @@ export function track<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2161-L2164)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2170-L2173)
 
 ## u
 
@@ -1809,7 +1813,7 @@ export function u<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2168-L2172)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2177-L2181)
 
 ## ul
 
@@ -1821,7 +1825,7 @@ export function ul<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2176-L2180)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2185-L2189)
 
 ## var\_
 
@@ -1833,7 +1837,7 @@ export function var_<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2184-L2188)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2193-L2197)
 
 ## video
 
@@ -1845,7 +1849,7 @@ export function video<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2192-L2196)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2201-L2205)
 
 ## wbr
 
@@ -1856,4 +1860,4 @@ export function wbr<Msg>(
 ): HtmlNode<Msg> {
 ```
 
-[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2200-L2203)
+[View source](https://github.com/eeue56/coed/blob/main/src/coed.ts#L2209-L2212)

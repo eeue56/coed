@@ -110,6 +110,18 @@ function update(msg: Msg, model: Model, send: (msg: Msg) => void): Model {
 
 There is also hydration support, via using `render` with `hydrate`. Check out the [hydration](examples/hydration/) folder for an example.
 
+## Parsing from html strings
+
+The `parse` module provides two functions: `parse` and `parseFragment`. They use JSDOM to turn a string of html into Coed. The majority of use cases probably want to use `parseFragment`.
+
+## Filtering
+
+To transform a tree, `coed` has several filtering methods:
+
+- `filter`, for removing nodes from the tree
+- `filterAttributes`, for removing attributes from the tree
+- `filterEvents`, for removing events from the tree
+
 ## Name
 
 Coed is the Welsh word for trees, forest, wood. For English speakers it'd be pronounced similar to "coyed".
