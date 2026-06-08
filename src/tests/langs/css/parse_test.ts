@@ -1,0 +1,352 @@
+import { deepStrictEqual } from "assert";
+import type { CssBlock } from "../../../langs/css/parse.ts";
+import {
+    cssBlockToString,
+    parseCssBlocks,
+} from "../../../langs/css/parse.ts";
+
+export function testTagParsing() {
+    const input = `
+h1 {
+    border-color: red;
+    width: 20px;
+    padding: 1rem;
+    height: 20vh;
+}`.trim();
+
+    const output: CssBlock[] = [
+        {
+            kind: "Regular",
+            selector: { kind: "Tag", tag: "h1" },
+            body: [
+                { kind: "Property", name: "border-color", value: "red" },
+                { kind: "Property", name: "width", value: "20px" },
+                { kind: "Property", name: "padding", value: "1rem" },
+                { kind: "Property", name: "height", value: "20vh" },
+            ],
+        },
+    ];
+
+    const actualBlocks = parseCssBlocks(input);
+
+    deepStrictEqual(actualBlocks, output);
+    deepStrictEqual(actualBlocks.map(cssBlockToString).join("\n"), input);
+}
+
+export function testClassParsing() {
+    const input = `
+.hello {
+    border-color: red;
+    width: 20px;
+    padding: 1rem;
+    height: 20vh;
+}`.trim();
+
+    const output: CssBlock[] = [
+        {
+            kind: "Regular",
+            selector: { kind: "Class", class: "hello" },
+            body: [
+                { kind: "Property", name: "border-color", value: "red" },
+                { kind: "Property", name: "width", value: "20px" },
+                { kind: "Property", name: "padding", value: "1rem" },
+                { kind: "Property", name: "height", value: "20vh" },
+            ],
+        },
+    ];
+
+    const actualBlocks = parseCssBlocks(input);
+
+    deepStrictEqual(actualBlocks, output);
+    deepStrictEqual(actualBlocks.map(cssBlockToString).join("\n"), input);
+}
+
+export function testIdParsing() {
+    const input = `
+#hello {
+    border-color: red;
+    width: 20px;
+    padding: 1rem;
+    height: 20vh;
+}`.trim();
+
+    const output: CssBlock[] = [
+        {
+            kind: "Regular",
+            selector: { kind: "Id", id: "hello" },
+            body: [
+                { kind: "Property", name: "border-color", value: "red" },
+                { kind: "Property", name: "width", value: "20px" },
+                { kind: "Property", name: "padding", value: "1rem" },
+                { kind: "Property", name: "height", value: "20vh" },
+            ],
+        },
+    ];
+
+    const actualBlocks = parseCssBlocks(input);
+
+    deepStrictEqual(actualBlocks, output);
+    deepStrictEqual(actualBlocks.map(cssBlockToString).join("\n"), input);
+}
+
+export function testAllParsing() {
+    const input = `
+* {
+    border-color: red;
+    width: 20px;
+    padding: 1rem;
+    height: 20vh;
+}`.trim();
+
+    const output: CssBlock[] = [
+        {
+            kind: "Regular",
+            selector: { kind: "All" },
+            body: [
+                { kind: "Property", name: "border-color", value: "red" },
+                { kind: "Property", name: "width", value: "20px" },
+                { kind: "Property", name: "padding", value: "1rem" },
+                { kind: "Property", name: "height", value: "20vh" },
+            ],
+        },
+    ];
+
+    const actualBlocks = parseCssBlocks(input);
+
+    deepStrictEqual(actualBlocks, output);
+    deepStrictEqual(actualBlocks.map(cssBlockToString).join("\n"), input);
+}
+
+export function testChildParsing() {
+    const input = `
+h1 > .hello > #world {
+    border-color: red;
+    width: 20px;
+    padding: 1rem;
+    height: 20vh;
+}`.trim();
+
+    const output: CssBlock[] = [
+        {
+            kind: "Regular",
+            selector: {
+                kind: "Child",
+                parent: { kind: "Tag", tag: "h1" },
+                child: {
+                    kind: "Child",
+                    parent: { kind: "Class", class: "hello" },
+                    child: { kind: "Id", id: "world" },
+                },
+            },
+            body: [
+                { kind: "Property", name: "border-color", value: "red" },
+                { kind: "Property", name: "width", value: "20px" },
+                { kind: "Property", name: "padding", value: "1rem" },
+                { kind: "Property", name: "height", value: "20vh" },
+            ],
+        },
+    ];
+
+    const actualBlocks = parseCssBlocks(input);
+
+    deepStrictEqual(actualBlocks, output);
+    deepStrictEqual(actualBlocks.map(cssBlockToString).join("\n"), input);
+}
+
+export function testSiblingParsing() {
+    const input = `
+h1 .hello #world {
+    border-color: red;
+    width: 20px;
+    padding: 1rem;
+    height: 20vh;
+}`.trim();
+
+    const output: CssBlock[] = [
+        {
+            kind: "Regular",
+            selector: {
+                kind: "Sibling",
+                siblings: [
+                    { kind: "Tag", tag: "h1" },
+                    { kind: "Class", class: "hello" },
+                    { kind: "Id", id: "world" },
+                ],
+            },
+            body: [
+                { kind: "Property", name: "border-color", value: "red" },
+                { kind: "Property", name: "width", value: "20px" },
+                { kind: "Property", name: "padding", value: "1rem" },
+                { kind: "Property", name: "height", value: "20vh" },
+            ],
+        },
+    ];
+
+    const actualBlocks = parseCssBlocks(input);
+
+    deepStrictEqual(actualBlocks, output);
+    deepStrictEqual(actualBlocks.map(cssBlockToString).join("\n"), input);
+}
+
+export function testPsuedoParsing() {
+    const input = `
+h1:hover {
+    border-color: red;
+    width: 20px;
+    padding: 1rem;
+    height: 20vh;
+}`.trim();
+
+    const output: CssBlock[] = [
+        {
+            kind: "Regular",
+            selector: {
+                kind: "Psuedo",
+                psuedo: "hover",
+                selector: { kind: "Tag", tag: "h1" },
+            },
+            body: [
+                { kind: "Property", name: "border-color", value: "red" },
+                { kind: "Property", name: "width", value: "20px" },
+                { kind: "Property", name: "padding", value: "1rem" },
+                { kind: "Property", name: "height", value: "20vh" },
+            ],
+        },
+    ];
+
+    const actualBlocks = parseCssBlocks(input);
+
+    deepStrictEqual(actualBlocks, output);
+    deepStrictEqual(actualBlocks.map(cssBlockToString).join("\n"), input);
+}
+
+export function testPsuedoElementParsing() {
+    const input = `
+h1::before {
+    border-color: red;
+    width: 20px;
+    padding: 1rem;
+    height: 20vh;
+}`.trim();
+
+    const output: CssBlock[] = [
+        {
+            kind: "Regular",
+            selector: {
+                kind: "PsuedoElement",
+                element: "before",
+                selector: { kind: "Tag", tag: "h1" },
+            },
+            body: [
+                { kind: "Property", name: "border-color", value: "red" },
+                { kind: "Property", name: "width", value: "20px" },
+                { kind: "Property", name: "padding", value: "1rem" },
+                { kind: "Property", name: "height", value: "20vh" },
+            ],
+        },
+    ];
+
+    const actualBlocks = parseCssBlocks(input);
+
+    deepStrictEqual(actualBlocks, output);
+    deepStrictEqual(actualBlocks.map(cssBlockToString).join("\n"), input);
+}
+
+export function testMultipleParsing() {
+    const input = `
+.hello, h1:hover, #world > div {
+    border-color: red;
+    width: 20px;
+    padding: 1rem;
+    height: 20vh;
+}`.trim();
+
+    const output: CssBlock[] = [
+        {
+            kind: "Regular",
+            selector: {
+                kind: "Multiple",
+                selectors: [
+                    { kind: "Class", class: "hello" },
+                    {
+                        kind: "Psuedo",
+                        psuedo: "hover",
+                        selector: { kind: "Tag", tag: "h1" },
+                    },
+                    {
+                        kind: "Child",
+                        parent: { kind: "Id", id: "world" },
+                        child: { kind: "Tag", tag: "div" },
+                    },
+                ],
+            },
+            body: [
+                { kind: "Property", name: "border-color", value: "red" },
+                { kind: "Property", name: "width", value: "20px" },
+                { kind: "Property", name: "padding", value: "1rem" },
+                { kind: "Property", name: "height", value: "20vh" },
+            ],
+        },
+    ];
+
+    const actualBlocks = parseCssBlocks(input);
+
+    deepStrictEqual(actualBlocks, output);
+    deepStrictEqual(actualBlocks.map(cssBlockToString).join("\n"), input);
+}
+
+export function testMediaParsing() {
+    const input = `
+
+@media (min-width: 1100px) {
+    .hello, h1:hover, #world > div {
+        border-color: red;
+        width: 20px;
+        padding: 1rem;
+        height: 20vh;
+    }
+}
+    `.trim();
+
+    const output: CssBlock[] = [
+        {
+            kind: "MediaQuery",
+            selector: {
+                kind: "Media",
+                query: "(min-width: 1100px)",
+            },
+            body: [
+                {
+                    kind: "Regular",
+                    selector: {
+                        kind: "Multiple",
+                        selectors: [
+                            { kind: "Class", class: "hello" },
+                            {
+                                kind: "Psuedo",
+                                psuedo: "hover",
+                                selector: { kind: "Tag", tag: "h1" },
+                            },
+                            {
+                                kind: "Child",
+                                parent: { kind: "Id", id: "world" },
+                                child: { kind: "Tag", tag: "div" },
+                            },
+                        ],
+                    },
+                    body: [
+                        { kind: "Property", name: "border-color", value: "red" },
+                        { kind: "Property", name: "width", value: "20px" },
+                        { kind: "Property", name: "padding", value: "1rem" },
+                        { kind: "Property", name: "height", value: "20vh" },
+                    ],
+                },
+            ],
+        },
+    ];
+
+    const actualBlocks = parseCssBlocks(input);
+
+    deepStrictEqual(actualBlocks, output);
+    deepStrictEqual(actualBlocks.map(cssBlockToString).join("\n"), input);
+}
