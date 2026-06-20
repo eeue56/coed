@@ -12,7 +12,8 @@
         "./build/parse.js",
         "./build/parse.d.ts",
         "./build/types.d.ts",
-        "./build/types.js"
+        "./build/types.js",
+        "./build/langs/css"
     ],
     "exports": {
         ".": {
@@ -34,6 +35,11 @@
             "types": "./build/types.d.ts",
             "import": "./build/types.js",
             "default": "./build/types.js"
+        },
+        "./css": {
+            "types": "./build/langs/css/index.d.ts",
+            "import": "./build/langs/css/index.js",
+            "default": "./build/langs/css/index.js"
         }
     },
     "typings": "build/coed.d.ts",

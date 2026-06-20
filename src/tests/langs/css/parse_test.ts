@@ -1,9 +1,6 @@
 import { deepStrictEqual } from "assert";
-import type { CssBlock } from "../../../langs/css/parse.ts";
-import {
-    cssBlockToString,
-    parseCssBlocks,
-} from "../../../langs/css/parse.ts";
+import { cssBlockToString, parseCssBlocks } from "../../../langs/css/parse.ts";
+import type { CssBlock } from "../../../langs/css/types.ts";
 
 export function testTagParsing() {
     const input = `
@@ -335,7 +332,108 @@ export function testMediaParsing() {
                         ],
                     },
                     body: [
-                        { kind: "Property", name: "border-color", value: "red" },
+                        {
+                            kind: "Property",
+                            name: "border-color",
+                            value: "red",
+                        },
+                        { kind: "Property", name: "width", value: "20px" },
+                        { kind: "Property", name: "padding", value: "1rem" },
+                        { kind: "Property", name: "height", value: "20vh" },
+                    ],
+                },
+            ],
+        },
+    ];
+
+    const actualBlocks = parseCssBlocks(input);
+
+    deepStrictEqual(actualBlocks, output);
+    deepStrictEqual(actualBlocks.map(cssBlockToString).join("\n"), input);
+}
+
+export function testEntireFileParsing() {
+    const input = `
+h1 {
+    border-color: red;
+    width: 20px;
+    padding: 1rem;
+    height: 20vh;
+}
+.title {
+    border-color: red;
+    width: 20px;
+    padding: 2rem;
+}
+#hello {
+    border-color: blue;
+}
+@media (min-width: 1100px) {
+    .hello, h1:hover, #world > div {
+        border-color: red;
+        width: 20px;
+        padding: 1rem;
+        height: 20vh;
+    }
+}
+`.trim();
+
+    const output: CssBlock[] = [
+        {
+            kind: "Regular",
+            selector: { kind: "Tag", tag: "h1" },
+            body: [
+                { kind: "Property", name: "border-color", value: "red" },
+                { kind: "Property", name: "width", value: "20px" },
+                { kind: "Property", name: "padding", value: "1rem" },
+                { kind: "Property", name: "height", value: "20vh" },
+            ],
+        },
+        {
+            kind: "Regular",
+            selector: { kind: "Class", class: "title" },
+            body: [
+                { kind: "Property", name: "border-color", value: "red" },
+                { kind: "Property", name: "width", value: "20px" },
+                { kind: "Property", name: "padding", value: "2rem" },
+            ],
+        },
+        {
+            kind: "Regular",
+            selector: { kind: "Id", id: "hello" },
+            body: [{ kind: "Property", name: "border-color", value: "blue" }],
+        },
+        {
+            kind: "MediaQuery",
+            selector: {
+                kind: "Media",
+                query: "(min-width: 1100px)",
+            },
+            body: [
+                {
+                    kind: "Regular",
+                    selector: {
+                        kind: "Multiple",
+                        selectors: [
+                            { kind: "Class", class: "hello" },
+                            {
+                                kind: "Psuedo",
+                                psuedo: "hover",
+                                selector: { kind: "Tag", tag: "h1" },
+                            },
+                            {
+                                kind: "Child",
+                                parent: { kind: "Id", id: "world" },
+                                child: { kind: "Tag", tag: "div" },
+                            },
+                        ],
+                    },
+                    body: [
+                        {
+                            kind: "Property",
+                            name: "border-color",
+                            value: "red",
+                        },
                         { kind: "Property", name: "width", value: "20px" },
                         { kind: "Property", name: "padding", value: "1rem" },
                         { kind: "Property", name: "height", value: "20vh" },

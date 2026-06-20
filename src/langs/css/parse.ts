@@ -1,23 +1,9 @@
-export type Selector =
-    | { kind: "Class"; class: string }
-    | { kind: "Tag"; tag: string }
-    | { kind: "Child"; parent: Selector; child: Selector }
-    | { kind: "Sibling"; siblings: Selector[] }
-    | { kind: "Psuedo"; selector: Selector; psuedo: string }
-    | { kind: "PsuedoElement"; selector: Selector; element: string }
-    | { kind: "Multiple"; selectors: Selector[] }
-    | { kind: "Id"; id: string }
-    | { kind: "All" }
-    | { kind: "Media"; query: string };
-
-export type Declaration =
-    | { kind: "Property"; name: string; value: string }
-    | { kind: "Nested"; selector: Selector; declarations: Declaration[] };
-
-export type Ruleset = {
-    selector: Selector;
-    declarations: Declaration[];
-};
+import type {
+    CssBlock,
+    Declaration,
+    ExtractedTagsAndClasses,
+    Selector,
+} from "./types.ts";
 
 type SelectorState = "Ready" | "ReadingClass" | "ReadingTag" | "ReadingId";
 
@@ -43,7 +29,10 @@ function selectorStateChange(
 
 export function parseSelector(str: string): Selector {
     if (str.includes(",")) {
-        return { kind: "Multiple", selectors: str.split(",").map(parseSelector) };
+        return {
+            kind: "Multiple",
+            selectors: str.split(",").map(parseSelector),
+        };
     }
 
     let state: SelectorState = "Ready";
@@ -92,7 +81,10 @@ export function parseSelector(str: string): Selector {
                 break;
             }
             case "@": {
-                return { kind: "Media", query: str.split(" ").slice(1).join(" ") };
+                return {
+                    kind: "Media",
+                    query: str.split(" ").slice(1).join(" "),
+                };
             }
             case " ": {
                 const maybeSelector = selectorStateChange(buffer, state);
@@ -122,7 +114,11 @@ export function parseSelector(str: string): Selector {
                     console.error("Error parsing: '", str, "'");
                     return { kind: "All" };
                 }
-                return { kind: "Psuedo", psuedo: str.slice(i + 1), selector: first };
+                return {
+                    kind: "Psuedo",
+                    psuedo: str.slice(i + 1),
+                    selector: first,
+                };
             }
             default: {
                 if (state === "Ready") {
@@ -165,7 +161,11 @@ export function parseDeclaration(str: string): Declaration {
         return { kind: "Nested", selector, declarations };
     } else {
         const [name, ...rest] = str.split(":");
-        return { kind: "Property", name: name.trim(), value: rest.join(":").trim() };
+        return {
+            kind: "Property",
+            name: name.trim(),
+            value: rest.join(":").trim(),
+        };
     }
 }
 
@@ -177,20 +177,9 @@ export function parseDeclarations(str: string): Declaration[] {
         .map(parseDeclaration);
 }
 
-export type CssBlock =
-    | {
-        kind: "Regular";
-        selector: Exclude<Selector, { kind: "Media" }>;
-        body: Declaration[];
-    }
-    | {
-        kind: "MediaQuery";
-        selector: { kind: "Media"; query: string };
-        body: CssBlock[];
-    };
-
 type CssParserState = "ReadingSelector" | "ReadingBody";
 
+/** parse css blocks from a string, failing gracefully */
 export function parseCssBlocks(css: string): CssBlock[] {
     let state: CssParserState = "ReadingSelector";
     let buffer: string[] = [];
@@ -248,10 +237,12 @@ export function parseCssBlocks(css: string): CssBlock[] {
     return blocks;
 }
 
-export function selectorToTagsAndClasses(selector: Selector): {
-    tags: string[];
-    classes: string[];
-} {
+/**
+ * get the tags and classes referenced in a seletor tree
+ */
+export function selectorToTagsAndClasses(
+    selector: Selector,
+): ExtractedTagsAndClasses {
     switch (selector.kind) {
         case "Class": {
             return { tags: [], classes: [selector.class] };
@@ -275,7 +266,7 @@ export function selectorToTagsAndClasses(selector: Selector): {
             return { tags: [], classes: [] };
         }
         case "Sibling": {
-            const result: { tags: string[]; classes: string[] } = {
+            const result: ExtractedTagsAndClasses = {
                 tags: [],
                 classes: [],
             };
@@ -294,7 +285,7 @@ export function selectorToTagsAndClasses(selector: Selector): {
             return selectorToTagsAndClasses(selector.selector);
         }
         case "Multiple": {
-            const result: { tags: string[]; classes: string[] } = {
+            const result: ExtractedTagsAndClasses = {
                 tags: [],
                 classes: [],
             };
@@ -313,6 +304,49 @@ export function selectorToTagsAndClasses(selector: Selector): {
             return { tags: [], classes: [] };
         }
     }
+}
+
+/**
+ * extract the tags and classes from a css block
+ */
+function cssBlockToTagsAndClasses(block: CssBlock): ExtractedTagsAndClasses {
+    switch (block.kind) {
+        case "Regular": {
+            return selectorToTagsAndClasses(block.selector);
+        }
+        case "MediaQuery": {
+            const result: ExtractedTagsAndClasses = {
+                tags: [],
+                classes: [],
+            };
+            for (const child of block.body) {
+                const { tags, classes } = cssBlockToTagsAndClasses(child);
+                result.tags = [...result.tags, ...tags];
+                result.classes = [...result.classes, ...classes];
+            }
+
+            return result;
+        }
+        case "Never": {
+            return { tags: [], classes: [] };
+        }
+    }
+}
+
+export function cssBlocksToTagsAndClasses(
+    blocks: CssBlock[],
+): ExtractedTagsAndClasses {
+    const result: ExtractedTagsAndClasses = {
+        tags: [],
+        classes: [],
+    };
+    for (const block of blocks) {
+        const { tags, classes } = cssBlockToTagsAndClasses(block);
+        result.tags = [...result.tags, ...tags];
+        result.classes = [...result.classes, ...classes];
+    }
+
+    return result;
 }
 
 function selectorToString(selector: Selector): string {
@@ -382,6 +416,9 @@ export function declarationsToString(declarations: Declaration[]): string {
 
 export function cssBlockToString(block: CssBlock): string {
     switch (block.kind) {
+        case "Never": {
+            return "";
+        }
         case "MediaQuery": {
             const query = selectorToString(block.selector);
             const inner = (block.body as CssBlock[])
@@ -393,7 +430,7 @@ export function cssBlockToString(block: CssBlock): string {
 ${inner.trimEnd()}
 }`;
         }
-        default: {
+        case "Regular": {
             const rules = indent(declarationsToString(block.body));
             return `${selectorToString(block.selector)} {
 ${rules}

@@ -122,6 +122,10 @@ To transform a tree, `coed` has several filtering methods:
 - `filterAttributes`, for removing attributes from the tree
 - `filterEvents`, for removing events from the tree
 
+## CSS
+
+CSS can be constructed into Coed trees via the `langs/css` support.
+
 ## Name
 
 Coed is the Welsh word for trees, forest, wood. For English speakers it'd be pronounced similar to "coyed".
