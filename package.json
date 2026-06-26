@@ -71,7 +71,8 @@
         "@eeue56/geiriadur": "^0.0.3",
         "@types/jsdom": "^28.0.3",
         "@types/node": "^24.0.3",
-        "typescript": "^6.0.3",
-        "jsdom": "^29.1.1"
+        "jsdom": "^29.1.1",
+        "prettier": "^3.8.4",
+        "typescript": "^6.0.3"
     }
 }
