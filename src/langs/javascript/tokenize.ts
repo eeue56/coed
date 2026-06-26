@@ -1,7 +1,7 @@
 import type { Token } from "./types.ts";
 
 function isDigit(char: string): boolean {
-    return char === "'" || char === '"' || char === "`";
+    return char >= "0" && char <= "9";
 }
 
 function isTrue(char: string): boolean {
@@ -27,6 +27,37 @@ function isIdentifierPart(char: string): boolean {
 
 function isStringQuote(char: string): boolean {
     return char === '"' || char === "'" || char === "`";
+}
+
+/**
+ * explicitly only support:
+ * ```
+ * 123
+ * 12.34
+ * ```
+ *
+ * and not support:
+ *
+ * ```
+ * 1e10
+ * 1.2e-3
+ * .5
+ * ```
+ */
+function isNumberStart(char: string): boolean {
+    return isDigit(char);
+}
+
+function isNumberPart(char: string, buffer: string): boolean {
+    if (isDigit(char)) {
+        return true;
+    }
+
+    if (char === ".") {
+        return !buffer.includes(".");
+    }
+
+    return false;
 }
 
 type TokenizerModel = {
@@ -116,9 +147,20 @@ export function tokenize(string: string): Token[] {
                     tokens,
                 );
             }
+        } else if (tokenizerModel.state === "ReadingNumber") {
+            if (!isNumberPart(char, tokenizerModel.buffer)) {
+                switchTokenizerState(
+                    "ReadyForNextToken",
+                    tokenizerModel,
+                    tokens,
+                );
+            }
         } else {
             if (isStringQuote(char)) {
                 switchTokenizerState("ReadingString", tokenizerModel, tokens);
+                tokenizerModel.currentTokenStartIndex = i;
+            } else if (isNumberStart(char)) {
+                switchTokenizerState("ReadingNumber", tokenizerModel, tokens);
                 tokenizerModel.currentTokenStartIndex = i;
             }
         }

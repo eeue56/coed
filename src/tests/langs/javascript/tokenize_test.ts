@@ -61,13 +61,19 @@ export function testFloatNumber() {
     ]);
 }
 
-export function testExponentNumber() {
+export function testExponentNumberNotSupported() {
     const tokens = tokenize("1.2e3");
     assert.deepStrictEqual(tokens, [
         {
             kind: "NumberToken",
-            value: 1200,
+            value: 1.2,
             startIndex: 0,
+            endIndex: 3,
+        },
+        {
+            kind: "NumberToken",
+            value: 3,
+            startIndex: 4,
             endIndex: 5,
         },
     ]);
