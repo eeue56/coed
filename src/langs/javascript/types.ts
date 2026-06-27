@@ -39,6 +39,8 @@ type ElseToken = BaseToken & { kind: "ElseToken" };
 type ForToken = BaseToken & { kind: "ForToken" };
 type FunctionToken = BaseToken & { kind: "FunctionToken" };
 type ReturnToken = BaseToken & { kind: "ReturnToken" };
+type ContinueToken = BaseToken & { kind: "ContinueToken" };
+type BreakToken = BaseToken & { kind: "BreakToken" };
 type NullToken = BaseToken & { kind: "NullToken" };
 type TrueToken = BaseToken & { kind: "TrueToken" };
 type FalseToken = BaseToken & { kind: "FalseToken" };
@@ -84,6 +86,8 @@ export type Token =
     | ForToken
     | FunctionToken
     | ReturnToken
+    | ContinueToken
+    | BreakToken
     | NullToken
     | TrueToken
     | FalseToken

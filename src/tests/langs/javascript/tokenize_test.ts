@@ -683,6 +683,128 @@ export function testIf() {
     ]);
 }
 
+export function testFunctionDefinition() {
+    const tokens = tokenize("function sum(a, b) {}");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "FunctionToken",
+            startIndex: 0,
+            endIndex: 8,
+        },
+        { kind: "WhitespaceToken", startIndex: 8, endIndex: 9, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "sum",
+            startIndex: 9,
+            endIndex: 12,
+        },
+        {
+            kind: "LeftParenToken",
+            startIndex: 12,
+            endIndex: 13,
+        },
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 13,
+            endIndex: 14,
+        },
+        {
+            kind: "CommaToken",
+            startIndex: 14,
+            endIndex: 15,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 15,
+            endIndex: 16,
+            value: " ",
+        },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 16,
+            endIndex: 17,
+        },
+        {
+            kind: "RightParenToken",
+            startIndex: 17,
+            endIndex: 18,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 18,
+            endIndex: 19,
+            value: " ",
+        },
+        {
+            kind: "LeftBraceToken",
+            startIndex: 19,
+            endIndex: 20,
+        },
+        {
+            kind: "RightBraceToken",
+            startIndex: 20,
+            endIndex: 21,
+        },
+    ]);
+}
+
+export function testReturn() {
+    const tokens = tokenize("return total;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "ReturnToken",
+            startIndex: 0,
+            endIndex: 6,
+        },
+        { kind: "WhitespaceToken", startIndex: 6, endIndex: 7, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "total",
+            startIndex: 7,
+            endIndex: 12,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 12,
+            endIndex: 13,
+        },
+    ]);
+}
+
+export function testContinue() {
+    const tokens = tokenize("continue;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "ContinueToken",
+            startIndex: 0,
+            endIndex: 8,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 8,
+            endIndex: 9,
+        },
+    ]);
+}
+
+export function testBreak() {
+    const tokens = tokenize("break;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "BreakToken",
+            startIndex: 0,
+            endIndex: 5,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 5,
+            endIndex: 6,
+        },
+    ]);
+}
+
 export function testEquality() {
     const tokens = tokenize("a === b");
     assert.deepStrictEqual(tokens, [

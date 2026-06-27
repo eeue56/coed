@@ -477,6 +477,30 @@ function switchTokenizerState(
                     startIndex: start,
                     endIndex: endIndex,
                 });
+            } else if (tokenizerModel.buffer === "function") {
+                tokens.push({
+                    kind: "FunctionToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
+            } else if (tokenizerModel.buffer === "return") {
+                tokens.push({
+                    kind: "ReturnToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
+            } else if (tokenizerModel.buffer === "continue") {
+                tokens.push({
+                    kind: "ContinueToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
+            } else if (tokenizerModel.buffer === "break") {
+                tokens.push({
+                    kind: "BreakToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
             } else if (tokenizerModel.buffer === "null") {
                 tokens.push({
                     kind: "NullToken",
