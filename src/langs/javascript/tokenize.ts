@@ -72,6 +72,26 @@ function isComma(char: string): boolean {
     return char === ",";
 }
 
+function isSemicolon(char: string): boolean {
+    return char === ";";
+}
+
+function isLeftParen(char: string): boolean {
+    return char === "(";
+}
+
+function isRightParen(char: string): boolean {
+    return char === ")";
+}
+
+function isLeftBrace(char: string): boolean {
+    return char === "{";
+}
+
+function isRightBrace(char: string): boolean {
+    return char === "}";
+}
+
 function isAssign(char: string): boolean {
     return char === "=";
 }
@@ -87,18 +107,28 @@ type TokenizerModel = {
 };
 
 type OneOffTokenizerState =
+    | "ReadLeftParen"
+    | "ReadRightParen"
     | "ReadLeftBracket"
     | "ReadRightBracket"
+    | "ReadLeftBrace"
+    | "ReadRightBrace"
     | "ReadComma"
+    | "ReadSemicolon"
     | "ReadAssign";
 
 function isOneOffTokenizerState(
     state: TokenizerState,
 ): state is OneOffTokenizerState {
     return (
+        state === "ReadLeftParen" ||
+        state === "ReadRightParen" ||
         state === "ReadLeftBracket" ||
         state === "ReadRightBracket" ||
+        state === "ReadLeftBrace" ||
+        state === "ReadRightBrace" ||
         state === "ReadComma" ||
+        state === "ReadSemicolon" ||
         state === "ReadAssign"
     );
 }
@@ -153,6 +183,22 @@ function switchTokenizerState(
         const start = currentIndex;
         console.log("Handling one-off state: ", newState);
         switch (newState) {
+            case "ReadLeftParen": {
+                tokens.push({
+                    kind: "LeftParenToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
+            case "ReadRightParen": {
+                tokens.push({
+                    kind: "RightParenToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
             case "ReadLeftBracket": {
                 console.log("ReadLeftBracket, pushing LeftBracketToken");
                 tokens.push({
@@ -170,9 +216,33 @@ function switchTokenizerState(
                 });
                 break;
             }
+            case "ReadLeftBrace": {
+                tokens.push({
+                    kind: "LeftBraceToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
+            case "ReadRightBrace": {
+                tokens.push({
+                    kind: "RightBraceToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
             case "ReadComma": {
                 tokens.push({
                     kind: "CommaToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
+            case "ReadSemicolon": {
+                tokens.push({
+                    kind: "SemicolonToken",
                     startIndex: start,
                     endIndex: start + 1,
                 });
@@ -345,6 +415,22 @@ export function tokenize(string: string): Token[] {
                 );
                 tokenizerModel.currentTokenStartIndex = i;
                 tokenizerModel.buffer += char;
+            } else if (isLeftParen(char)) {
+                switchTokenizerState(
+                    "ReadLeftParen",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
+                tokenizerModel.currentTokenStartIndex = i;
+            } else if (isRightParen(char)) {
+                switchTokenizerState(
+                    "ReadRightParen",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
+                tokenizerModel.currentTokenStartIndex = i;
             } else if (isLeftBracket(char)) {
                 switchTokenizerState(
                     "ReadLeftBracket",
@@ -363,8 +449,32 @@ export function tokenize(string: string): Token[] {
                     i,
                 );
                 tokenizerModel.currentTokenStartIndex = i;
+            } else if (isLeftBrace(char)) {
+                switchTokenizerState(
+                    "ReadLeftBrace",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
+                tokenizerModel.currentTokenStartIndex = i;
+            } else if (isRightBrace(char)) {
+                switchTokenizerState(
+                    "ReadRightBrace",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
+                tokenizerModel.currentTokenStartIndex = i;
             } else if (isComma(char)) {
                 switchTokenizerState("ReadComma", tokenizerModel, tokens, i);
+                tokenizerModel.currentTokenStartIndex = i;
+            } else if (isSemicolon(char)) {
+                switchTokenizerState(
+                    "ReadSemicolon",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
                 tokenizerModel.currentTokenStartIndex = i;
             } else if (isAssign(char)) {
                 switchTokenizerState("ReadAssign", tokenizerModel, tokens, i);
