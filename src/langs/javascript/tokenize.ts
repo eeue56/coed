@@ -72,6 +72,14 @@ function isComma(char: string): boolean {
     return char === ",";
 }
 
+function isAssign(char: string): boolean {
+    return char === "=";
+}
+
+function isWhitespace(char: string): boolean {
+    return char === " " || char === "\n" || char === "\r" || char === "\t";
+}
+
 type TokenizerModel = {
     state: BufferingTokenizerState;
     currentTokenStartIndex: number;
@@ -81,7 +89,8 @@ type TokenizerModel = {
 type OneOffTokenizerState =
     | "ReadLeftBracket"
     | "ReadRightBracket"
-    | "ReadComma";
+    | "ReadComma"
+    | "ReadAssign";
 
 function isOneOffTokenizerState(
     state: TokenizerState,
@@ -89,7 +98,8 @@ function isOneOffTokenizerState(
     return (
         state === "ReadLeftBracket" ||
         state === "ReadRightBracket" ||
-        state === "ReadComma"
+        state === "ReadComma" ||
+        state === "ReadAssign"
     );
 }
 
@@ -97,7 +107,8 @@ type BufferingTokenizerState =
     | "ReadyForNextToken"
     | "ReadingNumber"
     | "ReadingIdentifier"
-    | "ReadingString";
+    | "ReadingString"
+    | "ReadingWhitespace";
 
 function isBufferingTokenizerState(
     state: TokenizerState,
@@ -106,7 +117,8 @@ function isBufferingTokenizerState(
         state === "ReadyForNextToken" ||
         state === "ReadingNumber" ||
         state === "ReadingIdentifier" ||
-        state === "ReadingString"
+        state === "ReadingString" ||
+        state === "ReadingWhitespace"
     );
 }
 
@@ -166,6 +178,14 @@ function switchTokenizerState(
                 });
                 break;
             }
+            case "ReadAssign": {
+                tokens.push({
+                    kind: "AssignToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
         }
 
         console.log("Done with one-off state, resetting to ReadyForNextToken");
@@ -194,17 +214,40 @@ function switchTokenizerState(
             break;
         }
         case "ReadingIdentifier": {
-            tokens.push({
-                kind: "IdentifierToken",
-                name: tokenizerModel.buffer,
-                startIndex: start,
-                endIndex: endIndex,
-            });
+            if (tokenizerModel.buffer === "let") {
+                tokens.push({
+                    kind: "LetToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
+            } else if (tokenizerModel.buffer === "const") {
+                tokens.push({
+                    kind: "ConstToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
+            } else {
+                tokens.push({
+                    kind: "IdentifierToken",
+                    name: tokenizerModel.buffer,
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
+            }
             break;
         }
         case "ReadingString": {
             tokens.push({
                 kind: "StringToken",
+                value: tokenizerModel.buffer,
+                startIndex: start,
+                endIndex: endIndex,
+            });
+            break;
+        }
+        case "ReadingWhitespace": {
+            tokens.push({
+                kind: "WhitespaceToken",
                 value: tokenizerModel.buffer,
                 startIndex: start,
                 endIndex: endIndex,
@@ -259,6 +302,28 @@ export function tokenize(string: string): Token[] {
             } else {
                 tokenizerModel.buffer += char;
             }
+        } else if (tokenizerModel.state === "ReadingIdentifier") {
+            if (!isIdentifierPart(char)) {
+                switchTokenizerState(
+                    "ReadyForNextToken",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
+            } else {
+                tokenizerModel.buffer += char;
+            }
+        } else if (tokenizerModel.state === "ReadingWhitespace") {
+            if (!isWhitespace(char)) {
+                switchTokenizerState(
+                    "ReadyForNextToken",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
+            } else {
+                tokenizerModel.buffer += char;
+            }
         }
 
         if (tokenizerModel.state === "ReadyForNextToken") {
@@ -301,6 +366,18 @@ export function tokenize(string: string): Token[] {
             } else if (isComma(char)) {
                 switchTokenizerState("ReadComma", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
+            } else if (isAssign(char)) {
+                switchTokenizerState("ReadAssign", tokenizerModel, tokens, i);
+                tokenizerModel.currentTokenStartIndex = i;
+            } else if (isWhitespace(char)) {
+                switchTokenizerState(
+                    "ReadingWhitespace",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
+                tokenizerModel.currentTokenStartIndex = i;
+                tokenizerModel.buffer += char;
             } else if (isIdentifierStart(char)) {
                 switchTokenizerState(
                     "ReadingIdentifier",

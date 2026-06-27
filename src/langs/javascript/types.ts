@@ -1,8 +1,8 @@
-type BaseToken = { startIndex: number, endIndex: number };
+type BaseToken = { startIndex: number; endIndex: number };
 
-type NumberToken = BaseToken & { kind: "NumberToken", value: number };
-type StringToken = BaseToken & { kind: "StringToken", value: string };
-type IdentifierToken = BaseToken & { kind: "IdentifierToken", name: string };
+type NumberToken = BaseToken & { kind: "NumberToken"; value: number };
+type StringToken = BaseToken & { kind: "StringToken"; value: string };
+type IdentifierToken = BaseToken & { kind: "IdentifierToken"; name: string };
 type AdditionToken = BaseToken & { kind: "AdditionToken" };
 type SubtractionToken = BaseToken & { kind: "SubtractionToken" };
 type MultiplicationToken = BaseToken & { kind: "MultiplicationToken" };
@@ -25,6 +25,8 @@ type LeftBraceToken = BaseToken & { kind: "LeftBraceToken" };
 type RightBraceToken = BaseToken & { kind: "RightBraceToken" };
 type CommaToken = BaseToken & { kind: "CommaToken" };
 type SemicolonToken = BaseToken & { kind: "SemicolonToken" };
+type AssignToken = BaseToken & { kind: "AssignToken" };
+type WhitespaceToken = BaseToken & { kind: "WhitespaceToken"; value: string };
 type LetToken = BaseToken & { kind: "LetToken" };
 type ConstToken = BaseToken & { kind: "ConstToken" };
 type IfToken = BaseToken & { kind: "IfToken" };
@@ -33,13 +35,53 @@ type ForToken = BaseToken & { kind: "ForToken" };
 type FunctionToken = BaseToken & { kind: "FunctionToken" };
 type ReturnToken = BaseToken & { kind: "ReturnToken" };
 
-export type Token = NumberToken | StringToken | IdentifierToken | AdditionToken | SubtractionToken | MultiplicationToken | DivisionToken | EqualityToken | InqualityToken | LessThanToken | MoreThanToken | LessThanOrEqualToken | MoreThanOrEqualToken | IncrementToken | DecrementToken | IncreaseToken | DecreaseToken | LeftParenToken | RightParenToken | LeftBracketToken | RightBracketToken | LeftBraceToken | RightBraceToken | CommaToken | SemicolonToken | LetToken | ConstToken | IfToken | ElseToken | ForToken | FunctionToken | ReturnToken;
+export type Token =
+    | NumberToken
+    | StringToken
+    | IdentifierToken
+    | AdditionToken
+    | SubtractionToken
+    | MultiplicationToken
+    | DivisionToken
+    | EqualityToken
+    | InqualityToken
+    | LessThanToken
+    | MoreThanToken
+    | LessThanOrEqualToken
+    | MoreThanOrEqualToken
+    | IncrementToken
+    | DecrementToken
+    | IncreaseToken
+    | DecreaseToken
+    | LeftParenToken
+    | RightParenToken
+    | LeftBracketToken
+    | RightBracketToken
+    | LeftBraceToken
+    | RightBraceToken
+    | CommaToken
+    | SemicolonToken
+    | AssignToken
+    | WhitespaceToken
+    | LetToken
+    | ConstToken
+    | IfToken
+    | ElseToken
+    | ForToken
+    | FunctionToken
+    | ReturnToken;
 
-type NumberExpression = { kind: "NumberExpression", value: number };
-type StringExpression = { kind: "StringExpression", value: string };
-type StringLiteralExpression = { kind: "StringLiteralExpression", values: Expression[] };
-type ArrayExpression = { kind: "ArrayExpression", elements: Expression[] };
-type ObjectExpression = { kind: "ObjectExpression", properties: { [key: string]: Expression } };
+type NumberExpression = { kind: "NumberExpression"; value: number };
+type StringExpression = { kind: "StringExpression"; value: string };
+type StringLiteralExpression = {
+    kind: "StringLiteralExpression";
+    values: Expression[];
+};
+type ArrayExpression = { kind: "ArrayExpression"; elements: Expression[] };
+type ObjectExpression = {
+    kind: "ObjectExpression";
+    properties: { [key: string]: Expression };
+};
 type EqualityExpression = {
     kind: "EqualityExpression";
     left: Expression;
@@ -89,13 +131,13 @@ type IncreaseExpression = {
     kind: "IncreaseExpression";
     variable: string;
     amount: Expression;
-}
+};
 
 type DecreaseExpression = {
     kind: "DecreaseExpression";
     variable: string;
     amount: Expression;
-}
+};
 
 type FunctionCallExpression = {
     kind: "FunctionCallExpression";
@@ -152,9 +194,35 @@ type DivisionExpression = {
 };
 
 type NullExpression = { kind: "NullExpression" };
-type BooleanExpression = { kind: "BooleanExpression", value: boolean };
+type BooleanExpression = { kind: "BooleanExpression"; value: boolean };
 
-export type Expression = NumberExpression | StringExpression | ArrayExpression | ObjectExpression | EqualityExpression | InqualityExpression | LessThanExpression | MoreThanExpression | LessThanOrEqualExpression | MoreThanOrEqualExpression | IncrementExpression | DecrementExpression | IncreaseExpression | DecreaseExpression | NullExpression | BooleanExpression | StringLiteralExpression | FunctionCallExpression | NameLookupExpression | ObjectPropertyExpression | ObjectMethodCallExpression | ArrayAccessExpression | AdditionExpression | SubtractionExpression | MultiplicationExpression | DivisionExpression;
+export type Expression =
+    | NumberExpression
+    | StringExpression
+    | ArrayExpression
+    | ObjectExpression
+    | EqualityExpression
+    | InqualityExpression
+    | LessThanExpression
+    | MoreThanExpression
+    | LessThanOrEqualExpression
+    | MoreThanOrEqualExpression
+    | IncrementExpression
+    | DecrementExpression
+    | IncreaseExpression
+    | DecreaseExpression
+    | NullExpression
+    | BooleanExpression
+    | StringLiteralExpression
+    | FunctionCallExpression
+    | NameLookupExpression
+    | ObjectPropertyExpression
+    | ObjectMethodCallExpression
+    | ArrayAccessExpression
+    | AdditionExpression
+    | SubtractionExpression
+    | MultiplicationExpression
+    | DivisionExpression;
 
 type LetStatement = {
     kind: "LetStatement";
@@ -190,4 +258,9 @@ type FunctionDeclaration = {
     body: Ast[];
 };
 
-export type Ast = LetStatement | IfStatement | ForLoop | FunctionDeclaration | ConstStatement;
+export type Ast =
+    | LetStatement
+    | IfStatement
+    | ForLoop
+    | FunctionDeclaration
+    | ConstStatement;
