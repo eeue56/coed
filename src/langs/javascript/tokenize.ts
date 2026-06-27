@@ -477,6 +477,30 @@ function switchTokenizerState(
                     startIndex: start,
                     endIndex: endIndex,
                 });
+            } else if (tokenizerModel.buffer === "null") {
+                tokens.push({
+                    kind: "NullToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
+            } else if (tokenizerModel.buffer === "true") {
+                tokens.push({
+                    kind: "TrueToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
+            } else if (tokenizerModel.buffer === "false") {
+                tokens.push({
+                    kind: "FalseToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
+            } else if (tokenizerModel.buffer === "typeof") {
+                tokens.push({
+                    kind: "TypeofToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
             } else {
                 tokens.push({
                     kind: "IdentifierToken",

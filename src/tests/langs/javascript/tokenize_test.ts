@@ -1033,3 +1033,54 @@ export function testDecrement() {
         },
     ]);
 }
+
+export function testNull() {
+    const tokens = tokenize("null");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "NullToken",
+            startIndex: 0,
+            endIndex: 4,
+        },
+    ]);
+}
+
+export function testTrue() {
+    const tokens = tokenize("true");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "TrueToken",
+            startIndex: 0,
+            endIndex: 4,
+        },
+    ]);
+}
+
+export function testFalse() {
+    const tokens = tokenize("false");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "FalseToken",
+            startIndex: 0,
+            endIndex: 5,
+        },
+    ]);
+}
+
+export function testTypeof() {
+    const tokens = tokenize("typeof x");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "TypeofToken",
+            startIndex: 0,
+            endIndex: 6,
+        },
+        { kind: "WhitespaceToken", startIndex: 6, endIndex: 7, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "x",
+            startIndex: 7,
+            endIndex: 8,
+        },
+    ]);
+}

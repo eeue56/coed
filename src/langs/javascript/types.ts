@@ -39,6 +39,10 @@ type ElseToken = BaseToken & { kind: "ElseToken" };
 type ForToken = BaseToken & { kind: "ForToken" };
 type FunctionToken = BaseToken & { kind: "FunctionToken" };
 type ReturnToken = BaseToken & { kind: "ReturnToken" };
+type NullToken = BaseToken & { kind: "NullToken" };
+type TrueToken = BaseToken & { kind: "TrueToken" };
+type FalseToken = BaseToken & { kind: "FalseToken" };
+type TypeofToken = BaseToken & { kind: "TypeofToken" };
 
 export type Token =
     | NumberToken
@@ -79,7 +83,11 @@ export type Token =
     | ElseToken
     | ForToken
     | FunctionToken
-    | ReturnToken;
+    | ReturnToken
+    | NullToken
+    | TrueToken
+    | FalseToken
+    | TypeofToken;
 
 type NumberExpression = { kind: "NumberExpression"; value: number };
 type StringExpression = { kind: "StringExpression"; value: string };
