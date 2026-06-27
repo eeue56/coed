@@ -115,7 +115,16 @@ type OneOffTokenizerState =
     | "ReadRightBrace"
     | "ReadComma"
     | "ReadSemicolon"
-    | "ReadAssign";
+    | "ReadAssign"
+    | "ReadEquality"
+    | "ReadInequality"
+    | "ReadLessThan"
+    | "ReadMoreThan"
+    | "ReadLessThanOrEqual"
+    | "ReadMoreThanOrEqual"
+    | "ReadAnd"
+    | "ReadOr"
+    | "ReadNegation";
 
 function isOneOffTokenizerState(
     state: TokenizerState,
@@ -129,7 +138,16 @@ function isOneOffTokenizerState(
         state === "ReadRightBrace" ||
         state === "ReadComma" ||
         state === "ReadSemicolon" ||
-        state === "ReadAssign"
+        state === "ReadAssign" ||
+        state === "ReadEquality" ||
+        state === "ReadInequality" ||
+        state === "ReadLessThan" ||
+        state === "ReadMoreThan" ||
+        state === "ReadLessThanOrEqual" ||
+        state === "ReadMoreThanOrEqual" ||
+        state === "ReadAnd" ||
+        state === "ReadOr" ||
+        state === "ReadNegation"
     );
 }
 
@@ -256,6 +274,78 @@ function switchTokenizerState(
                 });
                 break;
             }
+            case "ReadEquality": {
+                tokens.push({
+                    kind: "EqualityToken",
+                    startIndex: start,
+                    endIndex: start + 3,
+                });
+                break;
+            }
+            case "ReadInequality": {
+                tokens.push({
+                    kind: "InequalityToken",
+                    startIndex: start,
+                    endIndex: start + 3,
+                });
+                break;
+            }
+            case "ReadLessThan": {
+                tokens.push({
+                    kind: "LessThanToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
+            case "ReadMoreThan": {
+                tokens.push({
+                    kind: "MoreThanToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
+            case "ReadLessThanOrEqual": {
+                tokens.push({
+                    kind: "LessThanOrEqualToken",
+                    startIndex: start,
+                    endIndex: start + 2,
+                });
+                break;
+            }
+            case "ReadMoreThanOrEqual": {
+                tokens.push({
+                    kind: "MoreThanOrEqualToken",
+                    startIndex: start,
+                    endIndex: start + 2,
+                });
+                break;
+            }
+            case "ReadAnd": {
+                tokens.push({
+                    kind: "AndToken",
+                    startIndex: start,
+                    endIndex: start + 2,
+                });
+                break;
+            }
+            case "ReadOr": {
+                tokens.push({
+                    kind: "OrToken",
+                    startIndex: start,
+                    endIndex: start + 2,
+                });
+                break;
+            }
+            case "ReadNegation": {
+                tokens.push({
+                    kind: "NegationToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
         }
 
         console.log("Done with one-off state, resetting to ReadyForNextToken");
@@ -299,6 +389,12 @@ function switchTokenizerState(
             } else if (tokenizerModel.buffer === "for") {
                 tokens.push({
                     kind: "ForToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
+            } else if (tokenizerModel.buffer === "if") {
+                tokens.push({
+                    kind: "IfToken",
                     startIndex: start,
                     endIndex: endIndex,
                 });
@@ -481,6 +577,62 @@ export function tokenize(string: string): Token[] {
                     tokens,
                     i,
                 );
+                tokenizerModel.currentTokenStartIndex = i;
+            } else if (
+                char === "=" &&
+                string[i + 1] === "=" &&
+                string[i + 2] === "="
+            ) {
+                switchTokenizerState("ReadEquality", tokenizerModel, tokens, i);
+                tokenizerModel.currentTokenStartIndex = i;
+                i += 2;
+            } else if (
+                char === "!" &&
+                string[i + 1] === "=" &&
+                string[i + 2] === "="
+            ) {
+                switchTokenizerState(
+                    "ReadInequality",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
+                tokenizerModel.currentTokenStartIndex = i;
+                i += 2;
+            } else if (char === "<" && string[i + 1] === "=") {
+                switchTokenizerState(
+                    "ReadLessThanOrEqual",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
+                tokenizerModel.currentTokenStartIndex = i;
+                i += 1;
+            } else if (char === ">" && string[i + 1] === "=") {
+                switchTokenizerState(
+                    "ReadMoreThanOrEqual",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
+                tokenizerModel.currentTokenStartIndex = i;
+                i += 1;
+            } else if (char === "&" && string[i + 1] === "&") {
+                switchTokenizerState("ReadAnd", tokenizerModel, tokens, i);
+                tokenizerModel.currentTokenStartIndex = i;
+                i += 1;
+            } else if (char === "|" && string[i + 1] === "|") {
+                switchTokenizerState("ReadOr", tokenizerModel, tokens, i);
+                tokenizerModel.currentTokenStartIndex = i;
+                i += 1;
+            } else if (char === "<") {
+                switchTokenizerState("ReadLessThan", tokenizerModel, tokens, i);
+                tokenizerModel.currentTokenStartIndex = i;
+            } else if (char === ">") {
+                switchTokenizerState("ReadMoreThan", tokenizerModel, tokens, i);
+                tokenizerModel.currentTokenStartIndex = i;
+            } else if (char === "!") {
+                switchTokenizerState("ReadNegation", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
             } else if (isAssign(char)) {
                 switchTokenizerState("ReadAssign", tokenizerModel, tokens, i);

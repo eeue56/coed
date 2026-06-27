@@ -412,3 +412,259 @@ export function testBraceTokens() {
         },
     ]);
 }
+
+export function testIf() {
+    const tokens = tokenize("if (a) {}");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IfToken",
+            startIndex: 0,
+            endIndex: 2,
+        },
+        { kind: "WhitespaceToken", startIndex: 2, endIndex: 3, value: " " },
+        {
+            kind: "LeftParenToken",
+            startIndex: 3,
+            endIndex: 4,
+        },
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 4,
+            endIndex: 5,
+        },
+        {
+            kind: "RightParenToken",
+            startIndex: 5,
+            endIndex: 6,
+        },
+        { kind: "WhitespaceToken", startIndex: 6, endIndex: 7, value: " " },
+        {
+            kind: "LeftBraceToken",
+            startIndex: 7,
+            endIndex: 8,
+        },
+        {
+            kind: "RightBraceToken",
+            startIndex: 8,
+            endIndex: 9,
+        },
+    ]);
+}
+
+export function testEquality() {
+    const tokens = tokenize("a === b");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 0,
+            endIndex: 1,
+        },
+        { kind: "WhitespaceToken", startIndex: 1, endIndex: 2, value: " " },
+        {
+            kind: "EqualityToken",
+            startIndex: 2,
+            endIndex: 5,
+        },
+        { kind: "WhitespaceToken", startIndex: 5, endIndex: 6, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 6,
+            endIndex: 7,
+        },
+    ]);
+}
+
+export function testInequality() {
+    const tokens = tokenize("a !== b");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 0,
+            endIndex: 1,
+        },
+        { kind: "WhitespaceToken", startIndex: 1, endIndex: 2, value: " " },
+        {
+            kind: "InequalityToken",
+            startIndex: 2,
+            endIndex: 5,
+        },
+        { kind: "WhitespaceToken", startIndex: 5, endIndex: 6, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 6,
+            endIndex: 7,
+        },
+    ]);
+}
+
+export function testLessThan() {
+    const tokens = tokenize("a < b");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 0,
+            endIndex: 1,
+        },
+        { kind: "WhitespaceToken", startIndex: 1, endIndex: 2, value: " " },
+        {
+            kind: "LessThanToken",
+            startIndex: 2,
+            endIndex: 3,
+        },
+        { kind: "WhitespaceToken", startIndex: 3, endIndex: 4, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 4,
+            endIndex: 5,
+        },
+    ]);
+}
+
+export function testMoreThan() {
+    const tokens = tokenize("a > b");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 0,
+            endIndex: 1,
+        },
+        { kind: "WhitespaceToken", startIndex: 1, endIndex: 2, value: " " },
+        {
+            kind: "MoreThanToken",
+            startIndex: 2,
+            endIndex: 3,
+        },
+        { kind: "WhitespaceToken", startIndex: 3, endIndex: 4, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 4,
+            endIndex: 5,
+        },
+    ]);
+}
+
+export function testNegation() {
+    const tokens = tokenize("!a");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "NegationToken",
+            startIndex: 0,
+            endIndex: 1,
+        },
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 1,
+            endIndex: 2,
+        },
+    ]);
+}
+
+export function testLessThanOrEqual() {
+    const tokens = tokenize("a <= b");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 0,
+            endIndex: 1,
+        },
+        { kind: "WhitespaceToken", startIndex: 1, endIndex: 2, value: " " },
+        {
+            kind: "LessThanOrEqualToken",
+            startIndex: 2,
+            endIndex: 4,
+        },
+        { kind: "WhitespaceToken", startIndex: 4, endIndex: 5, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 5,
+            endIndex: 6,
+        },
+    ]);
+}
+
+export function testMoreThanOrEqual() {
+    const tokens = tokenize("a >= b");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 0,
+            endIndex: 1,
+        },
+        { kind: "WhitespaceToken", startIndex: 1, endIndex: 2, value: " " },
+        {
+            kind: "MoreThanOrEqualToken",
+            startIndex: 2,
+            endIndex: 4,
+        },
+        { kind: "WhitespaceToken", startIndex: 4, endIndex: 5, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 5,
+            endIndex: 6,
+        },
+    ]);
+}
+
+export function testAnd() {
+    const tokens = tokenize("a && b");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 0,
+            endIndex: 1,
+        },
+        { kind: "WhitespaceToken", startIndex: 1, endIndex: 2, value: " " },
+        {
+            kind: "AndToken",
+            startIndex: 2,
+            endIndex: 4,
+        },
+        { kind: "WhitespaceToken", startIndex: 4, endIndex: 5, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 5,
+            endIndex: 6,
+        },
+    ]);
+}
+
+export function testOr() {
+    const tokens = tokenize("a || b");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 0,
+            endIndex: 1,
+        },
+        { kind: "WhitespaceToken", startIndex: 1, endIndex: 2, value: " " },
+        {
+            kind: "OrToken",
+            startIndex: 2,
+            endIndex: 4,
+        },
+        { kind: "WhitespaceToken", startIndex: 4, endIndex: 5, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 5,
+            endIndex: 6,
+        },
+    ]);
+}

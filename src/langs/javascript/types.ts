@@ -7,10 +7,13 @@ type AdditionToken = BaseToken & { kind: "AdditionToken" };
 type SubtractionToken = BaseToken & { kind: "SubtractionToken" };
 type MultiplicationToken = BaseToken & { kind: "MultiplicationToken" };
 type DivisionToken = BaseToken & { kind: "DivisionToken" };
+type AndToken = BaseToken & { kind: "AndToken" };
+type OrToken = BaseToken & { kind: "OrToken" };
 type EqualityToken = BaseToken & { kind: "EqualityToken" };
-type InqualityToken = BaseToken & { kind: "InqualityToken" };
+type InequalityToken = BaseToken & { kind: "InequalityToken" };
 type LessThanToken = BaseToken & { kind: "LessThanToken" };
 type MoreThanToken = BaseToken & { kind: "MoreThanToken" };
+type NegationToken = BaseToken & { kind: "NegationToken" };
 type LessThanOrEqualToken = BaseToken & { kind: "LessThanOrEqualToken" };
 type MoreThanOrEqualToken = BaseToken & { kind: "MoreThanOrEqualToken" };
 type IncrementToken = BaseToken & { kind: "IncrementToken" };
@@ -43,10 +46,13 @@ export type Token =
     | SubtractionToken
     | MultiplicationToken
     | DivisionToken
+    | AndToken
+    | OrToken
     | EqualityToken
-    | InqualityToken
+    | InequalityToken
     | LessThanToken
     | MoreThanToken
+    | NegationToken
     | LessThanOrEqualToken
     | MoreThanOrEqualToken
     | IncrementToken
@@ -87,8 +93,8 @@ type EqualityExpression = {
     left: Expression;
     right: Expression;
 };
-type InqualityExpression = {
-    kind: "InqualityExpression";
+type InequalityExpression = {
+    kind: "InequalityExpression";
     left: Expression;
     right: Expression;
 };
@@ -202,7 +208,7 @@ export type Expression =
     | ArrayExpression
     | ObjectExpression
     | EqualityExpression
-    | InqualityExpression
+    | InequalityExpression
     | LessThanExpression
     | MoreThanExpression
     | LessThanOrEqualExpression
