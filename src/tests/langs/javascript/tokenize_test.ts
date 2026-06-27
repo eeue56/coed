@@ -183,6 +183,152 @@ export function testConst() {
     ]);
 }
 
+export function testFor() {
+    const tokens = tokenize("for (let x = 0; ;) { const y = 1; }");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "ForToken",
+            startIndex: 0,
+            endIndex: 3,
+        },
+        { kind: "WhitespaceToken", startIndex: 3, endIndex: 4, value: " " },
+        {
+            kind: "LeftParenToken",
+            startIndex: 4,
+            endIndex: 5,
+        },
+        {
+            kind: "LetToken",
+            startIndex: 5,
+            endIndex: 8,
+        },
+        { kind: "WhitespaceToken", startIndex: 8, endIndex: 9, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "x",
+            startIndex: 9,
+            endIndex: 10,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 10,
+            endIndex: 11,
+            value: " ",
+        },
+        {
+            kind: "AssignToken",
+            startIndex: 11,
+            endIndex: 12,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 12,
+            endIndex: 13,
+            value: " ",
+        },
+        {
+            kind: "NumberToken",
+            value: 0,
+            startIndex: 13,
+            endIndex: 14,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 14,
+            endIndex: 15,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 15,
+            endIndex: 16,
+            value: " ",
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 16,
+            endIndex: 17,
+        },
+        {
+            kind: "RightParenToken",
+            startIndex: 17,
+            endIndex: 18,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 18,
+            endIndex: 19,
+            value: " ",
+        },
+        {
+            kind: "LeftBraceToken",
+            startIndex: 19,
+            endIndex: 20,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 20,
+            endIndex: 21,
+            value: " ",
+        },
+        {
+            kind: "ConstToken",
+            startIndex: 21,
+            endIndex: 26,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 26,
+            endIndex: 27,
+            value: " ",
+        },
+        {
+            kind: "IdentifierToken",
+            name: "y",
+            startIndex: 27,
+            endIndex: 28,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 28,
+            endIndex: 29,
+            value: " ",
+        },
+        {
+            kind: "AssignToken",
+            startIndex: 29,
+            endIndex: 30,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 30,
+            endIndex: 31,
+            value: " ",
+        },
+        {
+            kind: "NumberToken",
+            value: 1,
+            startIndex: 31,
+            endIndex: 32,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 32,
+            endIndex: 33,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 33,
+            endIndex: 34,
+            value: " ",
+        },
+        {
+            kind: "RightBraceToken",
+            startIndex: 34,
+            endIndex: 35,
+        },
+    ]);
+}
+
 export function testSemicolonToken() {
     const tokens = tokenize("let a = 1;");
     assert.deepStrictEqual(tokens, [

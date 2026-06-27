@@ -296,6 +296,12 @@ function switchTokenizerState(
                     startIndex: start,
                     endIndex: endIndex,
                 });
+            } else if (tokenizerModel.buffer === "for") {
+                tokens.push({
+                    kind: "ForToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
             } else {
                 tokens.push({
                     kind: "IdentifierToken",
