@@ -72,8 +72,16 @@ function isComma(char: string): boolean {
     return char === ",";
 }
 
+function isColon(char: string): boolean {
+    return char === ":";
+}
+
 function isSemicolon(char: string): boolean {
     return char === ";";
+}
+
+function isDot(char: string): boolean {
+    return char === ".";
 }
 
 function isLeftParen(char: string): boolean {
@@ -120,7 +128,9 @@ type OneOffTokenizerState =
     | "ReadLeftBrace"
     | "ReadRightBrace"
     | "ReadComma"
+    | "ReadColon"
     | "ReadSemicolon"
+    | "ReadDot"
     | "ReadAssign"
     | "ReadEquality"
     | "ReadInequality"
@@ -149,7 +159,9 @@ function isOneOffTokenizerState(
         state === "ReadLeftBrace" ||
         state === "ReadRightBrace" ||
         state === "ReadComma" ||
+        state === "ReadColon" ||
         state === "ReadSemicolon" ||
+        state === "ReadDot" ||
         state === "ReadAssign" ||
         state === "ReadEquality" ||
         state === "ReadInequality" ||
@@ -192,15 +204,12 @@ function switchTokenizerState(
 ): void {
     const currentState = tokenizerModel.state;
 
-    console.log("setting current state to: ", newState);
-
     if (newState === currentState) {
         return;
     }
 
     if (isOneOffTokenizerState(newState)) {
         if (isBufferingTokenizerState(currentState)) {
-            console.log("clearing buffered state");
             // clear out the old buffer
             switchTokenizerState(
                 "ReadyForNextToken",
@@ -211,7 +220,6 @@ function switchTokenizerState(
         }
 
         const start = currentIndex;
-        console.log("Handling one-off state: ", newState);
         switch (newState) {
             case "ReadAddition": {
                 tokens.push({
@@ -278,7 +286,6 @@ function switchTokenizerState(
                 break;
             }
             case "ReadLeftBracket": {
-                console.log("ReadLeftBracket, pushing LeftBracketToken");
                 tokens.push({
                     kind: "LeftBracketToken",
                     startIndex: start,
@@ -318,9 +325,25 @@ function switchTokenizerState(
                 });
                 break;
             }
+            case "ReadColon": {
+                tokens.push({
+                    kind: "ColonToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
             case "ReadSemicolon": {
                 tokens.push({
                     kind: "SemicolonToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
+            case "ReadDot": {
+                tokens.push({
+                    kind: "DotToken",
                     startIndex: start,
                     endIndex: start + 1,
                 });
@@ -408,14 +431,10 @@ function switchTokenizerState(
             }
         }
 
-        console.log("Done with one-off state, resetting to ReadyForNextToken");
-
         tokenizerModel.state = "ReadyForNextToken";
         tokenizerModel.buffer = "";
         return;
     }
-
-    console.log("Going to full validation for state: ", currentState);
 
     const start = tokenizerModel.currentTokenStartIndex;
     const endIndex = start + tokenizerModel.buffer.length;
@@ -503,13 +522,8 @@ export function tokenize(string: string): Token[] {
     for (let i = 0; i < string.length; i++) {
         const char = string[i];
 
-        console.log(
-            `Processing char: '${char}' at index ${i}, current state: ${tokenizerModel.state}, buffer: '${tokenizerModel.buffer}'`,
-        );
-
         if (tokenizerModel.state === "ReadingString") {
-            const openingQuote =
-                tokenizerModel.buffer[tokenizerModel.currentTokenStartIndex];
+            const openingQuote = tokenizerModel.buffer[0];
 
             if (char === openingQuote) {
                 tokenizerModel.buffer += char;
@@ -601,8 +615,6 @@ export function tokenize(string: string): Token[] {
                     i,
                 );
                 tokenizerModel.currentTokenStartIndex = i;
-                console.log("Now state: ", tokenizerModel.state);
-                console.log("now model", tokenizerModel);
             } else if (isRightBracket(char)) {
                 switchTokenizerState(
                     "ReadRightBracket",
@@ -630,6 +642,9 @@ export function tokenize(string: string): Token[] {
             } else if (isComma(char)) {
                 switchTokenizerState("ReadComma", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
+            } else if (isColon(char)) {
+                switchTokenizerState("ReadColon", tokenizerModel, tokens, i);
+                tokenizerModel.currentTokenStartIndex = i;
             } else if (isSemicolon(char)) {
                 switchTokenizerState(
                     "ReadSemicolon",
@@ -637,6 +652,9 @@ export function tokenize(string: string): Token[] {
                     tokens,
                     i,
                 );
+                tokenizerModel.currentTokenStartIndex = i;
+            } else if (isDot(char)) {
+                switchTokenizerState("ReadDot", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
             } else if (
                 char === "=" &&
@@ -769,8 +787,6 @@ export function tokenize(string: string): Token[] {
             string.length - 1,
         );
     }
-
-    console.log("final tokens: ", tokens);
 
     return tokens;
 }

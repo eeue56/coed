@@ -27,7 +27,9 @@ type RightBracketToken = BaseToken & { kind: "RightBracketToken" };
 type LeftBraceToken = BaseToken & { kind: "LeftBraceToken" };
 type RightBraceToken = BaseToken & { kind: "RightBraceToken" };
 type CommaToken = BaseToken & { kind: "CommaToken" };
+type ColonToken = BaseToken & { kind: "ColonToken" };
 type SemicolonToken = BaseToken & { kind: "SemicolonToken" };
+type DotToken = BaseToken & { kind: "DotToken" };
 type AssignToken = BaseToken & { kind: "AssignToken" };
 type WhitespaceToken = BaseToken & { kind: "WhitespaceToken"; value: string };
 type LetToken = BaseToken & { kind: "LetToken" };
@@ -66,7 +68,9 @@ export type Token =
     | LeftBraceToken
     | RightBraceToken
     | CommaToken
+    | ColonToken
     | SemicolonToken
+    | DotToken
     | AssignToken
     | WhitespaceToken
     | LetToken

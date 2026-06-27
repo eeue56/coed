@@ -94,6 +94,237 @@ export function testArrayLiteral() {
     ]);
 }
 
+export function testObjectLiteral() {
+    const tokens = tokenize("{a:1,b:2}");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "LeftBraceToken",
+            startIndex: 0,
+            endIndex: 1,
+        },
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 1,
+            endIndex: 2,
+        },
+        {
+            kind: "ColonToken",
+            startIndex: 2,
+            endIndex: 3,
+        },
+        {
+            kind: "NumberToken",
+            value: 1,
+            startIndex: 3,
+            endIndex: 4,
+        },
+        {
+            kind: "CommaToken",
+            startIndex: 4,
+            endIndex: 5,
+        },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 5,
+            endIndex: 6,
+        },
+        {
+            kind: "ColonToken",
+            startIndex: 6,
+            endIndex: 7,
+        },
+        {
+            kind: "NumberToken",
+            value: 2,
+            startIndex: 7,
+            endIndex: 8,
+        },
+        {
+            kind: "RightBraceToken",
+            startIndex: 8,
+            endIndex: 9,
+        },
+    ]);
+}
+
+export function testObjectIndexing() {
+    const tokens = tokenize("obj.key");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "obj",
+            startIndex: 0,
+            endIndex: 3,
+        },
+        {
+            kind: "DotToken",
+            startIndex: 3,
+            endIndex: 4,
+        },
+        {
+            kind: "IdentifierToken",
+            name: "key",
+            startIndex: 4,
+            endIndex: 7,
+        },
+    ]);
+}
+
+export function testArrayIndexing() {
+    const tokens = tokenize("arr[0]");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "arr",
+            startIndex: 0,
+            endIndex: 3,
+        },
+        {
+            kind: "LeftBracketToken",
+            startIndex: 3,
+            endIndex: 4,
+        },
+        {
+            kind: "NumberToken",
+            value: 0,
+            startIndex: 4,
+            endIndex: 5,
+        },
+        {
+            kind: "RightBracketToken",
+            startIndex: 5,
+            endIndex: 6,
+        },
+    ]);
+}
+
+export function testObjectPropertyAssignment() {
+    const tokens = tokenize("obj.key = 42");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "obj",
+            startIndex: 0,
+            endIndex: 3,
+        },
+        {
+            kind: "DotToken",
+            startIndex: 3,
+            endIndex: 4,
+        },
+        {
+            kind: "IdentifierToken",
+            name: "key",
+            startIndex: 4,
+            endIndex: 7,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 7,
+            endIndex: 8,
+            value: " ",
+        },
+        {
+            kind: "AssignToken",
+            startIndex: 8,
+            endIndex: 9,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 9,
+            endIndex: 10,
+            value: " ",
+        },
+        {
+            kind: "NumberToken",
+            value: 42,
+            startIndex: 10,
+            endIndex: 12,
+        },
+    ]);
+}
+
+export function testObjectPropertyStringIndexing() {
+    const tokens = tokenize('obj["key"]');
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "obj",
+            startIndex: 0,
+            endIndex: 3,
+        },
+        {
+            kind: "LeftBracketToken",
+            startIndex: 3,
+            endIndex: 4,
+        },
+        {
+            kind: "StringToken",
+            value: `"key"`,
+            startIndex: 4,
+            endIndex: 9,
+        },
+        {
+            kind: "RightBracketToken",
+            startIndex: 9,
+            endIndex: 10,
+        },
+    ]);
+}
+
+export function testObjectPropertyStringAssignment() {
+    const tokens = tokenize('obj["key"] = 42');
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "obj",
+            startIndex: 0,
+            endIndex: 3,
+        },
+        {
+            kind: "LeftBracketToken",
+            startIndex: 3,
+            endIndex: 4,
+        },
+        {
+            kind: "StringToken",
+            value: `"key"`,
+            startIndex: 4,
+            endIndex: 9,
+        },
+        {
+            kind: "RightBracketToken",
+            startIndex: 9,
+            endIndex: 10,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 10,
+            endIndex: 11,
+            value: " ",
+        },
+        {
+            kind: "AssignToken",
+            startIndex: 11,
+            endIndex: 12,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 12,
+            endIndex: 13,
+            value: " ",
+        },
+        {
+            kind: "NumberToken",
+            value: 42,
+            startIndex: 13,
+            endIndex: 15,
+        },
+    ]);
+}
+
 export function testParenTokens() {
     const tokens = tokenize("(a)");
     assert.deepStrictEqual(tokens, [
