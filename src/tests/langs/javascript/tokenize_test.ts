@@ -683,6 +683,127 @@ export function testIf() {
     ]);
 }
 
+export function testElse() {
+    const tokens = tokenize("if (a) {} else if (b) {} else {}");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IfToken",
+            startIndex: 0,
+            endIndex: 2,
+        },
+        { kind: "WhitespaceToken", startIndex: 2, endIndex: 3, value: " " },
+        {
+            kind: "LeftParenToken",
+            startIndex: 3,
+            endIndex: 4,
+        },
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 4,
+            endIndex: 5,
+        },
+        {
+            kind: "RightParenToken",
+            startIndex: 5,
+            endIndex: 6,
+        },
+        { kind: "WhitespaceToken", startIndex: 6, endIndex: 7, value: " " },
+        {
+            kind: "LeftBraceToken",
+            startIndex: 7,
+            endIndex: 8,
+        },
+        {
+            kind: "RightBraceToken",
+            startIndex: 8,
+            endIndex: 9,
+        },
+        { kind: "WhitespaceToken", startIndex: 9, endIndex: 10, value: " " },
+        {
+            kind: "ElseToken",
+            startIndex: 10,
+            endIndex: 14,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 14,
+            endIndex: 15,
+            value: " ",
+        },
+        {
+            kind: "IfToken",
+            startIndex: 15,
+            endIndex: 17,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 17,
+            endIndex: 18,
+            value: " ",
+        },
+        {
+            kind: "LeftParenToken",
+            startIndex: 18,
+            endIndex: 19,
+        },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 19,
+            endIndex: 20,
+        },
+        {
+            kind: "RightParenToken",
+            startIndex: 20,
+            endIndex: 21,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 21,
+            endIndex: 22,
+            value: " ",
+        },
+        {
+            kind: "LeftBraceToken",
+            startIndex: 22,
+            endIndex: 23,
+        },
+        {
+            kind: "RightBraceToken",
+            startIndex: 23,
+            endIndex: 24,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 24,
+            endIndex: 25,
+            value: " ",
+        },
+        {
+            kind: "ElseToken",
+            startIndex: 25,
+            endIndex: 29,
+        },
+        {
+            kind: "WhitespaceToken",
+            startIndex: 29,
+            endIndex: 30,
+            value: " ",
+        },
+        {
+            kind: "LeftBraceToken",
+            startIndex: 30,
+            endIndex: 31,
+        },
+        {
+            kind: "RightBraceToken",
+            startIndex: 31,
+            endIndex: 32,
+        },
+    ]);
+}
+
 export function testFunctionDefinition() {
     const tokens = tokenize("function sum(a, b) {}");
     assert.deepStrictEqual(tokens, [

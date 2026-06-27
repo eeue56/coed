@@ -477,6 +477,12 @@ function switchTokenizerState(
                     startIndex: start,
                     endIndex: endIndex,
                 });
+            } else if (tokenizerModel.buffer === "else") {
+                tokens.push({
+                    kind: "ElseToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
             } else if (tokenizerModel.buffer === "function") {
                 tokens.push({
                     kind: "FunctionToken",
