@@ -107,6 +107,12 @@ type TokenizerModel = {
 };
 
 type OneOffTokenizerState =
+    | "ReadAddition"
+    | "ReadSubtraction"
+    | "ReadMultiplication"
+    | "ReadDivision"
+    | "ReadIncrement"
+    | "ReadDecrement"
     | "ReadLeftParen"
     | "ReadRightParen"
     | "ReadLeftBracket"
@@ -130,6 +136,12 @@ function isOneOffTokenizerState(
     state: TokenizerState,
 ): state is OneOffTokenizerState {
     return (
+        state === "ReadAddition" ||
+        state === "ReadSubtraction" ||
+        state === "ReadMultiplication" ||
+        state === "ReadDivision" ||
+        state === "ReadIncrement" ||
+        state === "ReadDecrement" ||
         state === "ReadLeftParen" ||
         state === "ReadRightParen" ||
         state === "ReadLeftBracket" ||
@@ -201,6 +213,54 @@ function switchTokenizerState(
         const start = currentIndex;
         console.log("Handling one-off state: ", newState);
         switch (newState) {
+            case "ReadAddition": {
+                tokens.push({
+                    kind: "AdditionToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
+            case "ReadSubtraction": {
+                tokens.push({
+                    kind: "SubtractionToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
+            case "ReadMultiplication": {
+                tokens.push({
+                    kind: "MultiplicationToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
+            case "ReadDivision": {
+                tokens.push({
+                    kind: "DivisionToken",
+                    startIndex: start,
+                    endIndex: start + 1,
+                });
+                break;
+            }
+            case "ReadIncrement": {
+                tokens.push({
+                    kind: "IncrementToken",
+                    startIndex: start,
+                    endIndex: start + 2,
+                });
+                break;
+            }
+            case "ReadDecrement": {
+                tokens.push({
+                    kind: "DecrementToken",
+                    startIndex: start,
+                    endIndex: start + 2,
+                });
+                break;
+            }
             case "ReadLeftParen": {
                 tokens.push({
                     kind: "LeftParenToken",
@@ -625,6 +685,46 @@ export function tokenize(string: string): Token[] {
                 switchTokenizerState("ReadOr", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
                 i += 1;
+            } else if (char === "+" && string[i + 1] === "+") {
+                switchTokenizerState(
+                    "ReadIncrement",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
+                tokenizerModel.currentTokenStartIndex = i;
+                i += 1;
+            } else if (char === "-" && string[i + 1] === "-") {
+                switchTokenizerState(
+                    "ReadDecrement",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
+                tokenizerModel.currentTokenStartIndex = i;
+                i += 1;
+            } else if (char === "+") {
+                switchTokenizerState("ReadAddition", tokenizerModel, tokens, i);
+                tokenizerModel.currentTokenStartIndex = i;
+            } else if (char === "-") {
+                switchTokenizerState(
+                    "ReadSubtraction",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
+                tokenizerModel.currentTokenStartIndex = i;
+            } else if (char === "*") {
+                switchTokenizerState(
+                    "ReadMultiplication",
+                    tokenizerModel,
+                    tokens,
+                    i,
+                );
+                tokenizerModel.currentTokenStartIndex = i;
+            } else if (char === "/") {
+                switchTokenizerState("ReadDivision", tokenizerModel, tokens, i);
+                tokenizerModel.currentTokenStartIndex = i;
             } else if (char === "<") {
                 switchTokenizerState("ReadLessThan", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;

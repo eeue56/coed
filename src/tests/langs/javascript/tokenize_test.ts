@@ -668,3 +668,137 @@ export function testOr() {
         },
     ]);
 }
+
+export function testAddition() {
+    const tokens = tokenize("a + b");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 0,
+            endIndex: 1,
+        },
+        { kind: "WhitespaceToken", startIndex: 1, endIndex: 2, value: " " },
+        {
+            kind: "AdditionToken",
+            startIndex: 2,
+            endIndex: 3,
+        },
+        { kind: "WhitespaceToken", startIndex: 3, endIndex: 4, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 4,
+            endIndex: 5,
+        },
+    ]);
+}
+
+export function testSubtraction() {
+    const tokens = tokenize("a - b");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 0,
+            endIndex: 1,
+        },
+        { kind: "WhitespaceToken", startIndex: 1, endIndex: 2, value: " " },
+        {
+            kind: "SubtractionToken",
+            startIndex: 2,
+            endIndex: 3,
+        },
+        { kind: "WhitespaceToken", startIndex: 3, endIndex: 4, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 4,
+            endIndex: 5,
+        },
+    ]);
+}
+
+export function testMultiplication() {
+    const tokens = tokenize("a * b");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 0,
+            endIndex: 1,
+        },
+        { kind: "WhitespaceToken", startIndex: 1, endIndex: 2, value: " " },
+        {
+            kind: "MultiplicationToken",
+            startIndex: 2,
+            endIndex: 3,
+        },
+        { kind: "WhitespaceToken", startIndex: 3, endIndex: 4, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 4,
+            endIndex: 5,
+        },
+    ]);
+}
+
+export function testDivision() {
+    const tokens = tokenize("a / b");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "a",
+            startIndex: 0,
+            endIndex: 1,
+        },
+        { kind: "WhitespaceToken", startIndex: 1, endIndex: 2, value: " " },
+        {
+            kind: "DivisionToken",
+            startIndex: 2,
+            endIndex: 3,
+        },
+        { kind: "WhitespaceToken", startIndex: 3, endIndex: 4, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "b",
+            startIndex: 4,
+            endIndex: 5,
+        },
+    ]);
+}
+
+export function testIncrement() {
+    const tokens = tokenize("count++");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "count",
+            startIndex: 0,
+            endIndex: 5,
+        },
+        {
+            kind: "IncrementToken",
+            startIndex: 5,
+            endIndex: 7,
+        },
+    ]);
+}
+
+export function testDecrement() {
+    const tokens = tokenize("count--");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "IdentifierToken",
+            name: "count",
+            startIndex: 0,
+            endIndex: 5,
+        },
+        {
+            kind: "DecrementToken",
+            startIndex: 5,
+            endIndex: 7,
+        },
+    ]);
+}
