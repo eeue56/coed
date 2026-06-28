@@ -18,8 +18,6 @@ type LessThanOrEqualToken = BaseToken & { kind: "LessThanOrEqualToken" };
 type MoreThanOrEqualToken = BaseToken & { kind: "MoreThanOrEqualToken" };
 type IncrementToken = BaseToken & { kind: "IncrementToken" };
 type DecrementToken = BaseToken & { kind: "DecrementToken" };
-type IncreaseToken = BaseToken & { kind: "IncreaseToken" };
-type DecreaseToken = BaseToken & { kind: "DecreaseToken" };
 type LeftParenToken = BaseToken & { kind: "LeftParenToken" };
 type RightParenToken = BaseToken & { kind: "RightParenToken" };
 type LeftBracketToken = BaseToken & { kind: "LeftBracketToken" };
@@ -65,8 +63,6 @@ export type Token =
     | MoreThanOrEqualToken
     | IncrementToken
     | DecrementToken
-    | IncreaseToken
-    | DecreaseToken
     | LeftParenToken
     | RightParenToken
     | LeftBracketToken
@@ -167,7 +163,7 @@ type FunctionCallExpression = {
     arguments: Expression[];
 };
 
-type NameLookupExpression = {
+export type NameLookupExpression = {
     kind: "NameLookupExpression";
     name: string;
 };
@@ -286,3 +282,62 @@ export type Ast =
     | ForLoop
     | FunctionDeclaration
     | ConstStatement;
+
+export type Result<value> =
+    | {
+          kind: "Ok";
+          value: value;
+      }
+    | {
+          kind: "Err";
+          error: string;
+      };
+
+export type ExpressionParseResult = {
+    expression: Expression;
+    index: number;
+};
+
+export type StatementParseResult = {
+    statement: Ast | null;
+    index: number;
+};
+
+export type ParserState = {
+    tokens: Token[];
+    index: number;
+};
+
+export type SourceLocation = {
+    line: number;
+    column: number;
+    lineText: string;
+};
+
+export type DetailedParseError = {
+    problem: string;
+    hint: string;
+    suggestion: string | null;
+    focusToken: Token | null;
+};
+
+export type ParseExpressionFunction = (
+    state: ParserState,
+) => Result<Expression>;
+
+export type BinaryOperatorRule = {
+    tokenKind:
+        | "EqualityToken"
+        | "InequalityToken"
+        | "LessThanToken"
+        | "MoreThanToken"
+        | "LessThanOrEqualToken"
+        | "MoreThanOrEqualToken"
+        | "AdditionToken"
+        | "SubtractionToken"
+        | "MultiplicationToken"
+        | "DivisionToken";
+    build: (left: Expression, right: Expression) => Expression;
+};
+
+export type TokenKinds = Token["kind"];
