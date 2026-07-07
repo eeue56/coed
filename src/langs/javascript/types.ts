@@ -89,7 +89,7 @@ export type Token =
     | FalseToken
     | TypeofToken;
 
-type NumberExpression = { kind: "NumberExpression"; value: number };
+export type NumberExpression = { kind: "NumberExpression"; value: number };
 type StringExpression = { kind: "StringExpression"; value: string };
 type StringLiteralExpression = {
     kind: "StringLiteralExpression";
