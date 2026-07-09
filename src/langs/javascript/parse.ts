@@ -41,10 +41,10 @@ function stripStringQuotes(value: string): string {
 }
 
 function tokenIs<kind extends TokenKinds>(
-    token: Token | null,
+    token: Token | null | undefined,
     kind: kind,
 ): token is Extract<Token, { kind: kind }> {
-    return token !== null && token.kind === kind;
+    return token != null && token.kind === kind;
 }
 
 function isNameLookup(expression: Expression): NameLookupExpression | null {

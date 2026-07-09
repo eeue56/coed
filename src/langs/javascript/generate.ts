@@ -1,4 +1,43 @@
-import { Ast, Expression, Program } from "./types.ts";
+import type { Ast, Expression, Program } from "./types.ts";
+
+function indent(level: number, str: string): string {
+    if (level === 0) {
+        return str;
+    }
+
+    return str
+        .split("\n")
+        .map((line) => "    ".repeat(level) + line)
+        .join("\n");
+}
+
+function generateStatements(statements: Ast[]): string {
+    return statements.map((statement) => generateAST(statement, 0)).join("\n");
+}
+
+function generateBlock(statements: Ast[], level: number): string {
+    if (statements.length === 0) {
+        return "{}";
+    }
+
+    return `{
+${indent(level + 1, generateStatements(statements))}
+${indent(level, "}")}`;
+}
+
+function generateForInit(ast: Ast): string {
+    switch (ast.kind) {
+        case "LetStatement": {
+            return `let ${ast.name} = ${generateExpression(ast.value)}`;
+        }
+        case "ConstStatement": {
+            return `const ${ast.name} = ${generateExpression(ast.value)}`;
+        }
+        default: {
+            return generateAST(ast, 0).replace(/;$/, "");
+        }
+    }
+}
 
 export function generateExpression(expression: Expression): string {
     switch (expression.kind) {
@@ -9,11 +48,15 @@ export function generateExpression(expression: Expression): string {
         case "ArrayExpression":
             return `[${expression.elements.map(generateExpression).join(", ")}]`;
         case "ObjectExpression": {
-            const properties = Object.entries(expression.properties)
-                .map(([key, value]) => `${key}: ${generateExpression(value)}`)
-                .join(", ");
+            const properties = Object.entries(expression.properties).map(
+                ([key, value]) => `${key}: ${generateExpression(value)}`,
+            );
 
-            return `{${properties}}`;
+            if (properties.length === 0) {
+                return "{}";
+            }
+
+            return `{ ${properties.join(", ")} }`;
         }
         case "EqualityExpression": {
             return `${generateExpression(expression.left)} === ${generateExpression(expression.right)}`;
@@ -61,13 +104,13 @@ export function generateExpression(expression: Expression): string {
             return `${expression.name}`;
         }
         case "ObjectPropertyExpression": {
-            return `${expression.object}.${expression.property}`;
+            return `${generateExpression(expression.object)}.${generateExpression(expression.property)}`;
         }
         case "ObjectMethodCallExpression": {
-            return `${expression.object}.${expression.method}(${expression.arguments.map(generateExpression).join(", ")})`;
+            return `${generateExpression(expression.object)}.${generateExpression(expression.method)}(${expression.arguments.map(generateExpression).join(", ")})`;
         }
         case "ArrayAccessExpression": {
-            return `${expression.array}[${generateExpression(expression.index)}]`;
+            return `${generateExpression(expression.array)}[${generateExpression(expression.index)}]`;
         }
         case "AdditionExpression": {
             return `${generateExpression(expression.left)} + ${generateExpression(expression.right)}`;
@@ -84,30 +127,48 @@ export function generateExpression(expression: Expression): string {
     }
 }
 
-export function generateAST(ast: Ast): string {
+export function generateAST(ast: Ast, level: number): string {
     switch (ast.kind) {
         case "LetStatement": {
-            return `let ${ast.name} = ${generateExpression(ast.value)};`;
+            return indent(
+                level,
+                `let ${ast.name} = ${generateExpression(ast.value)};`,
+            );
         }
         case "IfStatement": {
             if (ast.elseBranch) {
-                return `if (${generateExpression(ast.condition)}) { ${ast.thenBranch.map(generateAST).join(" ")} } else { ${ast.elseBranch.map(generateAST).join(" ")} }`;
+                return indent(
+                    level,
+                    `if (${generateExpression(ast.condition)}) ${generateBlock(ast.thenBranch, level)} else ${generateBlock(ast.elseBranch, level)}`,
+                );
             }
 
-            return `if (${generateExpression(ast.condition)}) { ${ast.thenBranch.map(generateAST).join(" ")} }`;
+            return indent(
+                level,
+                `if (${generateExpression(ast.condition)}) ${generateBlock(ast.thenBranch, level)}`,
+            );
         }
         case "ForLoop": {
-            return `for (${generateAST(ast.init)} ${generateExpression(ast.condition)}; ${generateExpression(ast.increment)}) { ${ast.body.map(generateAST).join(" ")} }`;
+            return indent(
+                level,
+                `for (${generateForInit(ast.init)}; ${generateExpression(ast.condition)}; ${generateExpression(ast.increment)}) ${generateBlock(ast.body, level)}`,
+            );
         }
         case "FunctionDeclaration": {
-            return `function ${ast.name}(${ast.parameters.join(", ")}) { ${ast.body.map(generateAST).join(" ")} }`;
+            return indent(
+                level,
+                `function ${ast.name}(${ast.parameters.join(", ")}) ${generateBlock(ast.body, level)}`,
+            );
         }
         case "ConstStatement": {
-            return `const ${ast.name} = ${generateExpression(ast.value)};`;
+            return indent(
+                level,
+                `const ${ast.name} = ${generateExpression(ast.value)};`,
+            );
         }
     }
 }
 
 export function generateProgram(program: Program): string {
-    return program.map(generateAST).join("\n");
+    return program.map((ast) => generateAST(ast, 0)).join("\n");
 }
