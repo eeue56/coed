@@ -341,3 +341,5 @@ export type BinaryOperatorRule = {
 };
 
 export type TokenKinds = Token["kind"];
+
+export type Program = Ast[];

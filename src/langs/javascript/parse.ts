@@ -14,6 +14,7 @@ import type {
     NameLookupExpression,
     ParseExpressionFunction,
     ParserState,
+    Program,
     Result,
     StatementParseResult,
     Token,
@@ -1273,10 +1274,11 @@ export function parseExpression(tokens: Token[]): Result<Expression> {
 }
 
 /** tokenize and parse a JavaScript source string into an AST */
-export function parse(input: string): Result<Ast[]> {
+export function parse(input: string): Result<Program> {
     const tokens = withoutWhitespace(tokenize(input));
     return parseAllStatements(tokens, input);
 }
+
 export type ParsedExpressionResult = ReturnType<typeof parseExpressionAt>;
 export type ParsedBlockResult = ReturnType<typeof parseBlock>;
 export type ParsedStatementResult = ReturnType<typeof parseLetOrConst>;
