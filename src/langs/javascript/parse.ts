@@ -585,6 +585,15 @@ function parseLeaf(state: ParserState): Result<Expression> {
                 },
             };
         }
+        case "UndefinedToken": {
+            consumeToken(state);
+            return {
+                kind: "Ok",
+                value: {
+                    kind: "NullExpression",
+                },
+            };
+        }
         case "LeftParenToken": {
             consumeToken(state);
             const expression = parseEquality(state);
@@ -711,6 +720,122 @@ function parseStatementAt(
     return parseStatement(state);
 }
 
+function parseArrowParameters(
+    tokens: Token[],
+    startIndex: number,
+): { parameters: string[]; arrowIndex: number } | null {
+    const firstToken = tokens[startIndex];
+
+    if (tokenIs(firstToken, "IdentifierToken")) {
+        if (!tokenIs(tokens[startIndex + 1], "ArrowToken")) {
+            return null;
+        }
+
+        return {
+            parameters: [firstToken.name],
+            arrowIndex: startIndex + 1,
+        };
+    }
+
+    if (!tokenIs(firstToken, "LeftParenToken")) {
+        return null;
+    }
+
+    const parameters: string[] = [];
+    let index = startIndex + 1;
+
+    if (!tokenIs(tokens[index], "RightParenToken")) {
+        while (true) {
+            const parameter = tokens[index];
+            if (!tokenIs(parameter, "IdentifierToken")) {
+                return null;
+            }
+
+            parameters.push(parameter.name);
+            index += 1;
+
+            if (tokenIs(tokens[index], "CommaToken")) {
+                index += 1;
+                continue;
+            }
+
+            break;
+        }
+    }
+
+    if (!tokenIs(tokens[index], "RightParenToken")) {
+        return null;
+    }
+
+    if (!tokenIs(tokens[index + 1], "ArrowToken")) {
+        return null;
+    }
+
+    return {
+        parameters,
+        arrowIndex: index + 1,
+    };
+}
+
+function parseArrowFunctionDeclaration(
+    state: ParserState,
+): StatementParseResult {
+    const declarationName = state.tokens[state.index + 1];
+    if (!tokenIs(declarationName, "IdentifierToken")) {
+        return { statement: null, index: state.index };
+    }
+
+    if (!tokenIs(state.tokens[state.index + 2], "AssignToken")) {
+        return { statement: null, index: state.index };
+    }
+
+    const parameters = parseArrowParameters(state.tokens, state.index + 3);
+    if (parameters === null) {
+        return { statement: null, index: state.index };
+    }
+
+    let index = parameters.arrowIndex + 1;
+    let body: Ast[] | null = null;
+
+    if (tokenIs(state.tokens[index], "LeftBraceToken")) {
+        const parsedBody = parseBlock(state.tokens, index);
+        body = parsedBody.body;
+        index = parsedBody.index;
+    } else {
+        const expression = parseExpressionAt(state.tokens, index);
+        if (expression.kind === "Err") {
+            return { statement: null, index: state.index };
+        }
+
+        body = [
+            {
+                kind: "LetStatement",
+                name: "result",
+                value: expression.value.expression,
+            },
+        ];
+        index = expression.value.index;
+    }
+
+    if (body === null) {
+        return { statement: null, index: state.index };
+    }
+
+    if (tokenIs(state.tokens[index], "SemicolonToken")) {
+        index += 1;
+    }
+
+    return {
+        statement: {
+            kind: "FunctionDeclaration",
+            name: declarationName.name,
+            parameters: parameters.parameters,
+            body,
+        },
+        index,
+    };
+}
+
 /** dispatch to the appropriate statement parser based on the current token */
 function parseStatement(state: ParserState): StatementParseResult {
     const token = currentToken(state);
@@ -720,9 +845,24 @@ function parseStatement(state: ParserState): StatementParseResult {
 
     switch (token.kind) {
         case "LetToken": {
+            const arrowDeclaration = parseArrowFunctionDeclaration(state);
+            if (arrowDeclaration.statement !== null) {
+                return arrowDeclaration;
+            }
+            return parseLetOrConst(state, false, true);
+        }
+        case "VarToken": {
+            const arrowDeclaration = parseArrowFunctionDeclaration(state);
+            if (arrowDeclaration.statement !== null) {
+                return arrowDeclaration;
+            }
             return parseLetOrConst(state, false, true);
         }
         case "ConstToken": {
+            const arrowDeclaration = parseArrowFunctionDeclaration(state);
+            if (arrowDeclaration.statement !== null) {
+                return arrowDeclaration;
+            }
             return parseLetOrConst(state, true, true);
         }
         case "IfToken": {
@@ -730,6 +870,9 @@ function parseStatement(state: ParserState): StatementParseResult {
         }
         case "ForToken": {
             return parseFor(state);
+        }
+        case "WhileToken": {
+            return parseWhile(state);
         }
         case "FunctionToken": {
             return parseFunction(state);
@@ -826,6 +969,49 @@ export function parseLetOrConst(
             value: parsed.value.expression,
         },
         index,
+    };
+}
+
+function parseWhile(state: ParserState): StatementParseResult {
+    let index = state.index + 1;
+    if (!tokenIs(state.tokens[index], "LeftParenToken")) {
+        return { statement: null, index: state.index };
+    }
+
+    const condition = parseExpressionAt(state.tokens, index + 1);
+    if (condition.kind === "Err") {
+        return { statement: null, index: state.index };
+    }
+
+    index = condition.value.index;
+    if (!tokenIs(state.tokens[index], "RightParenToken")) {
+        return { statement: null, index: state.index };
+    }
+    index += 1;
+
+    const body = parseBlock(state.tokens, index);
+    if (body.body === null) {
+        return { statement: null, index: state.index };
+    }
+
+    const loopVariable = `__while_${state.index}`;
+
+    return {
+        statement: {
+            kind: "ForLoop",
+            init: {
+                kind: "LetStatement",
+                name: loopVariable,
+                value: { kind: "NumberExpression", value: 0 },
+            },
+            condition: condition.value.expression,
+            increment: {
+                kind: "IncrementExpression",
+                variable: loopVariable,
+            },
+            body: body.body,
+        },
+        index: body.index,
     };
 }
 

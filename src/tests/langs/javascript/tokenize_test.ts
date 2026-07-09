@@ -414,6 +414,66 @@ export function testConst() {
     ]);
 }
 
+export function testVarKeyword() {
+    const tokens = tokenize("var currentUser = undefined;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "VarToken",
+            startIndex: 0,
+            endIndex: 3,
+        },
+        { kind: "WhitespaceToken", startIndex: 3, endIndex: 4, value: " " },
+        {
+            kind: "IdentifierToken",
+            name: "currentUser",
+            startIndex: 4,
+            endIndex: 15,
+        },
+        { kind: "WhitespaceToken", startIndex: 15, endIndex: 16, value: " " },
+        {
+            kind: "AssignToken",
+            startIndex: 16,
+            endIndex: 17,
+        },
+        { kind: "WhitespaceToken", startIndex: 17, endIndex: 18, value: " " },
+        {
+            kind: "UndefinedToken",
+            startIndex: 18,
+            endIndex: 27,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 27,
+            endIndex: 28,
+        },
+    ]);
+}
+
+export function testWhileAndWithKeywords() {
+    const tokens = tokenize("while (ready) { with (scope) {} }");
+    assert.deepStrictEqual(tokens[0], {
+        kind: "WhileToken",
+        startIndex: 0,
+        endIndex: 5,
+    });
+    assert.deepStrictEqual(tokens[8], {
+        kind: "WithToken",
+        startIndex: 16,
+        endIndex: 20,
+    });
+}
+
+export function testArrowToken() {
+    const tokens = tokenize("const buildLabel = (value) => value;");
+    const arrowToken = tokens.find((token) => token.kind === "ArrowToken");
+
+    assert.deepStrictEqual(arrowToken, {
+        kind: "ArrowToken",
+        startIndex: 27,
+        endIndex: 29,
+    });
+}
+
 export function testFor() {
     const tokens = tokenize("for (let x = 0; ;) { const y = 1; }");
     assert.deepStrictEqual(tokens, [

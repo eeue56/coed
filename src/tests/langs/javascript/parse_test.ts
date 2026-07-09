@@ -270,6 +270,135 @@ export function testParseFunctionDeclaration() {
     });
 }
 
+export function testParseVarUndefinedAsLetAndNull() {
+    assert.deepStrictEqual(parse("var currentUser = undefined;"), {
+        kind: "Ok",
+        value: [
+            {
+                kind: "LetStatement",
+                name: "currentUser",
+                value: { kind: "NullExpression" },
+            },
+        ],
+    });
+}
+
+export function testParseWhileAsForLoop() {
+    assert.deepStrictEqual(
+        parse("while (hasPendingSync) { let syncAttempt = retryCount; }"),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "ForLoop",
+                    init: {
+                        kind: "LetStatement",
+                        name: "__while_0",
+                        value: { kind: "NumberExpression", value: 0 },
+                    },
+                    condition: {
+                        kind: "NameLookupExpression",
+                        name: "hasPendingSync",
+                    },
+                    increment: {
+                        kind: "IncrementExpression",
+                        variable: "__while_0",
+                    },
+                    body: [
+                        {
+                            kind: "LetStatement",
+                            name: "syncAttempt",
+                            value: {
+                                kind: "NameLookupExpression",
+                                name: "retryCount",
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+    );
+}
+
+export function testParseWithReturnsErr() {
+    const result = parse(
+        "with (dashboardState) { const selectedTheme = themeName; }",
+    );
+    assert.deepStrictEqual(result, {
+        kind: "Err",
+        error:
+            "I got stuck while parsing your JavaScript.\n" +
+            "\n" +
+            "Problem: The `with` statement is not allowed in this JavaScript subset.\n" +
+            "Hint: `with` is infrequently used, deprecated, and usually only valuable in niche style-driven cases. Rewrite it using explicit property access or by assigning the object to a named variable first.\n" +
+            "\n" +
+            "At line 1, column 1:\n" +
+            "with (dashboardState) { const selectedTheme = themeName; }\n" +
+            "^",
+    });
+}
+
+export function testParseArrowFunctionExpressionAsFunctionDeclaration() {
+    assert.deepStrictEqual(
+        parse(
+            "const buildInvoice = (subtotal, taxRate) => subtotal + taxRate;",
+        ),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "FunctionDeclaration",
+                    name: "buildInvoice",
+                    parameters: ["subtotal", "taxRate"],
+                    body: [
+                        {
+                            kind: "LetStatement",
+                            name: "result",
+                            value: {
+                                kind: "AdditionExpression",
+                                left: {
+                                    kind: "NameLookupExpression",
+                                    name: "subtotal",
+                                },
+                                right: {
+                                    kind: "NameLookupExpression",
+                                    name: "taxRate",
+                                },
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+    );
+}
+
+export function testParseArrowFunctionBlockBodyAsFunctionDeclaration() {
+    assert.deepStrictEqual(
+        parse("let createBanner = () => { const bannerState = true; };"),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "FunctionDeclaration",
+                    name: "createBanner",
+                    parameters: [],
+                    body: [
+                        {
+                            kind: "ConstStatement",
+                            name: "bannerState",
+                            value: {
+                                kind: "BooleanExpression",
+                                value: true,
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+    );
+}
+
 export function testParseReturnsErrForMalformedStatements() {
     const result = parse("let = 1; let x = 2;");
     assert.strictEqual(result.kind, "Err");

@@ -29,12 +29,16 @@ type ColonToken = BaseToken & { kind: "ColonToken" };
 type SemicolonToken = BaseToken & { kind: "SemicolonToken" };
 type DotToken = BaseToken & { kind: "DotToken" };
 type AssignToken = BaseToken & { kind: "AssignToken" };
+type ArrowToken = BaseToken & { kind: "ArrowToken" };
 type WhitespaceToken = BaseToken & { kind: "WhitespaceToken"; value: string };
 type LetToken = BaseToken & { kind: "LetToken" };
+type VarToken = BaseToken & { kind: "VarToken" };
 type ConstToken = BaseToken & { kind: "ConstToken" };
 type IfToken = BaseToken & { kind: "IfToken" };
 type ElseToken = BaseToken & { kind: "ElseToken" };
 type ForToken = BaseToken & { kind: "ForToken" };
+type WhileToken = BaseToken & { kind: "WhileToken" };
+type WithToken = BaseToken & { kind: "WithToken" };
 type FunctionToken = BaseToken & { kind: "FunctionToken" };
 type ReturnToken = BaseToken & { kind: "ReturnToken" };
 type ContinueToken = BaseToken & { kind: "ContinueToken" };
@@ -43,6 +47,7 @@ type NullToken = BaseToken & { kind: "NullToken" };
 type TrueToken = BaseToken & { kind: "TrueToken" };
 type FalseToken = BaseToken & { kind: "FalseToken" };
 type TypeofToken = BaseToken & { kind: "TypeofToken" };
+type UndefinedToken = BaseToken & { kind: "UndefinedToken" };
 
 export type Token =
     | NumberToken
@@ -74,12 +79,16 @@ export type Token =
     | SemicolonToken
     | DotToken
     | AssignToken
+    | ArrowToken
     | WhitespaceToken
     | LetToken
+    | VarToken
     | ConstToken
     | IfToken
     | ElseToken
     | ForToken
+    | WhileToken
+    | WithToken
     | FunctionToken
     | ReturnToken
     | ContinueToken
@@ -87,7 +96,8 @@ export type Token =
     | NullToken
     | TrueToken
     | FalseToken
-    | TypeofToken;
+    | TypeofToken
+    | UndefinedToken;
 
 export type NumberExpression = { kind: "NumberExpression"; value: number };
 type StringExpression = { kind: "StringExpression"; value: string };

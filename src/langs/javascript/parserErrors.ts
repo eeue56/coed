@@ -806,6 +806,16 @@ function explainStatementFailure(
         };
     }
 
+    if (token.kind === "WithToken") {
+        return {
+            problem:
+                "The `with` statement is not allowed in this JavaScript subset.",
+            hint: "`with` is infrequently used, deprecated, and usually only valuable in niche style-driven cases. Rewrite it using explicit property access or by assigning the object to a named variable first.",
+            suggestion: null,
+            focusToken: token,
+        };
+    }
+
     return {
         problem: `I cannot start a statement with ${tokenSummary(token)}.`,
         hint: "Statements in this subset must start with: let, const, if, for, or function.",

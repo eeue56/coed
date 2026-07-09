@@ -17,6 +17,12 @@ function assertMatchingParsedAndGeneratedCode(code: string) {
     assert.strictEqual(generateProgram(program), code);
 }
 
+function assertGeneratedFromSource(input: string, expected: string) {
+    const program = expectOk<Program>(parse(input));
+
+    assert.strictEqual(generateProgram(program), expected);
+}
+
 export function testGenerateObjectsAndArrays() {
     assertMatchingParsedAndGeneratedCode(
         `
@@ -363,6 +369,83 @@ export function testGenerateObjectWithArithmeticProperties() {
     assertMatchingParsedAndGeneratedCode(
         `
 const quotaSnapshot = { used: usedSeats, remaining: maxSeats - usedSeats };
+        `.trim(),
+    );
+}
+
+export function testGenerateVarUndefinedAsApprovedSubset() {
+    assertGeneratedFromSource(
+        `
+var currentUser = undefined;
+        `.trim(),
+        `
+let currentUser = null;
+        `.trim(),
+    );
+}
+
+export function testGenerateWhileLoopAsForLoop() {
+    assertGeneratedFromSource(
+        `
+while (hasPendingSync) {
+    let syncAttempt = retryCount;
+}
+        `.trim(),
+        `
+for (let __while_0 = 0; hasPendingSync; __while_0++) {
+    let syncAttempt = retryCount;
+}
+        `.trim(),
+    );
+}
+
+export function testGenerateWithBlockReturnsErr() {
+    const result = parse(
+        `
+with (dashboardState) {
+    const selectedTheme = themeName;
+}
+        `.trim(),
+    );
+
+    assert.deepStrictEqual(result, {
+        kind: "Err",
+        error:
+            "I got stuck while parsing your JavaScript.\n" +
+            "\n" +
+            "Problem: The `with` statement is not allowed in this JavaScript subset.\n" +
+            "Hint: `with` is infrequently used, deprecated, and usually only valuable in niche style-driven cases. Rewrite it using explicit property access or by assigning the object to a named variable first.\n" +
+            "\n" +
+            "At line 1, column 1:\n" +
+            "with (dashboardState) {\n" +
+            "^",
+    });
+}
+
+export function testGenerateArrowFunctionExpressionAsFunctionDeclaration() {
+    assertGeneratedFromSource(
+        `
+const buildInvoice = (subtotal, taxRate) => subtotal + taxRate;
+        `.trim(),
+        `
+function buildInvoice(subtotal, taxRate) {
+    let result = subtotal + taxRate;
+}
+        `.trim(),
+    );
+}
+
+export function testGenerateArrowFunctionBlockBodyAsFunctionDeclaration() {
+    assertGeneratedFromSource(
+        `
+let createBanner = () => {
+    const bannerState = true;
+};
+        `.trim(),
+        `
+function createBanner() {
+    const bannerState = true;
+}
         `.trim(),
     );
 }

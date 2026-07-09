@@ -132,6 +132,7 @@ type OneOffTokenizerState =
     | "ReadSemicolon"
     | "ReadDot"
     | "ReadAssign"
+    | "ReadArrow"
     | "ReadEquality"
     | "ReadInequality"
     | "ReadLessThan"
@@ -163,6 +164,7 @@ function isOneOffTokenizerState(
         state === "ReadSemicolon" ||
         state === "ReadDot" ||
         state === "ReadAssign" ||
+        state === "ReadArrow" ||
         state === "ReadEquality" ||
         state === "ReadInequality" ||
         state === "ReadLessThan" ||
@@ -357,6 +359,14 @@ function switchTokenizerState(
                 });
                 break;
             }
+            case "ReadArrow": {
+                tokens.push({
+                    kind: "ArrowToken",
+                    startIndex: start,
+                    endIndex: start + 2,
+                });
+                break;
+            }
             case "ReadEquality": {
                 tokens.push({
                     kind: "EqualityToken",
@@ -459,6 +469,12 @@ function switchTokenizerState(
                     startIndex: start,
                     endIndex: endIndex,
                 });
+            } else if (tokenizerModel.buffer === "var") {
+                tokens.push({
+                    kind: "VarToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
             } else if (tokenizerModel.buffer === "const") {
                 tokens.push({
                     kind: "ConstToken",
@@ -468,6 +484,18 @@ function switchTokenizerState(
             } else if (tokenizerModel.buffer === "for") {
                 tokens.push({
                     kind: "ForToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
+            } else if (tokenizerModel.buffer === "while") {
+                tokens.push({
+                    kind: "WhileToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
+            } else if (tokenizerModel.buffer === "with") {
+                tokens.push({
+                    kind: "WithToken",
                     startIndex: start,
                     endIndex: endIndex,
                 });
@@ -528,6 +556,12 @@ function switchTokenizerState(
             } else if (tokenizerModel.buffer === "typeof") {
                 tokens.push({
                     kind: "TypeofToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
+            } else if (tokenizerModel.buffer === "undefined") {
+                tokens.push({
+                    kind: "UndefinedToken",
                     startIndex: start,
                     endIndex: endIndex,
                 });
@@ -710,6 +744,10 @@ export function tokenize(string: string): Token[] {
             } else if (isDot(char)) {
                 switchTokenizerState("ReadDot", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
+            } else if (char === "=" && string[i + 1] === ">") {
+                switchTokenizerState("ReadArrow", tokenizerModel, tokens, i);
+                tokenizerModel.currentTokenStartIndex = i;
+                i += 1;
             } else if (
                 char === "=" &&
                 string[i + 1] === "=" &&
