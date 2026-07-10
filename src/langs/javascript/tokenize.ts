@@ -290,6 +290,247 @@ function isBufferingTokenizerState(
 
 type TokenizerState = BufferingTokenizerState | OneOffTokenizerState;
 
+function switchOneOffTokenState(
+    newState: OneOffTokenizerState,
+    tokenizerModel: TokenizerModel,
+    tokens: Token[],
+    currentIndex: number,
+): void {
+    if (isBufferingTokenizerState(tokenizerModel.state)) {
+        // clear out the old buffer
+        switchTokenizerState(
+            "ReadyForNextToken",
+            tokenizerModel,
+            tokens,
+            currentIndex,
+        );
+    }
+
+    const start = currentIndex;
+
+    switch (newState) {
+        case "ReadAddition": {
+            tokens.push({
+                kind: "AdditionToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadSubtraction": {
+            tokens.push({
+                kind: "SubtractionToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadMultiplication": {
+            tokens.push({
+                kind: "MultiplicationToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadDivision": {
+            tokens.push({
+                kind: "DivisionToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadIncrement": {
+            tokens.push({
+                kind: "IncrementToken",
+                startIndex: start,
+                endIndex: start + 2,
+            });
+            break;
+        }
+        case "ReadDecrement": {
+            tokens.push({
+                kind: "DecrementToken",
+                startIndex: start,
+                endIndex: start + 2,
+            });
+            break;
+        }
+        case "ReadLeftParen": {
+            tokens.push({
+                kind: "LeftParenToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadRightParen": {
+            tokens.push({
+                kind: "RightParenToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadLeftBracket": {
+            tokens.push({
+                kind: "LeftBracketToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadRightBracket": {
+            tokens.push({
+                kind: "RightBracketToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadLeftBrace": {
+            tokens.push({
+                kind: "LeftBraceToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadRightBrace": {
+            tokens.push({
+                kind: "RightBraceToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadComma": {
+            tokens.push({
+                kind: "CommaToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadColon": {
+            tokens.push({
+                kind: "ColonToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadSemicolon": {
+            tokens.push({
+                kind: "SemicolonToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadDot": {
+            tokens.push({
+                kind: "DotToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadAssign": {
+            tokens.push({
+                kind: "AssignToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadArrow": {
+            tokens.push({
+                kind: "ArrowToken",
+                startIndex: start,
+                endIndex: start + 2,
+            });
+            break;
+        }
+        case "ReadEquality": {
+            tokens.push({
+                kind: "EqualityToken",
+                startIndex: start,
+                endIndex: start + 3,
+            });
+            break;
+        }
+        case "ReadInequality": {
+            tokens.push({
+                kind: "InequalityToken",
+                startIndex: start,
+                endIndex: start + 3,
+            });
+            break;
+        }
+        case "ReadLessThan": {
+            tokens.push({
+                kind: "LessThanToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadMoreThan": {
+            tokens.push({
+                kind: "MoreThanToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+        case "ReadLessThanOrEqual": {
+            tokens.push({
+                kind: "LessThanOrEqualToken",
+                startIndex: start,
+                endIndex: start + 2,
+            });
+            break;
+        }
+        case "ReadMoreThanOrEqual": {
+            tokens.push({
+                kind: "MoreThanOrEqualToken",
+                startIndex: start,
+                endIndex: start + 2,
+            });
+            break;
+        }
+        case "ReadAnd": {
+            tokens.push({
+                kind: "AndToken",
+                startIndex: start,
+                endIndex: start + 2,
+            });
+            break;
+        }
+        case "ReadOr": {
+            tokens.push({
+                kind: "OrToken",
+                startIndex: start,
+                endIndex: start + 2,
+            });
+            break;
+        }
+        case "ReadNegation": {
+            tokens.push({
+                kind: "NegationToken",
+                startIndex: start,
+                endIndex: start + 1,
+            });
+            break;
+        }
+    }
+
+    tokenizerModel.state = "ReadyForNextToken";
+    tokenizerModel.buffer = "";
+}
+
 function switchTokenizerState(
     newState: TokenizerState,
     tokenizerModel: TokenizerModel,
@@ -303,238 +544,7 @@ function switchTokenizerState(
     }
 
     if (isOneOffTokenizerState(newState)) {
-        if (isBufferingTokenizerState(currentState)) {
-            // clear out the old buffer
-            switchTokenizerState(
-                "ReadyForNextToken",
-                tokenizerModel,
-                tokens,
-                currentIndex,
-            );
-        }
-
-        const start = currentIndex;
-        switch (newState) {
-            case "ReadAddition": {
-                tokens.push({
-                    kind: "AdditionToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadSubtraction": {
-                tokens.push({
-                    kind: "SubtractionToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadMultiplication": {
-                tokens.push({
-                    kind: "MultiplicationToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadDivision": {
-                tokens.push({
-                    kind: "DivisionToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadIncrement": {
-                tokens.push({
-                    kind: "IncrementToken",
-                    startIndex: start,
-                    endIndex: start + 2,
-                });
-                break;
-            }
-            case "ReadDecrement": {
-                tokens.push({
-                    kind: "DecrementToken",
-                    startIndex: start,
-                    endIndex: start + 2,
-                });
-                break;
-            }
-            case "ReadLeftParen": {
-                tokens.push({
-                    kind: "LeftParenToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadRightParen": {
-                tokens.push({
-                    kind: "RightParenToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadLeftBracket": {
-                tokens.push({
-                    kind: "LeftBracketToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadRightBracket": {
-                tokens.push({
-                    kind: "RightBracketToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadLeftBrace": {
-                tokens.push({
-                    kind: "LeftBraceToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadRightBrace": {
-                tokens.push({
-                    kind: "RightBraceToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadComma": {
-                tokens.push({
-                    kind: "CommaToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadColon": {
-                tokens.push({
-                    kind: "ColonToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadSemicolon": {
-                tokens.push({
-                    kind: "SemicolonToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadDot": {
-                tokens.push({
-                    kind: "DotToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadAssign": {
-                tokens.push({
-                    kind: "AssignToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadArrow": {
-                tokens.push({
-                    kind: "ArrowToken",
-                    startIndex: start,
-                    endIndex: start + 2,
-                });
-                break;
-            }
-            case "ReadEquality": {
-                tokens.push({
-                    kind: "EqualityToken",
-                    startIndex: start,
-                    endIndex: start + 3,
-                });
-                break;
-            }
-            case "ReadInequality": {
-                tokens.push({
-                    kind: "InequalityToken",
-                    startIndex: start,
-                    endIndex: start + 3,
-                });
-                break;
-            }
-            case "ReadLessThan": {
-                tokens.push({
-                    kind: "LessThanToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadMoreThan": {
-                tokens.push({
-                    kind: "MoreThanToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-            case "ReadLessThanOrEqual": {
-                tokens.push({
-                    kind: "LessThanOrEqualToken",
-                    startIndex: start,
-                    endIndex: start + 2,
-                });
-                break;
-            }
-            case "ReadMoreThanOrEqual": {
-                tokens.push({
-                    kind: "MoreThanOrEqualToken",
-                    startIndex: start,
-                    endIndex: start + 2,
-                });
-                break;
-            }
-            case "ReadAnd": {
-                tokens.push({
-                    kind: "AndToken",
-                    startIndex: start,
-                    endIndex: start + 2,
-                });
-                break;
-            }
-            case "ReadOr": {
-                tokens.push({
-                    kind: "OrToken",
-                    startIndex: start,
-                    endIndex: start + 2,
-                });
-                break;
-            }
-            case "ReadNegation": {
-                tokens.push({
-                    kind: "NegationToken",
-                    startIndex: start,
-                    endIndex: start + 1,
-                });
-                break;
-            }
-        }
-
-        tokenizerModel.state = "ReadyForNextToken";
-        tokenizerModel.buffer = "";
+        switchOneOffTokenState(newState, tokenizerModel, tokens, currentIndex);
         return;
     }
 
