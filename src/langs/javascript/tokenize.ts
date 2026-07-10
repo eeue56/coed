@@ -4,14 +4,6 @@ function isDigit(char: string): boolean {
     return char >= "0" && char <= "9";
 }
 
-function isTrue(buffer: string): boolean {
-    return buffer === "true";
-}
-
-function isFalse(buffer: string): boolean {
-    return buffer === "false";
-}
-
 function isEqualsSign(char: string): boolean {
     return char === "=";
 }
@@ -121,25 +113,6 @@ function isStringQuote(char: string): boolean {
     return char === '"' || char === "'" || char === "`";
 }
 
-/**
- * explicitly only support:
- * ```
- * 123
- * 12.34
- * ```
- *
- * and not support:
- *
- * ```
- * 1e10
- * 1.2e-3
- * .5
- * ```
- */
-function isNumberStart(char: string): boolean {
-    return isDigit(char);
-}
-
 function isNumberPart(char: string, buffer: string): boolean {
     if (isDigit(char)) {
         return true;
@@ -235,36 +208,6 @@ type OneOffTokenizerState =
     | "ReadOr"
     | "ReadNegation";
 
-const oneOffStates = new Set<OneOffTokenizerState>([
-    "ReadAddition",
-    "ReadSubtraction",
-    "ReadMultiplication",
-    "ReadDivision",
-    "ReadIncrement",
-    "ReadDecrement",
-    "ReadLeftParen",
-    "ReadRightParen",
-    "ReadLeftBracket",
-    "ReadRightBracket",
-    "ReadLeftBrace",
-    "ReadRightBrace",
-    "ReadComma",
-    "ReadColon",
-    "ReadSemicolon",
-    "ReadDot",
-    "ReadAssign",
-    "ReadArrow",
-    "ReadEquality",
-    "ReadInequality",
-    "ReadLessThan",
-    "ReadMoreThan",
-    "ReadLessThanOrEqual",
-    "ReadMoreThanOrEqual",
-    "ReadAnd",
-    "ReadOr",
-    "ReadNegation",
-]);
-
 type TokenInfo = { kind: Token["kind"]; length: number };
 
 const oneOffTokenInfo: Record<OneOffTokenizerState, TokenInfo> = {
@@ -300,7 +243,7 @@ const oneOffTokenInfo: Record<OneOffTokenizerState, TokenInfo> = {
 function isOneOffTokenizerState(
     state: TokenizerState,
 ): state is OneOffTokenizerState {
-    return oneOffStates.has(state as OneOffTokenizerState);
+    return state in oneOffTokenInfo;
 }
 
 type BufferingTokenizerState =
@@ -540,7 +483,7 @@ export function tokenize(string: string): Token[] {
                 );
                 tokenizerModel.currentTokenStartIndex = i;
                 tokenizerModel.buffer += char;
-            } else if (isNumberStart(char)) {
+            } else if (isDigit(char)) {
                 switchTokenizerState(
                     "ReadingNumber",
                     tokenizerModel,
