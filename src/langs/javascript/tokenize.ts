@@ -531,6 +531,130 @@ function switchOneOffTokenState(
     tokenizerModel.buffer = "";
 }
 
+function switchIdentifierToken(
+    buffer: string,
+    start: number,
+    endIndex: number,
+    tokens: Token[],
+): void {
+    if (buffer === "let") {
+        tokens.push({
+            kind: "LetToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "var") {
+        tokens.push({
+            kind: "VarToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "const") {
+        tokens.push({
+            kind: "ConstToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "for") {
+        tokens.push({
+            kind: "ForToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "while") {
+        tokens.push({
+            kind: "WhileToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "with") {
+        tokens.push({
+            kind: "WithToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "if") {
+        tokens.push({
+            kind: "IfToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "else") {
+        tokens.push({
+            kind: "ElseToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "function") {
+        tokens.push({
+            kind: "FunctionToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "return") {
+        tokens.push({
+            kind: "ReturnToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "continue") {
+        tokens.push({
+            kind: "ContinueToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "break") {
+        tokens.push({
+            kind: "BreakToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "null") {
+        tokens.push({
+            kind: "NullToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (isTrue(buffer)) {
+        tokens.push({
+            kind: "TrueToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (isFalse(buffer)) {
+        tokens.push({
+            kind: "FalseToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "typeof") {
+        tokens.push({
+            kind: "TypeofToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "as") {
+        tokens.push({
+            kind: "AsToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else if (buffer === "undefined") {
+        tokens.push({
+            kind: "UndefinedToken",
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    } else {
+        tokens.push({
+            kind: "IdentifierToken",
+            name: buffer,
+            startIndex: start,
+            endIndex: endIndex,
+        });
+    }
+}
+
 function switchTokenizerState(
     newState: TokenizerState,
     tokenizerModel: TokenizerModel,
@@ -565,122 +689,12 @@ function switchTokenizerState(
             break;
         }
         case "ReadingIdentifier": {
-            if (tokenizerModel.buffer === "let") {
-                tokens.push({
-                    kind: "LetToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "var") {
-                tokens.push({
-                    kind: "VarToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "const") {
-                tokens.push({
-                    kind: "ConstToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "for") {
-                tokens.push({
-                    kind: "ForToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "while") {
-                tokens.push({
-                    kind: "WhileToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "with") {
-                tokens.push({
-                    kind: "WithToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "if") {
-                tokens.push({
-                    kind: "IfToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "else") {
-                tokens.push({
-                    kind: "ElseToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "function") {
-                tokens.push({
-                    kind: "FunctionToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "return") {
-                tokens.push({
-                    kind: "ReturnToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "continue") {
-                tokens.push({
-                    kind: "ContinueToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "break") {
-                tokens.push({
-                    kind: "BreakToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "null") {
-                tokens.push({
-                    kind: "NullToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (isTrue(tokenizerModel.buffer)) {
-                tokens.push({
-                    kind: "TrueToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (isFalse(tokenizerModel.buffer)) {
-                tokens.push({
-                    kind: "FalseToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "typeof") {
-                tokens.push({
-                    kind: "TypeofToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "as") {
-                tokens.push({
-                    kind: "AsToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else if (tokenizerModel.buffer === "undefined") {
-                tokens.push({
-                    kind: "UndefinedToken",
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            } else {
-                tokens.push({
-                    kind: "IdentifierToken",
-                    name: tokenizerModel.buffer,
-                    startIndex: start,
-                    endIndex: endIndex,
-                });
-            }
+            switchIdentifierToken(
+                tokenizerModel.buffer,
+                start,
+                endIndex,
+                tokens,
+            );
             break;
         }
         case "ReadingString": {
