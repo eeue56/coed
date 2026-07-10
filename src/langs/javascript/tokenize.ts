@@ -290,6 +290,19 @@ function isBufferingTokenizerState(
 
 type TokenizerState = BufferingTokenizerState | OneOffTokenizerState;
 
+function pushToken(
+    tokens: Token[],
+    kind: Token["kind"],
+    startIndex: number,
+    endIndex: number,
+): void {
+    tokens.push({
+        kind,
+        startIndex,
+        endIndex,
+    } as Token);
+}
+
 function switchOneOffTokenState(
     newState: OneOffTokenizerState,
     tokenizerModel: TokenizerModel,
@@ -310,219 +323,111 @@ function switchOneOffTokenState(
 
     switch (newState) {
         case "ReadAddition": {
-            tokens.push({
-                kind: "AdditionToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "AdditionToken", start, start + 1);
             break;
         }
         case "ReadSubtraction": {
-            tokens.push({
-                kind: "SubtractionToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "SubtractionToken", start, start + 1);
             break;
         }
         case "ReadMultiplication": {
-            tokens.push({
-                kind: "MultiplicationToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "MultiplicationToken", start, start + 1);
             break;
         }
         case "ReadDivision": {
-            tokens.push({
-                kind: "DivisionToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "DivisionToken", start, start + 1);
             break;
         }
         case "ReadIncrement": {
-            tokens.push({
-                kind: "IncrementToken",
-                startIndex: start,
-                endIndex: start + 2,
-            });
+            pushToken(tokens, "IncrementToken", start, start + 2);
             break;
         }
         case "ReadDecrement": {
-            tokens.push({
-                kind: "DecrementToken",
-                startIndex: start,
-                endIndex: start + 2,
-            });
+            pushToken(tokens, "DecrementToken", start, start + 2);
             break;
         }
         case "ReadLeftParen": {
-            tokens.push({
-                kind: "LeftParenToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "LeftParenToken", start, start + 1);
             break;
         }
         case "ReadRightParen": {
-            tokens.push({
-                kind: "RightParenToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "RightParenToken", start, start + 1);
             break;
         }
         case "ReadLeftBracket": {
-            tokens.push({
-                kind: "LeftBracketToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "LeftBracketToken", start, start + 1);
             break;
         }
         case "ReadRightBracket": {
-            tokens.push({
-                kind: "RightBracketToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "RightBracketToken", start, start + 1);
             break;
         }
         case "ReadLeftBrace": {
-            tokens.push({
-                kind: "LeftBraceToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "LeftBraceToken", start, start + 1);
             break;
         }
         case "ReadRightBrace": {
-            tokens.push({
-                kind: "RightBraceToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "RightBraceToken", start, start + 1);
             break;
         }
         case "ReadComma": {
-            tokens.push({
-                kind: "CommaToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "CommaToken", start, start + 1);
             break;
         }
         case "ReadColon": {
-            tokens.push({
-                kind: "ColonToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "ColonToken", start, start + 1);
             break;
         }
         case "ReadSemicolon": {
-            tokens.push({
-                kind: "SemicolonToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "SemicolonToken", start, start + 1);
             break;
         }
         case "ReadDot": {
-            tokens.push({
-                kind: "DotToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "DotToken", start, start + 1);
             break;
         }
         case "ReadAssign": {
-            tokens.push({
-                kind: "AssignToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "AssignToken", start, start + 1);
             break;
         }
         case "ReadArrow": {
-            tokens.push({
-                kind: "ArrowToken",
-                startIndex: start,
-                endIndex: start + 2,
-            });
+            pushToken(tokens, "ArrowToken", start, start + 2);
             break;
         }
         case "ReadEquality": {
-            tokens.push({
-                kind: "EqualityToken",
-                startIndex: start,
-                endIndex: start + 3,
-            });
+            pushToken(tokens, "EqualityToken", start, start + 3);
             break;
         }
         case "ReadInequality": {
-            tokens.push({
-                kind: "InequalityToken",
-                startIndex: start,
-                endIndex: start + 3,
-            });
+            pushToken(tokens, "InequalityToken", start, start + 3);
             break;
         }
         case "ReadLessThan": {
-            tokens.push({
-                kind: "LessThanToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "LessThanToken", start, start + 1);
             break;
         }
         case "ReadMoreThan": {
-            tokens.push({
-                kind: "MoreThanToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "MoreThanToken", start, start + 1);
             break;
         }
         case "ReadLessThanOrEqual": {
-            tokens.push({
-                kind: "LessThanOrEqualToken",
-                startIndex: start,
-                endIndex: start + 2,
-            });
+            pushToken(tokens, "LessThanOrEqualToken", start, start + 2);
             break;
         }
         case "ReadMoreThanOrEqual": {
-            tokens.push({
-                kind: "MoreThanOrEqualToken",
-                startIndex: start,
-                endIndex: start + 2,
-            });
+            pushToken(tokens, "MoreThanOrEqualToken", start, start + 2);
             break;
         }
         case "ReadAnd": {
-            tokens.push({
-                kind: "AndToken",
-                startIndex: start,
-                endIndex: start + 2,
-            });
+            pushToken(tokens, "AndToken", start, start + 2);
             break;
         }
         case "ReadOr": {
-            tokens.push({
-                kind: "OrToken",
-                startIndex: start,
-                endIndex: start + 2,
-            });
+            pushToken(tokens, "OrToken", start, start + 2);
             break;
         }
         case "ReadNegation": {
-            tokens.push({
-                kind: "NegationToken",
-                startIndex: start,
-                endIndex: start + 1,
-            });
+            pushToken(tokens, "NegationToken", start, start + 1);
             break;
         }
     }
@@ -531,128 +436,47 @@ function switchOneOffTokenState(
     tokenizerModel.buffer = "";
 }
 
+const keywordKinds = {
+    let: "LetToken",
+    var: "VarToken",
+    const: "ConstToken",
+    for: "ForToken",
+    while: "WhileToken",
+    with: "WithToken",
+    if: "IfToken",
+    else: "ElseToken",
+    function: "FunctionToken",
+    return: "ReturnToken",
+    continue: "ContinueToken",
+    break: "BreakToken",
+    null: "NullToken",
+    typeof: "TypeofToken",
+    as: "AsToken",
+    undefined: "UndefinedToken",
+    true: "TrueToken",
+    false: "FalseToken",
+} as const;
+
+const keywords = Object.keys(keywordKinds);
+
 function switchIdentifierToken(
     buffer: string,
     start: number,
     endIndex: number,
     tokens: Token[],
 ): void {
-    if (buffer === "let") {
-        tokens.push({
-            kind: "LetToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "var") {
-        tokens.push({
-            kind: "VarToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "const") {
-        tokens.push({
-            kind: "ConstToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "for") {
-        tokens.push({
-            kind: "ForToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "while") {
-        tokens.push({
-            kind: "WhileToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "with") {
-        tokens.push({
-            kind: "WithToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "if") {
-        tokens.push({
-            kind: "IfToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "else") {
-        tokens.push({
-            kind: "ElseToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "function") {
-        tokens.push({
-            kind: "FunctionToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "return") {
-        tokens.push({
-            kind: "ReturnToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "continue") {
-        tokens.push({
-            kind: "ContinueToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "break") {
-        tokens.push({
-            kind: "BreakToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "null") {
-        tokens.push({
-            kind: "NullToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (isTrue(buffer)) {
-        tokens.push({
-            kind: "TrueToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (isFalse(buffer)) {
-        tokens.push({
-            kind: "FalseToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "typeof") {
-        tokens.push({
-            kind: "TypeofToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "as") {
-        tokens.push({
-            kind: "AsToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else if (buffer === "undefined") {
-        tokens.push({
-            kind: "UndefinedToken",
-            startIndex: start,
-            endIndex: endIndex,
-        });
-    } else {
+    if (!keywords.includes(buffer)) {
         tokens.push({
             kind: "IdentifierToken",
             name: buffer,
             startIndex: start,
             endIndex: endIndex,
         });
+        return;
     }
+    const keywordKind = keywordKinds[buffer as keyof typeof keywordKinds];
+
+    pushToken(tokens, keywordKind, start, endIndex);
 }
 
 function switchTokenizerState(
