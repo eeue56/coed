@@ -4,6 +4,8 @@ coed supports a subset of JavaScript to convert into a tree.
 
 When a JavaScript feature is not supported in the subset, it will either be converted to an approved feature, or a specific error will be given detailing what to do instead.
 
+Parser is based on Tegan, Derw and Mojie's parsers.
+
 ### Transformations
 
 Some accepted input is normalized into canonical subset nodes:
@@ -14,7 +16,7 @@ Some accepted input is normalized into canonical subset nodes:
 - `const name = (args) => expr;` becomes a named `function` declaration
 - `let name = () => { ... };` becomes a named `function` declaration
 - Type annotations on `let`/`const`, function parameters, and function return types are stripped
-- `expr as Type` assertions are also stripped
+- `expr as Type` assertions
 
 ### Supported statements
 
@@ -61,6 +63,9 @@ Some accepted input is normalized into canonical subset nodes:
     - Standard precedence (`*`/`/` before `+`/`-`)
 - Comparison operators:
     - `===`, `!==`, `<`, `>`, `<=`, `>=`
+- Logical operators:
+    - `&&`, `||`
+    - Standard precedence (`&&` before `||`)
 - Postfix operators:
     - `name++`, `name--`
 
@@ -70,8 +75,8 @@ Some accepted input is normalized into canonical subset nodes:
     - `with`
 - Not currently parsed as expressions:
     - Assignment expressions like `x = 1` or `obj.key = 1`
-    - Logical operators like `&&` and `||`
     - Exponent/scientific number forms like `1e10`, `1.2e-3`, `.5`
     - Optional chaining, nullish coalescing, destructuring, classes, and other general ESNext syntax
 - Prefix `!` and `typeof` tokens are accepted but currently lowered away (the parser keeps only the operand expression)
+- Postfix call/member/index/update forms are limited to name lookups on the left side (for example: `fn()`, `obj.key`, `obj["key"]`, `arr[0]`, `name++`)
 - Bracket access is limited to numeric or string literal keys (`arr[0]`, `obj["key"]`)
