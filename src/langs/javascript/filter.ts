@@ -113,10 +113,11 @@ export function filterExpression(
         }
         case "IncreaseExpression":
         case "DecreaseExpression": {
-            if (!shouldKeep(expression.amount)) {
+            const amount = filterExpression(expression.amount, shouldKeep);
+            if (!amount) {
                 return null;
             }
-            return expression;
+            return { ...expression, amount };
         }
         case "NullExpression": {
             return expression;
@@ -146,19 +147,21 @@ export function filterExpression(
             return expression;
         }
         case "ObjectPropertyExpression": {
-            if (
-                !shouldKeep(expression.property) ||
-                !shouldKeep(expression.object)
-            ) {
+            const object = filterExpression(expression.object, shouldKeep);
+            const property = filterExpression(expression.property, shouldKeep);
+            if (!object || !property) {
                 return null;
             }
-            return expression;
+            return {
+                ...expression,
+                object: object as typeof expression.object,
+                property: property as typeof expression.property,
+            };
         }
         case "ObjectMethodCallExpression": {
-            if (
-                !shouldKeep(expression.method) ||
-                !shouldKeep(expression.object)
-            ) {
+            const object = filterExpression(expression.object, shouldKeep);
+            const method = filterExpression(expression.method, shouldKeep);
+            if (!object || !method) {
                 return null;
             }
 
@@ -172,16 +175,24 @@ export function filterExpression(
                 args.push(filtered);
             }
 
-            return { ...expression, arguments: args };
+            return {
+                ...expression,
+                object: object as typeof expression.object,
+                method: method as typeof expression.method,
+                arguments: args,
+            };
         }
         case "ArrayAccessExpression": {
-            if (
-                !shouldKeep(expression.array) ||
-                !shouldKeep(expression.index)
-            ) {
+            const array = filterExpression(expression.array, shouldKeep);
+            const index = filterExpression(expression.index, shouldKeep);
+            if (!array || !index) {
                 return null;
             }
-            return expression;
+            return {
+                ...expression,
+                array: array as typeof expression.array,
+                index: index as typeof expression.index,
+            };
         }
         case "AdditionExpression":
         case "SubtractionExpression":

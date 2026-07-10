@@ -145,7 +145,9 @@ export function testFilterAstsCanRemoveContainerNodes() {
         return node.kind !== "FunctionDeclaration" && node.kind !== "ForLoop";
     });
 
-    assert.deepStrictEqual(actual, [{ kind: "ConstStatement", name: "z", value: one }]);
+    assert.deepStrictEqual(actual, [
+        { kind: "ConstStatement", name: "z", value: one },
+    ]);
 }
 
 export function testFilterAstsKeepsAllAstTypesWhenPredicateAlwaysTrue() {
@@ -204,5 +206,8 @@ export function testFilterAstsKeepsAllAstTypesWhenPredicateAlwaysTrue() {
         },
     ];
 
-    assert.deepStrictEqual(filterAsts(input, () => true), expected);
+    assert.deepStrictEqual(
+        filterAsts(input, () => true),
+        expected,
+    );
 }
