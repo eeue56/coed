@@ -4,12 +4,12 @@ function isDigit(char: string): boolean {
     return char >= "0" && char <= "9";
 }
 
-function isTrue(char: string): boolean {
-    return char === "true";
+function isTrue(buffer: string): boolean {
+    return buffer === "true";
 }
 
-function isFalse(char: string): boolean {
-    return char === "false";
+function isFalse(buffer: string): boolean {
+    return buffer === "false";
 }
 
 function isIdentifierStart(char: string): boolean {
@@ -541,13 +541,13 @@ function switchTokenizerState(
                     startIndex: start,
                     endIndex: endIndex,
                 });
-            } else if (tokenizerModel.buffer === "true") {
+            } else if (isTrue(tokenizerModel.buffer)) {
                 tokens.push({
                     kind: "TrueToken",
                     startIndex: start,
                     endIndex: endIndex,
                 });
-            } else if (tokenizerModel.buffer === "false") {
+            } else if (isFalse(tokenizerModel.buffer)) {
                 tokens.push({
                     kind: "FalseToken",
                     startIndex: start,
