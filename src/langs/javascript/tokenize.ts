@@ -4,98 +4,6 @@ function isDigit(char: string): boolean {
     return char >= "0" && char <= "9";
 }
 
-function isEqualsSign(char: string): boolean {
-    return char === "=";
-}
-
-function isExclamationMark(char: string): boolean {
-    return char === "!";
-}
-
-function isAmpersand(char: string): boolean {
-    return char === "&";
-}
-
-function isPipe(char: string): boolean {
-    return char === "|";
-}
-
-function isPlus(char: string): boolean {
-    return char === "+";
-}
-
-function isMinus(char: string): boolean {
-    return char === "-";
-}
-
-function isAsterisk(char: string): boolean {
-    return char === "*";
-}
-
-function isForwardSlash(char: string): boolean {
-    return char === "/";
-}
-
-function isLessThan(char: string): boolean {
-    return char === "<";
-}
-
-function isGreaterThan(char: string): boolean {
-    return char === ">";
-}
-
-function isArrow(char: string, nextChar: string): boolean {
-    return isEqualsSign(char) && nextChar === ">";
-}
-
-function isTripleEquals(
-    char: string,
-    nextChar: string,
-    nextNextChar: string,
-): boolean {
-    return (
-        isEqualsSign(char) &&
-        isEqualsSign(nextChar) &&
-        isEqualsSign(nextNextChar)
-    );
-}
-
-function isInequality(
-    char: string,
-    nextChar: string,
-    nextNextChar: string,
-): boolean {
-    return (
-        isExclamationMark(char) &&
-        isEqualsSign(nextChar) &&
-        isEqualsSign(nextNextChar)
-    );
-}
-
-function isLessThanOrEqualTo(char: string, nextChar: string): boolean {
-    return isLessThan(char) && isEqualsSign(nextChar);
-}
-
-function isGreaterThanOrEqualTo(char: string, nextChar: string): boolean {
-    return isGreaterThan(char) && isEqualsSign(nextChar);
-}
-
-function isAnd(char: string, nextChar: string): boolean {
-    return isAmpersand(char) && isAmpersand(nextChar);
-}
-
-function isOr(char: string, nextChar: string): boolean {
-    return isPipe(char) && isPipe(nextChar);
-}
-
-function isIncrement(char: string, nextChar: string): boolean {
-    return isPlus(char) && isPlus(nextChar);
-}
-
-function isDecrement(char: string, nextChar: string): boolean {
-    return isMinus(char) && isMinus(nextChar);
-}
-
 function isIdentifierStart(char: string): boolean {
     return (
         (char >= "a" && char <= "z") ||
@@ -123,46 +31,6 @@ function isNumberPart(char: string, buffer: string): boolean {
     }
 
     return false;
-}
-
-function isLeftBracket(char: string): boolean {
-    return char === "[";
-}
-
-function isRightBracket(char: string): boolean {
-    return char === "]";
-}
-
-function isComma(char: string): boolean {
-    return char === ",";
-}
-
-function isColon(char: string): boolean {
-    return char === ":";
-}
-
-function isSemicolon(char: string): boolean {
-    return char === ";";
-}
-
-function isDot(char: string): boolean {
-    return char === ".";
-}
-
-function isLeftParen(char: string): boolean {
-    return char === "(";
-}
-
-function isRightParen(char: string): boolean {
-    return char === ")";
-}
-
-function isLeftBrace(char: string): boolean {
-    return char === "{";
-}
-
-function isRightBrace(char: string): boolean {
-    return char === "}";
 }
 
 function isWhitespace(char: string): boolean {
@@ -235,6 +103,75 @@ const oneOffTokenInfo: Record<OneOffTokenizerState, TokenInfo> = {
     ReadOr: { kind: "OrToken", length: 2 },
     ReadNegation: { kind: "NegationToken", length: 1 },
 };
+
+type OneOffTransition = {
+    pattern: string;
+    state: OneOffTokenizerState;
+};
+
+type OneOffTransitionResult = {
+    state: OneOffTokenizerState;
+    indexAdvance: number;
+};
+
+const multiCharOneOffTransitions: OneOffTransition[] = [
+    { pattern: "=>", state: "ReadArrow" },
+    { pattern: "===", state: "ReadEquality" },
+    { pattern: "!==", state: "ReadInequality" },
+    { pattern: "<=", state: "ReadLessThanOrEqual" },
+    { pattern: ">=", state: "ReadMoreThanOrEqual" },
+    { pattern: "&&", state: "ReadAnd" },
+    { pattern: "||", state: "ReadOr" },
+    { pattern: "++", state: "ReadIncrement" },
+    { pattern: "--", state: "ReadDecrement" },
+];
+
+const singleCharOneOffStates: Record<string, OneOffTokenizerState> = {
+    "(": "ReadLeftParen",
+    ")": "ReadRightParen",
+    "[": "ReadLeftBracket",
+    "]": "ReadRightBracket",
+    "{": "ReadLeftBrace",
+    "}": "ReadRightBrace",
+    ",": "ReadComma",
+    ":": "ReadColon",
+    ";": "ReadSemicolon",
+    ".": "ReadDot",
+    "+": "ReadAddition",
+    "-": "ReadSubtraction",
+    "*": "ReadMultiplication",
+    "/": "ReadDivision",
+    "<": "ReadLessThan",
+    ">": "ReadMoreThan",
+    "!": "ReadNegation",
+    "=": "ReadAssign",
+};
+
+function getOneOffTransition(
+    input: string,
+    currentIndex: number,
+    char: string,
+): OneOffTransitionResult | null {
+    for (const transition of multiCharOneOffTransitions) {
+        if (input.startsWith(transition.pattern, currentIndex)) {
+            return {
+                state: transition.state,
+                indexAdvance: transition.pattern.length - 1,
+            };
+        }
+    }
+
+    const oneOffState = singleCharOneOffStates[char];
+
+    if (oneOffState === undefined) {
+        return null;
+    }
+
+    return {
+        state: oneOffState,
+        indexAdvance: 0,
+    };
+}
 
 function isOneOffTokenizerState(
     state: TokenizerState,
@@ -541,241 +478,16 @@ function processReadyForNextToken(
         return 0;
     }
 
-    if (isLeftParen(char)) {
+    const oneOffTransition = getOneOffTransition(input, currentIndex, char);
+
+    if (oneOffTransition !== null) {
         switchStateAtIndex(
-            "ReadLeftParen",
+            oneOffTransition.state,
             tokenizerModel,
             tokens,
             currentIndex,
         );
-        return 0;
-    }
-
-    if (isRightParen(char)) {
-        switchStateAtIndex(
-            "ReadRightParen",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 0;
-    }
-
-    if (isLeftBracket(char)) {
-        switchStateAtIndex(
-            "ReadLeftBracket",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 0;
-    }
-
-    if (isRightBracket(char)) {
-        switchStateAtIndex(
-            "ReadRightBracket",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 0;
-    }
-
-    if (isLeftBrace(char)) {
-        switchStateAtIndex(
-            "ReadLeftBrace",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 0;
-    }
-
-    if (isRightBrace(char)) {
-        switchStateAtIndex(
-            "ReadRightBrace",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 0;
-    }
-
-    if (isComma(char)) {
-        switchStateAtIndex("ReadComma", tokenizerModel, tokens, currentIndex);
-        return 0;
-    }
-
-    if (isColon(char)) {
-        switchStateAtIndex("ReadColon", tokenizerModel, tokens, currentIndex);
-        return 0;
-    }
-
-    if (isSemicolon(char)) {
-        switchStateAtIndex(
-            "ReadSemicolon",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 0;
-    }
-
-    if (isDot(char)) {
-        switchStateAtIndex("ReadDot", tokenizerModel, tokens, currentIndex);
-        return 0;
-    }
-
-    if (isArrow(char, input[currentIndex + 1])) {
-        switchStateAtIndex("ReadArrow", tokenizerModel, tokens, currentIndex);
-        return 1;
-    }
-
-    if (
-        isTripleEquals(char, input[currentIndex + 1], input[currentIndex + 2])
-    ) {
-        switchStateAtIndex(
-            "ReadEquality",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 2;
-    }
-
-    if (isInequality(char, input[currentIndex + 1], input[currentIndex + 2])) {
-        switchStateAtIndex(
-            "ReadInequality",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 2;
-    }
-
-    if (isLessThanOrEqualTo(char, input[currentIndex + 1])) {
-        switchStateAtIndex(
-            "ReadLessThanOrEqual",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 1;
-    }
-
-    if (isGreaterThanOrEqualTo(char, input[currentIndex + 1])) {
-        switchStateAtIndex(
-            "ReadMoreThanOrEqual",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 1;
-    }
-
-    if (isAnd(char, input[currentIndex + 1])) {
-        switchStateAtIndex("ReadAnd", tokenizerModel, tokens, currentIndex);
-        return 1;
-    }
-
-    if (isOr(char, input[currentIndex + 1])) {
-        switchStateAtIndex("ReadOr", tokenizerModel, tokens, currentIndex);
-        return 1;
-    }
-
-    if (isIncrement(char, input[currentIndex + 1])) {
-        switchStateAtIndex(
-            "ReadIncrement",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 1;
-    }
-
-    if (isDecrement(char, input[currentIndex + 1])) {
-        switchStateAtIndex(
-            "ReadDecrement",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 1;
-    }
-
-    if (isPlus(char)) {
-        switchStateAtIndex(
-            "ReadAddition",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 0;
-    }
-
-    if (isMinus(char)) {
-        switchStateAtIndex(
-            "ReadSubtraction",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 0;
-    }
-
-    if (isAsterisk(char)) {
-        switchStateAtIndex(
-            "ReadMultiplication",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 0;
-    }
-
-    if (isForwardSlash(char)) {
-        switchStateAtIndex(
-            "ReadDivision",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 0;
-    }
-
-    if (isLessThan(char)) {
-        switchStateAtIndex(
-            "ReadLessThan",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 0;
-    }
-
-    if (isGreaterThan(char)) {
-        switchStateAtIndex(
-            "ReadMoreThan",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 0;
-    }
-
-    if (isExclamationMark(char)) {
-        switchStateAtIndex(
-            "ReadNegation",
-            tokenizerModel,
-            tokens,
-            currentIndex,
-        );
-        return 0;
-    }
-
-    if (isEqualsSign(char)) {
-        switchStateAtIndex("ReadAssign", tokenizerModel, tokens, currentIndex);
-        return 0;
+        return oneOffTransition.indexAdvance;
     }
 
     if (isWhitespace(char)) {
