@@ -1,15 +1,14 @@
 import {
-    formatExpressionParseError,
+    buildStatementFailureContext,
+    createExpressionParseError,
     formatNoProgressError,
     formatStatementParseError,
     formatTrailingExpressionError,
-    type StatementFailureContext,
 } from "./parserErrors.ts";
 import { tokenize } from "./tokenize.ts";
 import type {
     Ast,
     BinaryOperatorRule,
-    Err,
     Expression,
     ExpressionParseResult,
     NameLookupExpression,
@@ -19,7 +18,7 @@ import type {
     Result,
     StatementParseResult,
     Token,
-    TokenKinds,
+    TokenKinds
 } from "./types.ts";
 
 /** filter out whitespace tokens from a token list */
@@ -58,13 +57,6 @@ function isNameLookup(expression: Expression): NameLookupExpression | null {
 
 function currentToken(state: ParserState): Token | null {
     return state.tokens[state.index] || null;
-}
-
-function errFromParserState(state: ParserState): Err {
-    return {
-        kind: "Err",
-        error: formatExpressionParseError(state.tokens, state.index),
-    };
 }
 
 /** advance the parser position by one token */
@@ -174,10 +166,7 @@ function parseCommaSeparatedExpressions(
     }
 
     if (!tokenIs(currentToken(state), closingTokenKind)) {
-        return {
-            kind: "Err",
-            error: formatExpressionParseError(state.tokens, state.index),
-        };
+        return createExpressionParseError(state.tokens, state.index);
     }
 
     return {
@@ -224,8 +213,8 @@ function parseAsTypeAssertion(
         "IncrementToken",
         "DecrementToken",
     ]);
-    if (afterType === null) {
-        return errFromParserState(state);
+        if (afterType === null) {
+            return createExpressionParseError(state.tokens, state.index);
     }
 
     state.index = afterType;
@@ -282,7 +271,7 @@ function parsePostfixStep(
         consumeToken(state);
         const propertyToken = currentToken(state);
         if (!tokenIs(propertyToken, "IdentifierToken")) {
-            return errFromParserState(state);
+            return createExpressionParseError(state.tokens, state.index);
         }
         consumeToken(state);
 
@@ -333,7 +322,7 @@ function parsePostfixStep(
         if (tokenIs(indexToken, "NumberToken")) {
             consumeToken(state);
             if (!tokenIs(currentToken(state), "RightBracketToken")) {
-                return errFromParserState(state);
+                return createExpressionParseError(state.tokens, state.index);
             }
 
             consumeToken(state);
@@ -353,7 +342,7 @@ function parsePostfixStep(
         if (tokenIs(indexToken, "StringToken")) {
             consumeToken(state);
             if (!tokenIs(currentToken(state), "RightBracketToken")) {
-                return errFromParserState(state);
+                return createExpressionParseError(state.tokens, state.index);
             }
 
             consumeToken(state);
@@ -375,7 +364,7 @@ function parsePostfixStep(
             };
         }
 
-        return errFromParserState(state);
+        return createExpressionParseError(state.tokens, state.index);
     }
 
     if (token.kind === "IncrementToken") {
@@ -588,7 +577,7 @@ function parsePostfix(state: ParserState): Result<Expression> {
 function parseLeaf(state: ParserState): Result<Expression> {
     const token = currentToken(state);
     if (!token) {
-        return errFromParserState(state);
+        return createExpressionParseError(state.tokens, state.index);
     }
 
     if (token.kind === "NegationToken" || token.kind === "TypeofToken") {
@@ -686,7 +675,7 @@ function parseLeaf(state: ParserState): Result<Expression> {
             const expression = parseLogicalOr(state);
             if (expression.kind === "Err") return expression;
             if (!tokenIs(currentToken(state), "RightParenToken")) {
-                return errFromParserState(state);
+                return createExpressionParseError(state.tokens, state.index);
             }
             consumeToken(state);
             return expression;
@@ -715,7 +704,7 @@ function parseLeaf(state: ParserState): Result<Expression> {
                 while (true) {
                     const keyToken = currentToken(state);
                     if (!keyToken) {
-                        return errFromParserState(state);
+                        return createExpressionParseError(state.tokens, state.index);
                     }
 
                     let key = "";
@@ -724,12 +713,12 @@ function parseLeaf(state: ParserState): Result<Expression> {
                     } else if (keyToken.kind === "StringToken") {
                         key = stripStringQuotes(keyToken.value);
                     } else {
-                        return errFromParserState(state);
+                        return createExpressionParseError(state.tokens, state.index);
                     }
                     consumeToken(state);
 
                     if (!tokenIs(currentToken(state), "ColonToken")) {
-                        return errFromParserState(state);
+                        return createExpressionParseError(state.tokens, state.index);
                     }
                     consumeToken(state);
 
@@ -747,7 +736,7 @@ function parseLeaf(state: ParserState): Result<Expression> {
             }
 
             if (!tokenIs(currentToken(state), "RightBraceToken")) {
-                return errFromParserState(state);
+                return createExpressionParseError(state.tokens, state.index);
             }
             consumeToken(state);
 
@@ -760,7 +749,7 @@ function parseLeaf(state: ParserState): Result<Expression> {
             };
         }
         default: {
-            return errFromParserState(state);
+            return createExpressionParseError(state.tokens, state.index);
         }
     }
 }
@@ -1540,232 +1529,6 @@ function parseBreak(state: ParserState): StatementParseResult {
     return parseLoopControlStatement(state, "BreakStatement");
 }
 
-function buildIfFailureContext(
-    tokens: Token[],
-    index: number,
-): StatementFailureContext {
-    const leftParen = tokens[index + 1];
-    const conditionStart = index + 2;
-    const ifCondition = tokenIs(leftParen, "LeftParenToken")
-        ? parseExpressionAt(tokens, conditionStart)
-        : undefined;
-
-    const rightParen =
-        ifCondition && ifCondition.kind === "Ok"
-            ? tokens[ifCondition.value.index]
-            : null;
-    const thenStart =
-        ifCondition && ifCondition.kind === "Ok"
-            ? ifCondition.value.index + 1
-            : -1;
-    const ifThenBranch =
-        ifCondition &&
-        ifCondition.kind === "Ok" &&
-        tokenIs(rightParen, "RightParenToken")
-            ? parseBlock(tokens, thenStart)
-            : null;
-
-    const elseToken = ifThenBranch ? tokens[ifThenBranch.index] : null;
-    const afterElse = ifThenBranch ? tokens[ifThenBranch.index + 1] : null;
-    const ifElseBranch =
-        ifThenBranch !== null &&
-        tokenIs(elseToken, "ElseToken") &&
-        tokenIs(afterElse, "LeftBraceToken")
-            ? parseBlock(tokens, ifThenBranch.index + 1)
-            : null;
-
-    return {
-        ifCondition,
-        ifThenBranch,
-        ifElseBranch,
-    };
-}
-
-function buildForFailureContext(
-    tokens: Token[],
-    index: number,
-): StatementFailureContext {
-    const leftParen = tokens[index + 1];
-    const initState = tokenIs(leftParen, "LeftParenToken")
-        ? ParserState(tokens, index + 2, false, false)
-        : null;
-    const forInit = initState ? parseLetOrConst(initState, false, false) : null;
-
-    const forInitValue =
-        tokenIs(tokens[index + 3], "IdentifierToken") &&
-        tokenIs(tokens[index + 4], "AssignToken")
-            ? parseExpressionAt(tokens, index + 5)
-            : null;
-
-    const forInitInnerParen = tokenIs(tokens[index + 5], "LeftParenToken")
-        ? parseExpressionAt(tokens, index + 6)
-        : null;
-
-    const firstSemicolon =
-        forInit !== null && forInit.statement !== null
-            ? tokens[forInit.index]
-            : null;
-    const conditionStart = forInit !== null ? forInit.index + 1 : -1;
-    const forCondition =
-        forInit !== null && tokenIs(firstSemicolon, "SemicolonToken")
-            ? parseExpressionAt(tokens, conditionStart)
-            : null;
-
-    const secondSemicolon =
-        forCondition !== null && forCondition.kind === "Ok"
-            ? tokens[forCondition.value.index]
-            : null;
-    const incrementStart =
-        forCondition !== null && forCondition.kind === "Ok"
-            ? forCondition.value.index + 1
-            : -1;
-    const forIncrement =
-        forCondition !== null &&
-        forCondition.kind === "Ok" &&
-        tokenIs(secondSemicolon, "SemicolonToken")
-            ? parseExpressionAt(tokens, incrementStart)
-            : null;
-
-    const rightParen =
-        forIncrement !== null && forIncrement.kind === "Ok"
-            ? tokens[forIncrement.value.index]
-            : null;
-    const bodyStart =
-        forIncrement !== null && forIncrement.kind === "Ok"
-            ? forIncrement.value.index + 1
-            : -1;
-    const forBody =
-        forIncrement !== null &&
-        forIncrement.kind === "Ok" &&
-        tokenIs(rightParen, "RightParenToken")
-            ? parseBlock(tokens, bodyStart)
-            : null;
-
-    return {
-        forInit,
-        forInitValue,
-        forInitInnerParen,
-        forCondition,
-        forIncrement,
-        forBody,
-    };
-}
-
-function buildLetConstFailureContext(
-    tokens: Token[],
-    index: number,
-): StatementFailureContext {
-    const letConstValue =
-        tokenIs(tokens[index + 1], "IdentifierToken") &&
-        tokenIs(tokens[index + 2], "AssignToken")
-            ? parseExpressionAt(tokens, index + 3)
-            : null;
-
-    const letConstInnerParen = tokenIs(tokens[index + 3], "LeftParenToken")
-        ? parseExpressionAt(tokens, index + 4)
-        : null;
-
-    return {
-        letConstValue,
-        letConstInnerParen,
-    };
-}
-
-function findFunctionParameterListEnd(
-    tokens: Token[],
-    parameterStart: number,
-): number | null {
-    let parameterIndex = parameterStart;
-
-    if (!tokenIs(tokens[parameterIndex], "RightParenToken")) {
-        while (parameterIndex < tokens.length) {
-            const parameter = tokens[parameterIndex];
-            if (!tokenIs(parameter, "IdentifierToken")) {
-                break;
-            }
-
-            parameterIndex += 1;
-            const separator = tokens[parameterIndex];
-            if (tokenIs(separator, "CommaToken")) {
-                parameterIndex += 1;
-                continue;
-            }
-
-            if (tokenIs(separator, "RightParenToken")) {
-                break;
-            }
-
-            parameterIndex = -1;
-            break;
-        }
-    }
-
-    if (
-        parameterIndex < 0 ||
-        !tokenIs(tokens[parameterIndex], "RightParenToken")
-    ) {
-        return null;
-    }
-
-    return parameterIndex;
-}
-
-function buildFunctionFailureContext(
-    tokens: Token[],
-    index: number,
-): StatementFailureContext {
-    const name = tokens[index + 1];
-    let functionBody = null;
-
-    if (tokenIs(name, "IdentifierToken")) {
-        const leftParen = tokens[index + 2];
-        if (tokenIs(leftParen, "LeftParenToken")) {
-            const parameterEnd = findFunctionParameterListEnd(
-                tokens,
-                index + 3,
-            );
-            if (parameterEnd !== null) {
-                functionBody = parseBlock(tokens, parameterEnd + 1);
-            }
-        }
-    }
-
-    return {
-        functionBody,
-    };
-}
-
-/** parse all statements in a token list, failing with an error on the first bad statement */
-function buildStatementFailureContext(
-    tokens: Token[],
-    index: number,
-): StatementFailureContext {
-    const token = tokens[index];
-
-    if (!token) {
-        return {};
-    }
-
-    switch (token.kind) {
-        case "IfToken": {
-            return buildIfFailureContext(tokens, index);
-        }
-        case "ForToken": {
-            return buildForFailureContext(tokens, index);
-        }
-        case "LetToken":
-        case "ConstToken": {
-            return buildLetConstFailureContext(tokens, index);
-        }
-        case "FunctionToken": {
-            return buildFunctionFailureContext(tokens, index);
-        }
-        default: {
-            return {};
-        }
-    }
-}
-
 function parseAllStatements(tokens: Token[], input: string): Result<Ast[]> {
     const statements: Ast[] = [];
     let index = 0;
@@ -1786,7 +1549,14 @@ function parseAllStatements(tokens: Token[], input: string): Result<Ast[]> {
                     input,
                     tokens,
                     index,
-                    buildStatementFailureContext(tokens, index),
+                    buildStatementFailureContext(tokens, index, {
+                        parseExpressionAt,
+                        parseBlock,
+                        parseLetOrConst,
+                        parseStatementAt,
+                        createParserState: ParserState,
+                        updateParserState,
+                    }),
                 ),
             };
         }

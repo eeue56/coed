@@ -5,6 +5,8 @@ import type {
 } from "./parse.ts";
 import type {
     DetailedParseError,
+    Err,
+    ParserState,
     SourceLocation,
     Token,
     TokenKinds,
@@ -688,6 +690,279 @@ export type StatementFailureContext = {
     forBody?: ParsedBlockResult | null;
     functionBody?: ParsedBlockResult | null;
 };
+
+export type StatementFailureHelpers = {
+    parseExpressionAt: (
+        tokens: Token[],
+        index: number,
+    ) => ParsedExpressionResult;
+    parseBlock: (
+        tokens: Token[],
+        startIndex: number,
+        parentState?: ParserState,
+    ) => ParsedBlockResult;
+    parseLetOrConst: (
+        state: ParserState,
+        isConst: boolean,
+        consumeSemicolon: boolean,
+    ) => ParsedStatementResult;
+    parseStatementAt: (state: ParserState) => ParsedStatementResult;
+    createParserState: (
+        tokens: Token[],
+        index: number,
+        insideFunction: boolean,
+        insideForLoop: boolean,
+    ) => ParserState;
+    updateParserState: (
+        state: ParserState,
+        index: number,
+        overrides?: Partial<
+            Pick<ParserState, "insideFunction" | "insideForLoop">
+        >,
+    ) => ParserState;
+};
+
+export function createExpressionParseError(
+    tokens: Token[],
+    index: number,
+): Err {
+    return {
+        kind: "Err",
+        error: formatExpressionParseError(tokens, index),
+    };
+}
+
+function buildIfFailureContext(
+    tokens: Token[],
+    index: number,
+    helpers: StatementFailureHelpers,
+): StatementFailureContext {
+    const leftParen = tokens[index + 1];
+    const conditionStart = index + 2;
+    const ifCondition = tokenIs(leftParen, "LeftParenToken")
+        ? helpers.parseExpressionAt(tokens, conditionStart)
+        : undefined;
+
+    const rightParen =
+        ifCondition && ifCondition.kind === "Ok"
+            ? tokens[ifCondition.value.index]
+            : null;
+    const thenStart =
+        ifCondition && ifCondition.kind === "Ok"
+            ? ifCondition.value.index + 1
+            : -1;
+    const ifThenBranch =
+        ifCondition &&
+        ifCondition.kind === "Ok" &&
+        tokenIs(rightParen, "RightParenToken")
+            ? helpers.parseBlock(tokens, thenStart)
+            : null;
+
+    const elseToken = ifThenBranch ? tokens[ifThenBranch.index] : null;
+    const afterElse = ifThenBranch ? tokens[ifThenBranch.index + 1] : null;
+    const ifElseBranch =
+        ifThenBranch !== null &&
+        tokenIs(elseToken, "ElseToken") &&
+        tokenIs(afterElse, "LeftBraceToken")
+            ? helpers.parseBlock(tokens, ifThenBranch.index + 1)
+            : null;
+
+    return {
+        ifCondition,
+        ifThenBranch,
+        ifElseBranch,
+    };
+}
+
+function buildForFailureContext(
+    tokens: Token[],
+    index: number,
+    helpers: StatementFailureHelpers,
+): StatementFailureContext {
+    const leftParen = tokens[index + 1];
+    const initState = tokenIs(leftParen, "LeftParenToken")
+        ? helpers.createParserState(tokens, index + 2, false, false)
+        : null;
+    const forInit = initState
+        ? helpers.parseLetOrConst(initState, false, false)
+        : null;
+
+    const forInitValue =
+        tokenIs(tokens[index + 3], "IdentifierToken") &&
+        tokenIs(tokens[index + 4], "AssignToken")
+            ? helpers.parseExpressionAt(tokens, index + 5)
+            : null;
+
+    const forInitInnerParen = tokenIs(tokens[index + 5], "LeftParenToken")
+        ? helpers.parseExpressionAt(tokens, index + 6)
+        : null;
+
+    const firstSemicolon =
+        forInit !== null && forInit.statement !== null
+            ? tokens[forInit.index]
+            : null;
+    const conditionStart = forInit !== null ? forInit.index + 1 : -1;
+    const forCondition =
+        forInit !== null && tokenIs(firstSemicolon, "SemicolonToken")
+            ? helpers.parseExpressionAt(tokens, conditionStart)
+            : null;
+
+    const secondSemicolon =
+        forCondition !== null && forCondition.kind === "Ok"
+            ? tokens[forCondition.value.index]
+            : null;
+    const incrementStart =
+        forCondition !== null && forCondition.kind === "Ok"
+            ? forCondition.value.index + 1
+            : -1;
+    const forIncrement =
+        forCondition !== null &&
+        forCondition.kind === "Ok" &&
+        tokenIs(secondSemicolon, "SemicolonToken")
+            ? helpers.parseExpressionAt(tokens, incrementStart)
+            : null;
+
+    const rightParen =
+        forIncrement !== null && forIncrement.kind === "Ok"
+            ? tokens[forIncrement.value.index]
+            : null;
+    const bodyStart =
+        forIncrement !== null && forIncrement.kind === "Ok"
+            ? forIncrement.value.index + 1
+            : -1;
+    const forBody =
+        forIncrement !== null &&
+        forIncrement.kind === "Ok" &&
+        tokenIs(rightParen, "RightParenToken")
+            ? helpers.parseBlock(tokens, bodyStart)
+            : null;
+
+    return {
+        forInit,
+        forInitValue,
+        forInitInnerParen,
+        forCondition,
+        forIncrement,
+        forBody,
+    };
+}
+
+function buildLetConstFailureContext(
+    tokens: Token[],
+    index: number,
+    helpers: StatementFailureHelpers,
+): StatementFailureContext {
+    const letConstValue =
+        tokenIs(tokens[index + 1], "IdentifierToken") &&
+        tokenIs(tokens[index + 2], "AssignToken")
+            ? helpers.parseExpressionAt(tokens, index + 3)
+            : null;
+
+    const letConstInnerParen = tokenIs(tokens[index + 3], "LeftParenToken")
+        ? helpers.parseExpressionAt(tokens, index + 4)
+        : null;
+
+    return {
+        letConstValue,
+        letConstInnerParen,
+    };
+}
+
+function findFunctionParameterListEnd(
+    tokens: Token[],
+    parameterStart: number,
+): number | null {
+    let parameterIndex = parameterStart;
+
+    if (!tokenIs(tokens[parameterIndex], "RightParenToken")) {
+        while (parameterIndex < tokens.length) {
+            const parameter = tokens[parameterIndex];
+            if (!tokenIs(parameter, "IdentifierToken")) {
+                break;
+            }
+
+            parameterIndex += 1;
+            const separator = tokens[parameterIndex];
+            if (tokenIs(separator, "CommaToken")) {
+                parameterIndex += 1;
+                continue;
+            }
+
+            if (tokenIs(separator, "RightParenToken")) {
+                break;
+            }
+
+            parameterIndex = -1;
+            break;
+        }
+    }
+
+    if (
+        parameterIndex < 0 ||
+        !tokenIs(tokens[parameterIndex], "RightParenToken")
+    ) {
+        return null;
+    }
+
+    return parameterIndex;
+}
+
+function buildFunctionFailureContext(
+    tokens: Token[],
+    index: number,
+    helpers: StatementFailureHelpers,
+): StatementFailureContext {
+    const name = tokens[index + 1];
+    let functionBody = null;
+
+    if (tokenIs(name, "IdentifierToken")) {
+        const leftParen = tokens[index + 2];
+        if (tokenIs(leftParen, "LeftParenToken")) {
+            const parameterEnd = findFunctionParameterListEnd(
+                tokens,
+                index + 3,
+            );
+            if (parameterEnd !== null) {
+                functionBody = helpers.parseBlock(tokens, parameterEnd + 1);
+            }
+        }
+    }
+
+    return {
+        functionBody,
+    };
+}
+
+export function buildStatementFailureContext(
+    tokens: Token[],
+    index: number,
+    helpers: StatementFailureHelpers,
+): StatementFailureContext {
+    const token = tokens[index];
+
+    if (!token) {
+        return {};
+    }
+
+    switch (token.kind) {
+        case "IfToken": {
+            return buildIfFailureContext(tokens, index, helpers);
+        }
+        case "ForToken": {
+            return buildForFailureContext(tokens, index, helpers);
+        }
+        case "LetToken":
+        case "ConstToken": {
+            return buildLetConstFailureContext(tokens, index, helpers);
+        }
+        case "FunctionToken": {
+            return buildFunctionFailureContext(tokens, index, helpers);
+        }
+        default: {
+            return {};
+        }
+    }
+}
 
 function explainStatementFailure(
     tokens: Token[],
