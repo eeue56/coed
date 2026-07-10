@@ -1,6 +1,9 @@
 import * as assert from "assert";
-import { parse, parseExpression } from "../../../langs/javascript/parse.ts";
-import { tokenize } from "../../../langs/javascript/tokenize.ts";
+import {
+    parse,
+    parseExpression,
+} from "../../../langs/javascript/parser/parse.ts";
+import { tokenize } from "../../../langs/javascript/parser/tokenize.ts";
 import type { Result } from "../../../langs/javascript/types.ts";
 
 function expectOk<T>(result: Result<T>): T {

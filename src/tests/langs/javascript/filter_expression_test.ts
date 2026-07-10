@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { filterExpression } from "../../../langs/javascript/filter.ts";
-import { parseExpression } from "../../../langs/javascript/parse.ts";
-import { tokenize } from "../../../langs/javascript/tokenize.ts";
+import { parseExpression } from "../../../langs/javascript/parser/parse.ts";
+import { tokenize } from "../../../langs/javascript/parser/tokenize.ts";
 import type {
     Expression,
     NumberExpression,

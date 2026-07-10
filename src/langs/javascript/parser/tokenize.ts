@@ -336,7 +336,13 @@ function switchTokenizerState(
 
     const start = tokenizerModel.currentTokenStartIndex;
     const endIndex = start + tokenizerModel.buffer.length;
-    flushCurrentBufferedToken(currentState, tokenizerModel, start, endIndex, tokens);
+    flushCurrentBufferedToken(
+        currentState,
+        tokenizerModel,
+        start,
+        endIndex,
+        tokens,
+    );
 
     tokenizerModel.state = newState;
     tokenizerModel.buffer = "";
@@ -368,7 +374,12 @@ function switchToReady(
     tokens: Token[],
     currentIndex: number,
 ): void {
-    switchTokenizerState("ReadyForNextToken", tokenizerModel, tokens, currentIndex);
+    switchTokenizerState(
+        "ReadyForNextToken",
+        tokenizerModel,
+        tokens,
+        currentIndex,
+    );
 }
 
 function appendOrSwitchToReady(

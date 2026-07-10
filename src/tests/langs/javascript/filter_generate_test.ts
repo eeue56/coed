@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { filterExpression } from "../../../langs/javascript/filter.ts";
 import { generateProgram } from "../../../langs/javascript/generate.ts";
-import { parse } from "../../../langs/javascript/parse.ts";
+import { parse } from "../../../langs/javascript/parser/parse.ts";
 import type {
     Ast,
     Expression,

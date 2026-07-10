@@ -4,9 +4,9 @@ import type {
     ParserState,
     Result,
     StatementParseResult,
-    Token,
     TokenKinds,
-} from "./types.ts";
+} from "../types.ts";
+import type { Token } from "./types.ts";
 
 export function withoutWhitespace(tokens: Token[]): Token[] {
     return tokens.filter((token) => token.kind !== "WhitespaceToken");

@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import { generateProgram } from "../../../langs/javascript/generate.ts";
-import { parse } from "../../../langs/javascript/parse.ts";
+import { parse } from "../../../langs/javascript/parser/parse.ts";
 import type { Program, Result } from "../../../langs/javascript/types.ts";
 
 function expectOk<T>(result: Result<T>): T {

@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { tokenize } from "../../../langs/javascript/tokenize.ts";
+import { tokenize } from "../../../langs/javascript/parser/tokenize.ts";
 
 export function testDoubleQuoteString() {
     const tokens = tokenize(`"hello world"`);

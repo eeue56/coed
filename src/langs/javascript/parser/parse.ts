@@ -1,3 +1,15 @@
+import type {
+    Ast,
+    BinaryOperatorRule,
+    Expression,
+    ExpressionParseResult,
+    ParseExpressionFunction,
+    ParserState,
+    Program,
+    Result,
+    StatementParseResult,
+    TokenKinds,
+} from "../types.ts";
 import {
     buildStatementFailureContext,
     createExpressionParseError,
@@ -33,50 +45,18 @@ import {
 } from "./parserHelpers.ts";
 import { tokenize } from "./tokenize.ts";
 import type {
-    Ast,
-    BinaryOperatorRule,
-    Expression,
-    ExpressionParseResult,
-    ParseExpressionFunction,
-    ParserState,
-    Program,
-    Result,
-    StatementParseResult,
+    BinaryExpression,
+    ClosingTokenKind,
+    IfStatementAst,
+    LoopControlKind,
+    ParsedConditionBlock,
+    ParsedForHeader,
+    ParsedFunctionBody,
+    ParsedOptionalElse,
+    StatementListParseResult,
+    StatementParser,
     Token,
-    TokenKinds,
 } from "./types.ts";
-
-type StatementParser = (state: ParserState) => StatementParseResult;
-type BinaryExpression = Extract<
-    Expression,
-    { left: Expression; right: Expression }
->;
-
-type ParsedFunctionBody = { body: Ast[]; index: number };
-type LetStatement = Extract<Ast, { kind: "LetStatement" }>;
-type IfStatementAst = Extract<Ast, { kind: "IfStatement" }>;
-type ParsedForHeader = {
-    init: LetStatement;
-    condition: Expression;
-    increment: Expression;
-    afterRightParenIndex: number;
-};
-type LoopControlKind = "ContinueStatement" | "BreakStatement";
-type ParsedConditionBlock = {
-    condition: Expression;
-    body: Ast[];
-    nextIndex: number;
-};
-type ParsedOptionalElse = {
-    elseBranch?: Ast[];
-    nextIndex: number;
-};
-type ClosingTokenKind = "RightParenToken" | "RightBracketToken";
-type StatementListParseResult = {
-    statements: Ast[] | null;
-    index: number;
-    noProgressToken?: Token;
-};
 
 function binaryRule<K extends BinaryExpression["kind"]>(
     tokenKind: BinaryOperatorRule["tokenKind"],
@@ -1207,7 +1187,3 @@ export function parse(input: string): Result<Program> {
     const tokens = withoutWhitespace(tokenize(input));
     return parseAllStatements(tokens, input);
 }
-
-export type ParsedExpressionResult = ReturnType<typeof parseExpressionAt>;
-export type ParsedBlockResult = ReturnType<typeof parseBlock>;
-export type ParsedStatementResult = ReturnType<typeof parseLetOrConst>;

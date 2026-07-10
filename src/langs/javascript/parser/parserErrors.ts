@@ -1,14 +1,14 @@
 import type {
-    ParsedBlockResult,
-    ParsedExpressionResult,
-    ParsedStatementResult,
-} from "./parse.ts";
-import { tokenIs } from "./parserHelpers.ts";
-import type {
     DetailedParseError,
     Err,
     ParserState,
     SourceLocation,
+} from "../types.ts";
+import { tokenIs } from "./parserHelpers.ts";
+import type {
+    ParsedBlockResult,
+    ParsedExpressionResult,
+    ParsedStatementResult,
     Token,
 } from "./types.ts";
 
