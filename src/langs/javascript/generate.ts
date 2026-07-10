@@ -95,7 +95,17 @@ export function generateExpression(expression: Expression): string {
             return `${expression.value}`;
         }
         case "StringLiteralExpression": {
-            return `\`${expression.values}\``;
+            const values = expression.values
+                .map((value) => {
+                    if (value.kind === "StringExpression") {
+                        return value.value;
+                    }
+
+                    return `\${${generateExpression(value)}}`;
+                })
+                .join("");
+
+            return `\`${values}\``;
         }
         case "FunctionCallExpression": {
             return `${expression.functionName}(${expression.arguments.map(generateExpression).join(", ")})`;

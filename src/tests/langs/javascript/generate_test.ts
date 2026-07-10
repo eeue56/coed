@@ -245,6 +245,15 @@ let firstInvoice = invoiceIds[0];
     );
 }
 
+export function testGenerateStringLiteralExpression() {
+    assertMatchingParsedAndGeneratedCode(
+        `
+const name = "noah";
+let greeting = \`hello \${name}\`;
+        `.trim(),
+    );
+}
+
 export function testGenerateIncrementExpressionAssignment() {
     assertMatchingParsedAndGeneratedCode(
         `
