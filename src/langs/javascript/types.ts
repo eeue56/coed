@@ -309,15 +309,17 @@ export type Ast =
     | ContinueStatement
     | BreakStatement;
 
-export type Result<value> =
-    | {
-          kind: "Ok";
-          value: value;
-      }
-    | {
-          kind: "Err";
-          error: string;
-      };
+export type Ok<value> = {
+    kind: "Ok";
+    value: value;
+};
+
+export type Err = {
+    kind: "Err";
+    error: string;
+};
+
+export type Result<value> = Ok<value> | Err;
 
 export type ExpressionParseResult = {
     expression: Expression;

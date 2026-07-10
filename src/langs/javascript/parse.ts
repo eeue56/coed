@@ -9,6 +9,7 @@ import { tokenize } from "./tokenize.ts";
 import type {
     Ast,
     BinaryOperatorRule,
+    Err,
     Expression,
     ExpressionParseResult,
     NameLookupExpression,
@@ -57,6 +58,13 @@ function isNameLookup(expression: Expression): NameLookupExpression | null {
 
 function currentToken(state: ParserState): Token | null {
     return state.tokens[state.index] || null;
+}
+
+function errFromParserState(state: ParserState): Err {
+    return {
+        kind: "Err",
+        error: formatExpressionParseError(state.tokens, state.index),
+    };
 }
 
 /** advance the parser position by one token */
@@ -233,10 +241,7 @@ function parsePostfixStep(
         consumeToken(state);
         const propertyToken = currentToken(state);
         if (!tokenIs(propertyToken, "IdentifierToken")) {
-            return {
-                kind: "Err",
-                error: formatExpressionParseError(state.tokens, state.index),
-            };
+            return errFromParserState(state);
         }
         consumeToken(state);
 
@@ -287,13 +292,7 @@ function parsePostfixStep(
         if (tokenIs(indexToken, "NumberToken")) {
             consumeToken(state);
             if (!tokenIs(currentToken(state), "RightBracketToken")) {
-                return {
-                    kind: "Err",
-                    error: formatExpressionParseError(
-                        state.tokens,
-                        state.index,
-                    ),
-                };
+                return errFromParserState(state);
             }
 
             consumeToken(state);
@@ -313,13 +312,7 @@ function parsePostfixStep(
         if (tokenIs(indexToken, "StringToken")) {
             consumeToken(state);
             if (!tokenIs(currentToken(state), "RightBracketToken")) {
-                return {
-                    kind: "Err",
-                    error: formatExpressionParseError(
-                        state.tokens,
-                        state.index,
-                    ),
-                };
+                return errFromParserState(state);
             }
 
             consumeToken(state);
@@ -341,10 +334,7 @@ function parsePostfixStep(
             };
         }
 
-        return {
-            kind: "Err",
-            error: formatExpressionParseError(state.tokens, state.index),
-        };
+        return errFromParserState(state);
     }
 
     if (token.kind === "IncrementToken") {
@@ -525,10 +515,7 @@ function parsePostfix(state: ParserState): Result<Expression> {
 function parseLeaf(state: ParserState): Result<Expression> {
     const token = currentToken(state);
     if (!token) {
-        return {
-            kind: "Err",
-            error: formatExpressionParseError(state.tokens, state.index),
-        };
+        return errFromParserState(state);
     }
 
     if (token.kind === "NegationToken" || token.kind === "TypeofToken") {
@@ -626,13 +613,7 @@ function parseLeaf(state: ParserState): Result<Expression> {
             const expression = parseEquality(state);
             if (expression.kind === "Err") return expression;
             if (!tokenIs(currentToken(state), "RightParenToken")) {
-                return {
-                    kind: "Err",
-                    error: formatExpressionParseError(
-                        state.tokens,
-                        state.index,
-                    ),
-                };
+                return errFromParserState(state);
             }
             consumeToken(state);
             return expression;
@@ -661,13 +642,7 @@ function parseLeaf(state: ParserState): Result<Expression> {
                 while (true) {
                     const keyToken = currentToken(state);
                     if (!keyToken) {
-                        return {
-                            kind: "Err",
-                            error: formatExpressionParseError(
-                                state.tokens,
-                                state.index,
-                            ),
-                        };
+                        return errFromParserState(state);
                     }
 
                     let key = "";
@@ -676,24 +651,12 @@ function parseLeaf(state: ParserState): Result<Expression> {
                     } else if (keyToken.kind === "StringToken") {
                         key = stripStringQuotes(keyToken.value);
                     } else {
-                        return {
-                            kind: "Err",
-                            error: formatExpressionParseError(
-                                state.tokens,
-                                state.index,
-                            ),
-                        };
+                        return errFromParserState(state);
                     }
                     consumeToken(state);
 
                     if (!tokenIs(currentToken(state), "ColonToken")) {
-                        return {
-                            kind: "Err",
-                            error: formatExpressionParseError(
-                                state.tokens,
-                                state.index,
-                            ),
-                        };
+                        return errFromParserState(state);
                     }
                     consumeToken(state);
 
@@ -711,13 +674,7 @@ function parseLeaf(state: ParserState): Result<Expression> {
             }
 
             if (!tokenIs(currentToken(state), "RightBraceToken")) {
-                return {
-                    kind: "Err",
-                    error: formatExpressionParseError(
-                        state.tokens,
-                        state.index,
-                    ),
-                };
+                return errFromParserState(state);
             }
             consumeToken(state);
 
@@ -730,10 +687,7 @@ function parseLeaf(state: ParserState): Result<Expression> {
             };
         }
         default: {
-            return {
-                kind: "Err",
-                error: formatExpressionParseError(state.tokens, state.index),
-            };
+            return errFromParserState(state);
         }
     }
 }
@@ -866,6 +820,18 @@ function parseArrowFunctionDeclaration(
     };
 }
 
+function parseDeclarationStatement(
+    state: ParserState,
+    isConst: boolean,
+): StatementParseResult {
+    const arrowDeclaration = parseArrowFunctionDeclaration(state);
+    if (arrowDeclaration.statement !== null) {
+        return arrowDeclaration;
+    }
+
+    return parseLetOrConst(state, isConst, true);
+}
+
 /** dispatch to the appropriate statement parser based on the current token */
 function parseStatement(state: ParserState): StatementParseResult {
     const token = currentToken(state);
@@ -875,25 +841,13 @@ function parseStatement(state: ParserState): StatementParseResult {
 
     switch (token.kind) {
         case "LetToken": {
-            const arrowDeclaration = parseArrowFunctionDeclaration(state);
-            if (arrowDeclaration.statement !== null) {
-                return arrowDeclaration;
-            }
-            return parseLetOrConst(state, false, true);
+            return parseDeclarationStatement(state, false);
         }
         case "VarToken": {
-            const arrowDeclaration = parseArrowFunctionDeclaration(state);
-            if (arrowDeclaration.statement !== null) {
-                return arrowDeclaration;
-            }
-            return parseLetOrConst(state, false, true);
+            return parseDeclarationStatement(state, false);
         }
         case "ConstToken": {
-            const arrowDeclaration = parseArrowFunctionDeclaration(state);
-            if (arrowDeclaration.statement !== null) {
-                return arrowDeclaration;
-            }
-            return parseLetOrConst(state, true, true);
+            return parseDeclarationStatement(state, true);
         }
         case "IfToken": {
             return parseIf(state);
@@ -1012,24 +966,39 @@ export function parseLetOrConst(
     };
 }
 
+function parseParenthesizedExpressionFrom(
+    tokens: Token[],
+    startIndex: number,
+): ExpressionParseResult | null {
+    if (!tokenIs(tokens[startIndex], "LeftParenToken")) {
+        return null;
+    }
+
+    const expression = parseExpressionAt(tokens, startIndex + 1);
+    if (expression.kind === "Err") {
+        return null;
+    }
+
+    if (!tokenIs(tokens[expression.value.index], "RightParenToken")) {
+        return null;
+    }
+
+    return {
+        expression: expression.value.expression,
+        index: expression.value.index + 1,
+    };
+}
+
 function parseWhile(state: ParserState): StatementParseResult {
-    let index = state.index + 1;
-    if (!tokenIs(state.tokens[index], "LeftParenToken")) {
+    const condition = parseParenthesizedExpressionFrom(
+        state.tokens,
+        state.index + 1,
+    );
+    if (condition === null) {
         return { statement: null, index: state.index };
     }
 
-    const condition = parseExpressionAt(state.tokens, index + 1);
-    if (condition.kind === "Err") {
-        return { statement: null, index: state.index };
-    }
-
-    index = condition.value.index;
-    if (!tokenIs(state.tokens[index], "RightParenToken")) {
-        return { statement: null, index: state.index };
-    }
-    index += 1;
-
-    const body = parseBlock(state.tokens, index, state);
+    const body = parseBlock(state.tokens, condition.index, state);
     if (body.body === null) {
         return { statement: null, index: state.index };
     }
@@ -1044,7 +1013,7 @@ function parseWhile(state: ParserState): StatementParseResult {
                 name: loopVariable,
                 value: { kind: "NumberExpression", value: 0 },
             },
-            condition: condition.value.expression,
+            condition: condition.expression,
             increment: {
                 kind: "IncrementExpression",
                 variable: loopVariable,
@@ -1057,21 +1026,15 @@ function parseWhile(state: ParserState): StatementParseResult {
 
 /** parse an if statement, including optional else/else-if branches */
 function parseIf(state: ParserState): StatementParseResult {
-    let index = state.index + 1;
-    if (!tokenIs(state.tokens[index], "LeftParenToken")) {
+    const condition = parseParenthesizedExpressionFrom(
+        state.tokens,
+        state.index + 1,
+    );
+    if (condition === null) {
         return { statement: null, index: state.index };
     }
 
-    const condition = parseExpressionAt(state.tokens, index + 1);
-    if (condition.kind === "Err") {
-        return { statement: null, index: state.index };
-    }
-
-    index = condition.value.index;
-    if (!tokenIs(state.tokens[index], "RightParenToken")) {
-        return { statement: null, index: state.index };
-    }
-    index += 1;
+    let index = condition.index;
 
     const thenBranch = parseBlock(state.tokens, index, state);
     if (thenBranch.body === null) {
@@ -1094,7 +1057,7 @@ function parseIf(state: ParserState): StatementParseResult {
             return {
                 statement: {
                     kind: "IfStatement",
-                    condition: condition.value.expression,
+                    condition: condition.expression,
                     thenBranch: thenBranch.body,
                     elseBranch: [elseIf.statement],
                 },
@@ -1110,7 +1073,7 @@ function parseIf(state: ParserState): StatementParseResult {
         return {
             statement: {
                 kind: "IfStatement",
-                condition: condition.value.expression,
+                condition: condition.expression,
                 thenBranch: thenBranch.body,
                 elseBranch: elseBranch.body,
             },
@@ -1121,7 +1084,7 @@ function parseIf(state: ParserState): StatementParseResult {
     return {
         statement: {
             kind: "IfStatement",
-            condition: condition.value.expression,
+            condition: condition.expression,
             thenBranch: thenBranch.body,
         },
         index,
@@ -1300,59 +1263,237 @@ function parseReturn(state: ParserState): StatementParseResult {
     };
 }
 
-function parseContinue(state: ParserState): StatementParseResult {
+function parseLoopControlStatement(
+    state: ParserState,
+    statementKind: "ContinueStatement" | "BreakStatement",
+): StatementParseResult {
     if (!state.insideForLoop) {
         return { statement: null, index: state.index };
     }
 
     let index = state.index + 1;
-    const tokenAfterContinue = state.tokens[index];
+    const tokenAfterControl = state.tokens[index];
 
     if (
-        tokenAfterContinue !== undefined &&
-        !tokenIs(tokenAfterContinue, "SemicolonToken") &&
-        !tokenIs(tokenAfterContinue, "RightBraceToken")
+        tokenAfterControl !== undefined &&
+        !tokenIs(tokenAfterControl, "SemicolonToken") &&
+        !tokenIs(tokenAfterControl, "RightBraceToken")
     ) {
         return { statement: null, index: state.index };
     }
 
-    if (tokenIs(tokenAfterContinue, "SemicolonToken")) {
+    if (tokenIs(tokenAfterControl, "SemicolonToken")) {
         index += 1;
     }
 
     return {
         statement: {
-            kind: "ContinueStatement",
+            kind: statementKind,
         },
         index,
     };
 }
 
-function parseBreak(state: ParserState): StatementParseResult {
-    if (!state.insideForLoop) {
-        return { statement: null, index: state.index };
-    }
+function parseContinue(state: ParserState): StatementParseResult {
+    return parseLoopControlStatement(state, "ContinueStatement");
+}
 
-    let index = state.index + 1;
-    const tokenAfterBreak = state.tokens[index];
+function parseBreak(state: ParserState): StatementParseResult {
+    return parseLoopControlStatement(state, "BreakStatement");
+}
+
+function buildIfFailureContext(
+    tokens: Token[],
+    index: number,
+): StatementFailureContext {
+    const leftParen = tokens[index + 1];
+    const conditionStart = index + 2;
+    const ifCondition = tokenIs(leftParen, "LeftParenToken")
+        ? parseExpressionAt(tokens, conditionStart)
+        : undefined;
+
+    const rightParen =
+        ifCondition && ifCondition.kind === "Ok"
+            ? tokens[ifCondition.value.index]
+            : null;
+    const thenStart =
+        ifCondition && ifCondition.kind === "Ok"
+            ? ifCondition.value.index + 1
+            : -1;
+    const ifThenBranch =
+        ifCondition &&
+        ifCondition.kind === "Ok" &&
+        tokenIs(rightParen, "RightParenToken")
+            ? parseBlock(tokens, thenStart)
+            : null;
+
+    const elseToken = ifThenBranch ? tokens[ifThenBranch.index] : null;
+    const afterElse = ifThenBranch ? tokens[ifThenBranch.index + 1] : null;
+    const ifElseBranch =
+        ifThenBranch !== null &&
+        tokenIs(elseToken, "ElseToken") &&
+        tokenIs(afterElse, "LeftBraceToken")
+            ? parseBlock(tokens, ifThenBranch.index + 1)
+            : null;
+
+    return {
+        ifCondition,
+        ifThenBranch,
+        ifElseBranch,
+    };
+}
+
+function buildForFailureContext(
+    tokens: Token[],
+    index: number,
+): StatementFailureContext {
+    const leftParen = tokens[index + 1];
+    const initState = tokenIs(leftParen, "LeftParenToken")
+        ? ParserState(tokens, index + 2, false, false)
+        : null;
+    const forInit = initState ? parseLetOrConst(initState, false, false) : null;
+
+    const forInitValue =
+        tokenIs(tokens[index + 3], "IdentifierToken") &&
+        tokenIs(tokens[index + 4], "AssignToken")
+            ? parseExpressionAt(tokens, index + 5)
+            : null;
+
+    const forInitInnerParen = tokenIs(tokens[index + 5], "LeftParenToken")
+        ? parseExpressionAt(tokens, index + 6)
+        : null;
+
+    const firstSemicolon =
+        forInit !== null && forInit.statement !== null
+            ? tokens[forInit.index]
+            : null;
+    const conditionStart = forInit !== null ? forInit.index + 1 : -1;
+    const forCondition =
+        forInit !== null && tokenIs(firstSemicolon, "SemicolonToken")
+            ? parseExpressionAt(tokens, conditionStart)
+            : null;
+
+    const secondSemicolon =
+        forCondition !== null && forCondition.kind === "Ok"
+            ? tokens[forCondition.value.index]
+            : null;
+    const incrementStart =
+        forCondition !== null && forCondition.kind === "Ok"
+            ? forCondition.value.index + 1
+            : -1;
+    const forIncrement =
+        forCondition !== null &&
+        forCondition.kind === "Ok" &&
+        tokenIs(secondSemicolon, "SemicolonToken")
+            ? parseExpressionAt(tokens, incrementStart)
+            : null;
+
+    const rightParen =
+        forIncrement !== null && forIncrement.kind === "Ok"
+            ? tokens[forIncrement.value.index]
+            : null;
+    const bodyStart =
+        forIncrement !== null && forIncrement.kind === "Ok"
+            ? forIncrement.value.index + 1
+            : -1;
+    const forBody =
+        forIncrement !== null &&
+        forIncrement.kind === "Ok" &&
+        tokenIs(rightParen, "RightParenToken")
+            ? parseBlock(tokens, bodyStart)
+            : null;
+
+    return {
+        forInit,
+        forInitValue,
+        forInitInnerParen,
+        forCondition,
+        forIncrement,
+        forBody,
+    };
+}
+
+function buildLetConstFailureContext(
+    tokens: Token[],
+    index: number,
+): StatementFailureContext {
+    const letConstValue =
+        tokenIs(tokens[index + 1], "IdentifierToken") &&
+        tokenIs(tokens[index + 2], "AssignToken")
+            ? parseExpressionAt(tokens, index + 3)
+            : null;
+
+    const letConstInnerParen = tokenIs(tokens[index + 3], "LeftParenToken")
+        ? parseExpressionAt(tokens, index + 4)
+        : null;
+
+    return {
+        letConstValue,
+        letConstInnerParen,
+    };
+}
+
+function findFunctionParameterListEnd(
+    tokens: Token[],
+    parameterStart: number,
+): number | null {
+    let parameterIndex = parameterStart;
+
+    if (!tokenIs(tokens[parameterIndex], "RightParenToken")) {
+        while (parameterIndex < tokens.length) {
+            const parameter = tokens[parameterIndex];
+            if (!tokenIs(parameter, "IdentifierToken")) {
+                break;
+            }
+
+            parameterIndex += 1;
+            const separator = tokens[parameterIndex];
+            if (tokenIs(separator, "CommaToken")) {
+                parameterIndex += 1;
+                continue;
+            }
+
+            if (tokenIs(separator, "RightParenToken")) {
+                break;
+            }
+
+            parameterIndex = -1;
+            break;
+        }
+    }
 
     if (
-        tokenAfterBreak !== undefined &&
-        !tokenIs(tokenAfterBreak, "SemicolonToken") &&
-        !tokenIs(tokenAfterBreak, "RightBraceToken")
+        parameterIndex < 0 ||
+        !tokenIs(tokens[parameterIndex], "RightParenToken")
     ) {
-        return { statement: null, index: state.index };
+        return null;
     }
 
-    if (tokenIs(tokenAfterBreak, "SemicolonToken")) {
-        index += 1;
+    return parameterIndex;
+}
+
+function buildFunctionFailureContext(
+    tokens: Token[],
+    index: number,
+): StatementFailureContext {
+    const name = tokens[index + 1];
+    let functionBody = null;
+
+    if (tokenIs(name, "IdentifierToken")) {
+        const leftParen = tokens[index + 2];
+        if (tokenIs(leftParen, "LeftParenToken")) {
+            const parameterEnd = findFunctionParameterListEnd(
+                tokens,
+                index + 3,
+            );
+            if (parameterEnd !== null) {
+                functionBody = parseBlock(tokens, parameterEnd + 1);
+            }
+        }
     }
 
     return {
-        statement: {
-            kind: "BreakStatement",
-        },
-        index,
+        functionBody,
     };
 }
 
@@ -1367,177 +1508,24 @@ function buildStatementFailureContext(
         return {};
     }
 
-    if (token.kind === "IfToken") {
-        const leftParen = tokens[index + 1];
-        const conditionStart = index + 2;
-        const ifCondition = tokenIs(leftParen, "LeftParenToken")
-            ? parseExpressionAt(tokens, conditionStart)
-            : undefined;
-
-        const rightParen =
-            ifCondition && ifCondition.kind === "Ok"
-                ? tokens[ifCondition.value.index]
-                : null;
-        const thenStart =
-            ifCondition && ifCondition.kind === "Ok"
-                ? ifCondition.value.index + 1
-                : -1;
-        const ifThenBranch =
-            ifCondition &&
-            ifCondition.kind === "Ok" &&
-            tokenIs(rightParen, "RightParenToken")
-                ? parseBlock(tokens, thenStart)
-                : null;
-
-        const elseToken = ifThenBranch ? tokens[ifThenBranch.index] : null;
-        const afterElse = ifThenBranch ? tokens[ifThenBranch.index + 1] : null;
-        const ifElseBranch =
-            ifThenBranch !== null &&
-            tokenIs(elseToken, "ElseToken") &&
-            tokenIs(afterElse, "LeftBraceToken")
-                ? parseBlock(tokens, ifThenBranch.index + 1)
-                : null;
-
-        return {
-            ifCondition,
-            ifThenBranch,
-            ifElseBranch,
-        };
-    }
-
-    if (token.kind === "ForToken") {
-        const leftParen = tokens[index + 1];
-        const initState = tokenIs(leftParen, "LeftParenToken")
-            ? ParserState(tokens, index + 2, false, false)
-            : null;
-        const forInit = initState
-            ? parseLetOrConst(initState, false, false)
-            : null;
-
-        const forInitValue =
-            tokenIs(tokens[index + 3], "IdentifierToken") &&
-            tokenIs(tokens[index + 4], "AssignToken")
-                ? parseExpressionAt(tokens, index + 5)
-                : null;
-
-        const forInitInnerParen = tokenIs(tokens[index + 5], "LeftParenToken")
-            ? parseExpressionAt(tokens, index + 6)
-            : null;
-
-        const firstSemicolon =
-            forInit !== null && forInit.statement !== null
-                ? tokens[forInit.index]
-                : null;
-        const conditionStart = forInit !== null ? forInit.index + 1 : -1;
-        const forCondition =
-            forInit !== null && tokenIs(firstSemicolon, "SemicolonToken")
-                ? parseExpressionAt(tokens, conditionStart)
-                : null;
-
-        const secondSemicolon =
-            forCondition !== null && forCondition.kind === "Ok"
-                ? tokens[forCondition.value.index]
-                : null;
-        const incrementStart =
-            forCondition !== null && forCondition.kind === "Ok"
-                ? forCondition.value.index + 1
-                : -1;
-        const forIncrement =
-            forCondition !== null &&
-            forCondition.kind === "Ok" &&
-            tokenIs(secondSemicolon, "SemicolonToken")
-                ? parseExpressionAt(tokens, incrementStart)
-                : null;
-
-        const rightParen =
-            forIncrement !== null && forIncrement.kind === "Ok"
-                ? tokens[forIncrement.value.index]
-                : null;
-        const bodyStart =
-            forIncrement !== null && forIncrement.kind === "Ok"
-                ? forIncrement.value.index + 1
-                : -1;
-        const forBody =
-            forIncrement !== null &&
-            forIncrement.kind === "Ok" &&
-            tokenIs(rightParen, "RightParenToken")
-                ? parseBlock(tokens, bodyStart)
-                : null;
-
-        return {
-            forInit,
-            forInitValue,
-            forInitInnerParen,
-            forCondition,
-            forIncrement,
-            forBody,
-        };
-    }
-
-    if (token.kind === "LetToken" || token.kind === "ConstToken") {
-        const letConstValue =
-            tokenIs(tokens[index + 1], "IdentifierToken") &&
-            tokenIs(tokens[index + 2], "AssignToken")
-                ? parseExpressionAt(tokens, index + 3)
-                : null;
-
-        const letConstInnerParen = tokenIs(tokens[index + 3], "LeftParenToken")
-            ? parseExpressionAt(tokens, index + 4)
-            : null;
-
-        return {
-            letConstValue,
-            letConstInnerParen,
-        };
-    }
-
-    if (token.kind === "FunctionToken") {
-        const name = tokens[index + 1];
-        let functionBody = null;
-
-        if (tokenIs(name, "IdentifierToken")) {
-            let parameterIndex = index + 3;
-            const leftParen = tokens[index + 2];
-
-            if (tokenIs(leftParen, "LeftParenToken")) {
-                if (!tokenIs(tokens[parameterIndex], "RightParenToken")) {
-                    while (parameterIndex < tokens.length) {
-                        const parameter = tokens[parameterIndex];
-                        if (!tokenIs(parameter, "IdentifierToken")) {
-                            break;
-                        }
-
-                        parameterIndex += 1;
-                        const separator = tokens[parameterIndex];
-                        if (tokenIs(separator, "CommaToken")) {
-                            parameterIndex += 1;
-                            continue;
-                        }
-
-                        if (tokenIs(separator, "RightParenToken")) {
-                            break;
-                        }
-
-                        parameterIndex = -1;
-                        break;
-                    }
-                }
-
-                if (
-                    parameterIndex >= 0 &&
-                    tokenIs(tokens[parameterIndex], "RightParenToken")
-                ) {
-                    functionBody = parseBlock(tokens, parameterIndex + 1);
-                }
-            }
+    switch (token.kind) {
+        case "IfToken": {
+            return buildIfFailureContext(tokens, index);
         }
-
-        return {
-            functionBody,
-        };
+        case "ForToken": {
+            return buildForFailureContext(tokens, index);
+        }
+        case "LetToken":
+        case "ConstToken": {
+            return buildLetConstFailureContext(tokens, index);
+        }
+        case "FunctionToken": {
+            return buildFunctionFailureContext(tokens, index);
+        }
+        default: {
+            return {};
+        }
     }
-
-    return {};
 }
 
 function parseAllStatements(tokens: Token[], input: string): Result<Ast[]> {
