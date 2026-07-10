@@ -399,6 +399,106 @@ export function testParseArrowFunctionBlockBodyAsFunctionDeclaration() {
     );
 }
 
+export function testParseReturnStatementWithValue() {
+    assert.deepStrictEqual(parse("function formatName(name) { return name; }"), {
+        kind: "Ok",
+        value: [
+            {
+                kind: "FunctionDeclaration",
+                name: "formatName",
+                parameters: ["name"],
+                body: [
+                    {
+                        kind: "ReturnStatement",
+                        value: {
+                            kind: "NameLookupExpression",
+                            name: "name",
+                        },
+                    },
+                ],
+            },
+        ],
+    });
+}
+
+export function testParseReturnStatementWithoutValue() {
+    assert.deepStrictEqual(parse("function stop() { return; }"), {
+        kind: "Ok",
+        value: [
+            {
+                kind: "FunctionDeclaration",
+                name: "stop",
+                parameters: [],
+                body: [
+                    {
+                        kind: "ReturnStatement",
+                        value: null,
+                    },
+                ],
+            },
+        ],
+    });
+}
+
+export function testParseBreakAndContinueStatements() {
+    assert.deepStrictEqual(
+        parse("for (let i = 0; i < 3; i++) { continue; break; }"),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "ForLoop",
+                    init: {
+                        kind: "LetStatement",
+                        name: "i",
+                        value: { kind: "NumberExpression", value: 0 },
+                    },
+                    condition: {
+                        kind: "LessThanExpression",
+                        left: { kind: "NameLookupExpression", name: "i" },
+                        right: { kind: "NumberExpression", value: 3 },
+                    },
+                    increment: {
+                        kind: "IncrementExpression",
+                        variable: "i",
+                    },
+                    body: [
+                        {
+                            kind: "ContinueStatement",
+                        },
+                        {
+                            kind: "BreakStatement",
+                        },
+                    ],
+                },
+            ],
+        },
+    );
+}
+
+export function testParseReturnOutsideFunctionReturnsErr() {
+    const result = parse("return total;");
+    assert.strictEqual(result.kind, "Err");
+}
+
+export function testParseBreakOutsideForLoopReturnsErr() {
+    const result = parse("break;");
+    assert.strictEqual(result.kind, "Err");
+}
+
+export function testParseContinueOutsideForLoopReturnsErr() {
+    const result = parse("continue;");
+    assert.strictEqual(result.kind, "Err");
+}
+
+export function testParseBreakAndContinueInsideFunctionWithoutForLoopReturnErr() {
+    const breakResult = parse("function stop() { break; }");
+    assert.strictEqual(breakResult.kind, "Err");
+
+    const continueResult = parse("function next() { continue; }");
+    assert.strictEqual(continueResult.kind, "Err");
+}
+
 export function testParseReturnsErrForMalformedStatements() {
     const result = parse("let = 1; let x = 2;");
     assert.strictEqual(result.kind, "Err");

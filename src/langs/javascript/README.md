@@ -27,6 +27,11 @@ Some accepted input is normalized into canonical subset nodes:
     - `for (let i = init; condition; increment) { ... }`
 - Function declarations:
     - `function name(a, b) { ... }`
+- Control flow statements:
+    - `return expression;` (only inside function bodies)
+    - `return;` (only inside function bodies)
+    - `break;` (only inside `for` loop bodies)
+    - `continue;` (only inside `for` loop bodies)
 
 ### Supported expressions
 
@@ -61,8 +66,6 @@ Some accepted input is normalized into canonical subset nodes:
 
 - Explicitly rejected:
     - `with`
-- Not currently parsed as statements:
-    - `return`, `break`, `continue`
 - Not currently parsed as expressions:
     - Assignment expressions like `x = 1` or `obj.key = 1`
     - Logical operators like `&&` and `||`

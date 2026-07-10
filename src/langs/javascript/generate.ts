@@ -166,6 +166,19 @@ export function generateAST(ast: Ast, level: number): string {
                 `const ${ast.name} = ${generateExpression(ast.value)};`,
             );
         }
+        case "ReturnStatement": {
+            if (ast.value === null) {
+                return indent(level, `return;`);
+            }
+
+            return indent(level, `return ${generateExpression(ast.value)};`);
+        }
+        case "ContinueStatement": {
+            return indent(level, `continue;`);
+        }
+        case "BreakStatement": {
+            return indent(level, `break;`);
+        }
     }
 }
 

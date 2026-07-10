@@ -449,3 +449,34 @@ function createBanner() {
         `.trim(),
     );
 }
+
+export function testGenerateReturnWithValue() {
+    assertMatchingParsedAndGeneratedCode(
+        `
+function getCurrentRoute(routeName) {
+    return routeName;
+}
+        `.trim(),
+    );
+}
+
+export function testGenerateReturnWithoutValue() {
+    assertMatchingParsedAndGeneratedCode(
+        `
+function stopSync() {
+    return;
+}
+        `.trim(),
+    );
+}
+
+export function testGenerateBreakAndContinueInLoop() {
+    assertMatchingParsedAndGeneratedCode(
+        `
+for (let retryIndex = 0; retryIndex < 3; retryIndex++) {
+    continue;
+    break;
+}
+        `.trim(),
+    );
+}

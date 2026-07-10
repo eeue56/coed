@@ -84,6 +84,20 @@ function sanitizeAst(ast: Ast, predicate: ExpressionPredicate): Ast | null {
                 body: sanitizeProgram(ast.body, predicate),
             };
         }
+        case "ReturnStatement": {
+            if (ast.value === null) {
+                return ast;
+            }
+
+            const value = filterExpression(ast.value, predicate);
+            return value ? { ...ast, value } : null;
+        }
+        case "ContinueStatement": {
+            return ast;
+        }
+        case "BreakStatement": {
+            return ast;
+        }
     }
 }
 

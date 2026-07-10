@@ -27,6 +27,15 @@ function filterAst(ast: Ast, shouldKeep: (node: Ast) => boolean): Ast | null {
         case "LetStatement": {
             return ast;
         }
+        case "ReturnStatement": {
+            return ast;
+        }
+        case "ContinueStatement": {
+            return ast;
+        }
+        case "BreakStatement": {
+            return ast;
+        }
     }
 }
 

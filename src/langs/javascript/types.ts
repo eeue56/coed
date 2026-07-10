@@ -286,12 +286,28 @@ type FunctionDeclaration = {
     body: Ast[];
 };
 
+type ReturnStatement = {
+    kind: "ReturnStatement";
+    value: Expression | null;
+};
+
+type ContinueStatement = {
+    kind: "ContinueStatement";
+};
+
+type BreakStatement = {
+    kind: "BreakStatement";
+};
+
 export type Ast =
     | LetStatement
     | IfStatement
     | ForLoop
     | FunctionDeclaration
-    | ConstStatement;
+    | ConstStatement
+    | ReturnStatement
+    | ContinueStatement
+    | BreakStatement;
 
 export type Result<value> =
     | {
@@ -316,6 +332,8 @@ export type StatementParseResult = {
 export type ParserState = {
     tokens: Token[];
     index: number;
+    insideFunction: boolean;
+    insideForLoop: boolean;
 };
 
 export type SourceLocation = {

@@ -64,12 +64,39 @@ function consumeToken(state: ParserState): void {
     state.index += 1;
 }
 
+function ParserState(
+    tokens: Token[],
+    index: number,
+    insideFunction: boolean,
+    insideForLoop: boolean,
+): ParserState {
+    return {
+        tokens,
+        index,
+        insideFunction,
+        insideForLoop,
+    };
+}
+
+function updateParserState(
+    state: ParserState,
+    index: number,
+    overrides?: Partial<Pick<ParserState, "insideFunction" | "insideForLoop">>,
+): ParserState {
+    return {
+        tokens: state.tokens,
+        index,
+        insideFunction: overrides?.insideFunction ?? state.insideFunction,
+        insideForLoop: overrides?.insideForLoop ?? state.insideForLoop,
+    };
+}
+
 /** parse a single expression starting at the given token index */
 export function parseExpressionAt(
     tokens: Token[],
     index: number,
 ): Result<ExpressionParseResult> {
-    const state: ParserState = { tokens, index };
+    const state = ParserState(tokens, index, false, false);
     const expression = parseEquality(state);
     if (expression.kind === "Err") {
         return expression;
@@ -712,11 +739,7 @@ function parseLeaf(state: ParserState): Result<Expression> {
 }
 
 /** parse a single statement starting at the given token index */
-function parseStatementAt(
-    tokens: Token[],
-    index: number,
-): StatementParseResult {
-    const state: ParserState = { tokens, index };
+function parseStatementAt(state: ParserState): StatementParseResult {
     return parseStatement(state);
 }
 
@@ -798,7 +821,14 @@ function parseArrowFunctionDeclaration(
     let body: Ast[] | null = null;
 
     if (tokenIs(state.tokens[index], "LeftBraceToken")) {
-        const parsedBody = parseBlock(state.tokens, index);
+        const parsedBody = parseBlock(
+            state.tokens,
+            index,
+            updateParserState(state, index, {
+                insideFunction: true,
+                insideForLoop: false,
+            }),
+        );
         body = parsedBody.body;
         index = parsedBody.index;
     } else {
@@ -877,6 +907,15 @@ function parseStatement(state: ParserState): StatementParseResult {
         case "FunctionToken": {
             return parseFunction(state);
         }
+        case "ReturnToken": {
+            return parseReturn(state);
+        }
+        case "ContinueToken": {
+            return parseContinue(state);
+        }
+        case "BreakToken": {
+            return parseBreak(state);
+        }
         default: {
             return { statement: null, index: state.index };
         }
@@ -887,6 +926,7 @@ function parseStatement(state: ParserState): StatementParseResult {
 export function parseBlock(
     tokens: Token[],
     startIndex: number,
+    parentState: ParserState = ParserState(tokens, startIndex, false, false),
 ): {
     body: Ast[] | null;
     index: number;
@@ -911,7 +951,7 @@ export function parseBlock(
             continue;
         }
 
-        const nested = parseStatementAt(tokens, index);
+        const nested = parseStatementAt(updateParserState(parentState, index));
         if (nested.statement === null) {
             return { body: null, index };
         }
@@ -989,7 +1029,7 @@ function parseWhile(state: ParserState): StatementParseResult {
     }
     index += 1;
 
-    const body = parseBlock(state.tokens, index);
+    const body = parseBlock(state.tokens, index, state);
     if (body.body === null) {
         return { statement: null, index: state.index };
     }
@@ -1033,7 +1073,7 @@ function parseIf(state: ParserState): StatementParseResult {
     }
     index += 1;
 
-    const thenBranch = parseBlock(state.tokens, index);
+    const thenBranch = parseBlock(state.tokens, index, state);
     if (thenBranch.body === null) {
         return { statement: null, index: state.index };
     }
@@ -1043,7 +1083,7 @@ function parseIf(state: ParserState): StatementParseResult {
     if (tokenIs(state.tokens[index], "ElseToken")) {
         index += 1;
         if (tokenIs(state.tokens[index], "IfToken")) {
-            const elseIf = parseStatementAt(state.tokens, index);
+            const elseIf = parseStatementAt(updateParserState(state, index));
             if (
                 elseIf.statement === null ||
                 elseIf.statement.kind !== "IfStatement"
@@ -1062,7 +1102,7 @@ function parseIf(state: ParserState): StatementParseResult {
             };
         }
 
-        const elseBranch = parseBlock(state.tokens, index);
+        const elseBranch = parseBlock(state.tokens, index, state);
         if (elseBranch.body === null) {
             return { statement: null, index: state.index };
         }
@@ -1096,10 +1136,7 @@ function parseFor(state: ParserState): StatementParseResult {
     }
     index += 1;
 
-    const initState: ParserState = {
-        tokens: state.tokens,
-        index,
-    };
+    const initState = updateParserState(state, index);
     const init = parseLetOrConst(initState, false, false);
     if (init.statement === null || init.statement.kind !== "LetStatement") {
         return { statement: null, index: state.index };
@@ -1133,7 +1170,13 @@ function parseFor(state: ParserState): StatementParseResult {
     }
     index += 1;
 
-    const body = parseBlock(state.tokens, index);
+    const body = parseBlock(
+        state.tokens,
+        index,
+        updateParserState(state, index, {
+            insideForLoop: true,
+        }),
+    );
     if (body.body === null) {
         return { statement: null, index: state.index };
     }
@@ -1189,7 +1232,14 @@ function parseFunction(state: ParserState): StatementParseResult {
     }
     index += 1;
 
-    const body = parseBlock(state.tokens, index);
+    const body = parseBlock(
+        state.tokens,
+        index,
+        updateParserState(state, index, {
+            insideFunction: true,
+            insideForLoop: false,
+        }),
+    );
     if (body.body === null) {
         return { statement: null, index: state.index };
     }
@@ -1202,6 +1252,107 @@ function parseFunction(state: ParserState): StatementParseResult {
             body: body.body,
         },
         index: body.index,
+    };
+}
+
+function parseReturn(state: ParserState): StatementParseResult {
+    if (!state.insideFunction) {
+        return { statement: null, index: state.index };
+    }
+
+    let index = state.index + 1;
+    const tokenAfterReturn = state.tokens[index];
+
+    if (
+        tokenAfterReturn === undefined ||
+        tokenIs(tokenAfterReturn, "SemicolonToken") ||
+        tokenIs(tokenAfterReturn, "RightBraceToken")
+    ) {
+        if (tokenIs(tokenAfterReturn, "SemicolonToken")) {
+            index += 1;
+        }
+
+        return {
+            statement: {
+                kind: "ReturnStatement",
+                value: null,
+            },
+            index,
+        };
+    }
+
+    const parsedExpression = parseExpressionAt(state.tokens, index);
+    if (parsedExpression.kind === "Err") {
+        return { statement: null, index: state.index };
+    }
+
+    index = parsedExpression.value.index;
+    if (tokenIs(state.tokens[index], "SemicolonToken")) {
+        index += 1;
+    }
+
+    return {
+        statement: {
+            kind: "ReturnStatement",
+            value: parsedExpression.value.expression,
+        },
+        index,
+    };
+}
+
+function parseContinue(state: ParserState): StatementParseResult {
+    if (!state.insideForLoop) {
+        return { statement: null, index: state.index };
+    }
+
+    let index = state.index + 1;
+    const tokenAfterContinue = state.tokens[index];
+
+    if (
+        tokenAfterContinue !== undefined &&
+        !tokenIs(tokenAfterContinue, "SemicolonToken") &&
+        !tokenIs(tokenAfterContinue, "RightBraceToken")
+    ) {
+        return { statement: null, index: state.index };
+    }
+
+    if (tokenIs(tokenAfterContinue, "SemicolonToken")) {
+        index += 1;
+    }
+
+    return {
+        statement: {
+            kind: "ContinueStatement",
+        },
+        index,
+    };
+}
+
+function parseBreak(state: ParserState): StatementParseResult {
+    if (!state.insideForLoop) {
+        return { statement: null, index: state.index };
+    }
+
+    let index = state.index + 1;
+    const tokenAfterBreak = state.tokens[index];
+
+    if (
+        tokenAfterBreak !== undefined &&
+        !tokenIs(tokenAfterBreak, "SemicolonToken") &&
+        !tokenIs(tokenAfterBreak, "RightBraceToken")
+    ) {
+        return { statement: null, index: state.index };
+    }
+
+    if (tokenIs(tokenAfterBreak, "SemicolonToken")) {
+        index += 1;
+    }
+
+    return {
+        statement: {
+            kind: "BreakStatement",
+        },
+        index,
     };
 }
 
@@ -1257,7 +1408,7 @@ function buildStatementFailureContext(
     if (token.kind === "ForToken") {
         const leftParen = tokens[index + 1];
         const initState = tokenIs(leftParen, "LeftParenToken")
-            ? { tokens, index: index + 2 }
+            ? ParserState(tokens, index + 2, false, false)
             : null;
         const forInit = initState
             ? parseLetOrConst(initState, false, false)
@@ -1392,6 +1543,7 @@ function buildStatementFailureContext(
 function parseAllStatements(tokens: Token[], input: string): Result<Ast[]> {
     const statements: Ast[] = [];
     let index = 0;
+    const rootState = ParserState(tokens, index, false, false);
 
     while (index < tokens.length) {
         if (tokenIs(tokens[index], "SemicolonToken")) {
@@ -1400,7 +1552,7 @@ function parseAllStatements(tokens: Token[], input: string): Result<Ast[]> {
         }
 
         const before = index;
-        const parsed = parseStatementAt(tokens, index);
+        const parsed = parseStatementAt(updateParserState(rootState, index));
         if (parsed.statement === null) {
             return {
                 kind: "Err",
