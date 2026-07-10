@@ -235,38 +235,72 @@ type OneOffTokenizerState =
     | "ReadOr"
     | "ReadNegation";
 
+const oneOffStates = new Set<OneOffTokenizerState>([
+    "ReadAddition",
+    "ReadSubtraction",
+    "ReadMultiplication",
+    "ReadDivision",
+    "ReadIncrement",
+    "ReadDecrement",
+    "ReadLeftParen",
+    "ReadRightParen",
+    "ReadLeftBracket",
+    "ReadRightBracket",
+    "ReadLeftBrace",
+    "ReadRightBrace",
+    "ReadComma",
+    "ReadColon",
+    "ReadSemicolon",
+    "ReadDot",
+    "ReadAssign",
+    "ReadArrow",
+    "ReadEquality",
+    "ReadInequality",
+    "ReadLessThan",
+    "ReadMoreThan",
+    "ReadLessThanOrEqual",
+    "ReadMoreThanOrEqual",
+    "ReadAnd",
+    "ReadOr",
+    "ReadNegation",
+]);
+
+type TokenInfo = { kind: Token["kind"]; length: number };
+
+const oneOffTokenInfo: Record<OneOffTokenizerState, TokenInfo> = {
+    ReadAddition: { kind: "AdditionToken", length: 1 },
+    ReadSubtraction: { kind: "SubtractionToken", length: 1 },
+    ReadMultiplication: { kind: "MultiplicationToken", length: 1 },
+    ReadDivision: { kind: "DivisionToken", length: 1 },
+    ReadIncrement: { kind: "IncrementToken", length: 2 },
+    ReadDecrement: { kind: "DecrementToken", length: 2 },
+    ReadLeftParen: { kind: "LeftParenToken", length: 1 },
+    ReadRightParen: { kind: "RightParenToken", length: 1 },
+    ReadLeftBracket: { kind: "LeftBracketToken", length: 1 },
+    ReadRightBracket: { kind: "RightBracketToken", length: 1 },
+    ReadLeftBrace: { kind: "LeftBraceToken", length: 1 },
+    ReadRightBrace: { kind: "RightBraceToken", length: 1 },
+    ReadComma: { kind: "CommaToken", length: 1 },
+    ReadColon: { kind: "ColonToken", length: 1 },
+    ReadSemicolon: { kind: "SemicolonToken", length: 1 },
+    ReadDot: { kind: "DotToken", length: 1 },
+    ReadAssign: { kind: "AssignToken", length: 1 },
+    ReadArrow: { kind: "ArrowToken", length: 2 },
+    ReadEquality: { kind: "EqualityToken", length: 3 },
+    ReadInequality: { kind: "InequalityToken", length: 3 },
+    ReadLessThan: { kind: "LessThanToken", length: 1 },
+    ReadMoreThan: { kind: "MoreThanToken", length: 1 },
+    ReadLessThanOrEqual: { kind: "LessThanOrEqualToken", length: 2 },
+    ReadMoreThanOrEqual: { kind: "MoreThanOrEqualToken", length: 2 },
+    ReadAnd: { kind: "AndToken", length: 2 },
+    ReadOr: { kind: "OrToken", length: 2 },
+    ReadNegation: { kind: "NegationToken", length: 1 },
+};
+
 function isOneOffTokenizerState(
     state: TokenizerState,
 ): state is OneOffTokenizerState {
-    return (
-        state === "ReadAddition" ||
-        state === "ReadSubtraction" ||
-        state === "ReadMultiplication" ||
-        state === "ReadDivision" ||
-        state === "ReadIncrement" ||
-        state === "ReadDecrement" ||
-        state === "ReadLeftParen" ||
-        state === "ReadRightParen" ||
-        state === "ReadLeftBracket" ||
-        state === "ReadRightBracket" ||
-        state === "ReadLeftBrace" ||
-        state === "ReadRightBrace" ||
-        state === "ReadComma" ||
-        state === "ReadColon" ||
-        state === "ReadSemicolon" ||
-        state === "ReadDot" ||
-        state === "ReadAssign" ||
-        state === "ReadArrow" ||
-        state === "ReadEquality" ||
-        state === "ReadInequality" ||
-        state === "ReadLessThan" ||
-        state === "ReadMoreThan" ||
-        state === "ReadLessThanOrEqual" ||
-        state === "ReadMoreThanOrEqual" ||
-        state === "ReadAnd" ||
-        state === "ReadOr" ||
-        state === "ReadNegation"
-    );
+    return oneOffStates.has(state as OneOffTokenizerState);
 }
 
 type BufferingTokenizerState =
@@ -320,117 +354,8 @@ function switchOneOffTokenState(
     }
 
     const start = currentIndex;
-
-    switch (newState) {
-        case "ReadAddition": {
-            pushToken(tokens, "AdditionToken", start, start + 1);
-            break;
-        }
-        case "ReadSubtraction": {
-            pushToken(tokens, "SubtractionToken", start, start + 1);
-            break;
-        }
-        case "ReadMultiplication": {
-            pushToken(tokens, "MultiplicationToken", start, start + 1);
-            break;
-        }
-        case "ReadDivision": {
-            pushToken(tokens, "DivisionToken", start, start + 1);
-            break;
-        }
-        case "ReadIncrement": {
-            pushToken(tokens, "IncrementToken", start, start + 2);
-            break;
-        }
-        case "ReadDecrement": {
-            pushToken(tokens, "DecrementToken", start, start + 2);
-            break;
-        }
-        case "ReadLeftParen": {
-            pushToken(tokens, "LeftParenToken", start, start + 1);
-            break;
-        }
-        case "ReadRightParen": {
-            pushToken(tokens, "RightParenToken", start, start + 1);
-            break;
-        }
-        case "ReadLeftBracket": {
-            pushToken(tokens, "LeftBracketToken", start, start + 1);
-            break;
-        }
-        case "ReadRightBracket": {
-            pushToken(tokens, "RightBracketToken", start, start + 1);
-            break;
-        }
-        case "ReadLeftBrace": {
-            pushToken(tokens, "LeftBraceToken", start, start + 1);
-            break;
-        }
-        case "ReadRightBrace": {
-            pushToken(tokens, "RightBraceToken", start, start + 1);
-            break;
-        }
-        case "ReadComma": {
-            pushToken(tokens, "CommaToken", start, start + 1);
-            break;
-        }
-        case "ReadColon": {
-            pushToken(tokens, "ColonToken", start, start + 1);
-            break;
-        }
-        case "ReadSemicolon": {
-            pushToken(tokens, "SemicolonToken", start, start + 1);
-            break;
-        }
-        case "ReadDot": {
-            pushToken(tokens, "DotToken", start, start + 1);
-            break;
-        }
-        case "ReadAssign": {
-            pushToken(tokens, "AssignToken", start, start + 1);
-            break;
-        }
-        case "ReadArrow": {
-            pushToken(tokens, "ArrowToken", start, start + 2);
-            break;
-        }
-        case "ReadEquality": {
-            pushToken(tokens, "EqualityToken", start, start + 3);
-            break;
-        }
-        case "ReadInequality": {
-            pushToken(tokens, "InequalityToken", start, start + 3);
-            break;
-        }
-        case "ReadLessThan": {
-            pushToken(tokens, "LessThanToken", start, start + 1);
-            break;
-        }
-        case "ReadMoreThan": {
-            pushToken(tokens, "MoreThanToken", start, start + 1);
-            break;
-        }
-        case "ReadLessThanOrEqual": {
-            pushToken(tokens, "LessThanOrEqualToken", start, start + 2);
-            break;
-        }
-        case "ReadMoreThanOrEqual": {
-            pushToken(tokens, "MoreThanOrEqualToken", start, start + 2);
-            break;
-        }
-        case "ReadAnd": {
-            pushToken(tokens, "AndToken", start, start + 2);
-            break;
-        }
-        case "ReadOr": {
-            pushToken(tokens, "OrToken", start, start + 2);
-            break;
-        }
-        case "ReadNegation": {
-            pushToken(tokens, "NegationToken", start, start + 1);
-            break;
-        }
-    }
+    const { kind, length } = oneOffTokenInfo[newState];
+    pushToken(tokens, kind, start, start + length);
 
     tokenizerModel.state = "ReadyForNextToken";
     tokenizerModel.buffer = "";
@@ -457,15 +382,15 @@ const keywordKinds = {
     false: "FalseToken",
 } as const;
 
-const keywords = Object.keys(keywordKinds);
-
 function switchIdentifierToken(
     buffer: string,
     start: number,
     endIndex: number,
     tokens: Token[],
 ): void {
-    if (!keywords.includes(buffer)) {
+    const keywordKind = keywordKinds[buffer as keyof typeof keywordKinds];
+
+    if (keywordKind === undefined) {
         tokens.push({
             kind: "IdentifierToken",
             name: buffer,
@@ -474,7 +399,6 @@ function switchIdentifierToken(
         });
         return;
     }
-    const keywordKind = keywordKinds[buffer as keyof typeof keywordKinds];
 
     pushToken(tokens, keywordKind, start, endIndex);
 }
