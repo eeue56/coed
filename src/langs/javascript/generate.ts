@@ -114,10 +114,30 @@ export function generateExpression(expression: Expression): string {
             return `${expression.name}`;
         }
         case "ObjectPropertyExpression": {
-            return `${generateExpression(expression.object)}.${generateExpression(expression.property)}`;
+            const parent = generateExpression(expression.object);
+            switch (expression.property.kind) {
+                case "NameLookupExpression": {
+                    return `${parent}.${generateExpression(expression.property)}`;
+                }
+                case "StringLiteralExpression": {
+                    return `${parent}[${generateExpression(expression.property)}]`;
+                }
+            }
         }
         case "ObjectMethodCallExpression": {
-            return `${generateExpression(expression.object)}.${generateExpression(expression.method)}(${expression.arguments.map(generateExpression).join(", ")})`;
+            const parent = generateExpression(expression.object);
+            const args = expression.arguments
+                .map(generateExpression)
+                .join(", ");
+
+            switch (expression.method.kind) {
+                case "NameLookupExpression": {
+                    return `${parent}.${generateExpression(expression.method)}(${args})`;
+                }
+                case "StringLiteralExpression": {
+                    return `${parent}[${generateExpression(expression.method)}](${args})`;
+                }
+            }
         }
         case "ArrayAccessExpression": {
             return `${generateExpression(expression.array)}[${generateExpression(expression.index)}]`;

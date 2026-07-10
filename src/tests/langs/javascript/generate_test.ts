@@ -393,10 +393,54 @@ export function testGenerateFunctionWithPropertyLookupAndMethodCall() {
         `
 function refreshProfile(accountId) {
     let profileState = apiClient.fetchProfile(accountId);
-    let displayName = profileState.displayName;
+    let displayName = profileState[\`displayName\`];
 }
         `.trim(),
     );
+}
+
+export function testGenerateFunctionWithPropertyLookupAndMethodCallGetsDoubleQuoteNormalized() {
+    const program = expectOk<Program>(
+        parse(
+            `
+function refreshProfile(accountId) {
+    let profileState = apiClient.fetchProfile(accountId);
+    let displayName = profileState["displayName"];
+}
+        `.trim(),
+        ),
+    );
+
+    const expectedOutcome = `
+function refreshProfile(accountId) {
+    let profileState = apiClient.fetchProfile(accountId);
+    let displayName = profileState[\`displayName\`];
+}
+        `.trim();
+
+    assert.strictEqual(generateProgram(program), expectedOutcome);
+}
+
+export function testGenerateFunctionWithPropertyLookupAndMethodCallGetsSingleQuoteNormalized() {
+    const program = expectOk<Program>(
+        parse(
+            `
+function refreshProfile(accountId) {
+    let profileState = apiClient.fetchProfile(accountId);
+    let displayName = profileState['displayName'];
+}
+        `.trim(),
+        ),
+    );
+
+    const expectedOutcome = `
+function refreshProfile(accountId) {
+    let profileState = apiClient.fetchProfile(accountId);
+    let displayName = profileState[\`displayName\`];
+}
+        `.trim();
+
+    assert.strictEqual(generateProgram(program), expectedOutcome);
 }
 
 export function testGenerateObjectMethodCallWithArrayAccessArgument() {
