@@ -1,6 +1,7 @@
-import { Token } from "./parser/types.ts";
+import type { Token } from "./parser/types.ts";
 
 export type NumberExpression = { kind: "NumberExpression"; value: number };
+
 type StringExpression = { kind: "StringExpression"; value: string };
 type StringLiteralExpression = {
     kind: "StringLiteralExpression";
