@@ -180,6 +180,14 @@ const shouldEscalate = waitMinutes >= thresholdMinutes;
     );
 }
 
+export function testGenerateLogicalAndOrExpressions() {
+    assertMatchingParsedAndGeneratedCode(
+        `
+let canProceed = isEnabled && hasCapacity || isAdmin;
+        `.trim(),
+    );
+}
+
 export function testGenerateFunctionCallWithMultipleArguments() {
     assertMatchingParsedAndGeneratedCode(
         `

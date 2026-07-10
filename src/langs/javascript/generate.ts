@@ -124,6 +124,12 @@ export function generateExpression(expression: Expression): string {
         case "DivisionExpression": {
             return `${generateExpression(expression.left)} / ${generateExpression(expression.right)}`;
         }
+        case "AndExpression": {
+            return `${generateExpression(expression.left)} && ${generateExpression(expression.right)}`;
+        }
+        case "OrExpression": {
+            return `${generateExpression(expression.left)} || ${generateExpression(expression.right)}`;
+        }
     }
 }
 

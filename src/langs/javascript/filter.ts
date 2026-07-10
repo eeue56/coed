@@ -160,7 +160,9 @@ export function filterExpression(
         case "AdditionExpression":
         case "SubtractionExpression":
         case "MultiplicationExpression":
-        case "DivisionExpression": {
+        case "DivisionExpression":
+        case "AndExpression":
+        case "OrExpression": {
             if (!shouldKeep(expression.left) || !shouldKeep(expression.right)) {
                 return null;
             }

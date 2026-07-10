@@ -105,7 +105,7 @@ export function parseExpressionAt(
     index: number,
 ): Result<ExpressionParseResult> {
     const state = ParserState(tokens, index, false, false);
-    const expression = parseEquality(state);
+    const expression = parseLogicalOr(state);
     if (expression.kind === "Err") {
         return expression;
     }
@@ -162,7 +162,7 @@ function parseCommaSeparatedExpressions(
     const values: Expression[] = [];
 
     while (!tokenIs(currentToken(state), closingTokenKind)) {
-        const parsed = parseEquality(state);
+        const parsed = parseLogicalOr(state);
         if (parsed.kind === "Err") return parsed;
         values.push(parsed.value);
 
@@ -379,6 +379,34 @@ function parsePostfixStep(
         kind: "Ok",
         value: null,
     };
+}
+
+/** parse logical OR expressions (||) */
+function parseLogicalOr(state: ParserState): Result<Expression> {
+    return parseLeftAssociative(state, parseLogicalAnd, [
+        {
+            tokenKind: "OrToken",
+            build: (left, right) => ({
+                kind: "OrExpression",
+                left,
+                right,
+            }),
+        },
+    ]);
+}
+
+/** parse logical AND expressions (&&) */
+function parseLogicalAnd(state: ParserState): Result<Expression> {
+    return parseLeftAssociative(state, parseEquality, [
+        {
+            tokenKind: "AndToken",
+            build: (left, right) => ({
+                kind: "AndExpression",
+                left,
+                right,
+            }),
+        },
+    ]);
 }
 
 /** parse equality (===) and inequality (!==) expressions */
@@ -610,7 +638,7 @@ function parseLeaf(state: ParserState): Result<Expression> {
         }
         case "LeftParenToken": {
             consumeToken(state);
-            const expression = parseEquality(state);
+            const expression = parseLogicalOr(state);
             if (expression.kind === "Err") return expression;
             if (!tokenIs(currentToken(state), "RightParenToken")) {
                 return errFromParserState(state);
@@ -660,7 +688,7 @@ function parseLeaf(state: ParserState): Result<Expression> {
                     }
                     consumeToken(state);
 
-                    const value = parseEquality(state);
+                    const value = parseLogicalOr(state);
                     if (value.kind === "Err") return value;
                     properties[key] = value.value;
 

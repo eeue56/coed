@@ -221,6 +221,18 @@ type DivisionExpression = {
     right: Expression;
 };
 
+type AndExpression = {
+    kind: "AndExpression";
+    left: Expression;
+    right: Expression;
+};
+
+type OrExpression = {
+    kind: "OrExpression";
+    left: Expression;
+    right: Expression;
+};
+
 type NullExpression = { kind: "NullExpression" };
 type BooleanExpression = { kind: "BooleanExpression"; value: boolean };
 
@@ -250,7 +262,9 @@ export type Expression =
     | AdditionExpression
     | SubtractionExpression
     | MultiplicationExpression
-    | DivisionExpression;
+    | DivisionExpression
+    | AndExpression
+    | OrExpression;
 
 type LetStatement = {
     kind: "LetStatement";
@@ -366,7 +380,9 @@ export type BinaryOperatorRule = {
         | "AdditionToken"
         | "SubtractionToken"
         | "MultiplicationToken"
-        | "DivisionToken";
+        | "DivisionToken"
+        | "AndToken"
+        | "OrToken";
     build: (left: Expression, right: Expression) => Expression;
 };
 

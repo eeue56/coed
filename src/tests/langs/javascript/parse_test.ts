@@ -72,6 +72,30 @@ export function testParseComparisonExpressions() {
     });
 }
 
+export function testParseLogicalExpressionsWithPrecedence() {
+    assert.deepStrictEqual(expectOk(parseExpression(tokenize("a && b"))), {
+        kind: "AndExpression",
+        left: { kind: "NameLookupExpression", name: "a" },
+        right: { kind: "NameLookupExpression", name: "b" },
+    });
+
+    assert.deepStrictEqual(expectOk(parseExpression(tokenize("a || b"))), {
+        kind: "OrExpression",
+        left: { kind: "NameLookupExpression", name: "a" },
+        right: { kind: "NameLookupExpression", name: "b" },
+    });
+
+    assert.deepStrictEqual(expectOk(parseExpression(tokenize("a || b && c"))), {
+        kind: "OrExpression",
+        left: { kind: "NameLookupExpression", name: "a" },
+        right: {
+            kind: "AndExpression",
+            left: { kind: "NameLookupExpression", name: "b" },
+            right: { kind: "NameLookupExpression", name: "c" },
+        },
+    });
+}
+
 export function testParseArrayAndObjectExpressions() {
     assert.deepStrictEqual(expectOk(parseExpression(tokenize("[1, 2]"))), {
         kind: "ArrayExpression",
@@ -400,25 +424,28 @@ export function testParseArrowFunctionBlockBodyAsFunctionDeclaration() {
 }
 
 export function testParseReturnStatementWithValue() {
-    assert.deepStrictEqual(parse("function formatName(name) { return name; }"), {
-        kind: "Ok",
-        value: [
-            {
-                kind: "FunctionDeclaration",
-                name: "formatName",
-                parameters: ["name"],
-                body: [
-                    {
-                        kind: "ReturnStatement",
-                        value: {
-                            kind: "NameLookupExpression",
-                            name: "name",
+    assert.deepStrictEqual(
+        parse("function formatName(name) { return name; }"),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "FunctionDeclaration",
+                    name: "formatName",
+                    parameters: ["name"],
+                    body: [
+                        {
+                            kind: "ReturnStatement",
+                            value: {
+                                kind: "NameLookupExpression",
+                                name: "name",
+                            },
                         },
-                    },
-                ],
-            },
-        ],
-    });
+                    ],
+                },
+            ],
+        },
+    );
 }
 
 export function testParseReturnStatementWithoutValue() {
