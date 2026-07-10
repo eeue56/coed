@@ -5,98 +5,37 @@ import {
     formatStatementParseError,
     formatTrailingExpressionError,
 } from "./parserErrors.ts";
+import {
+    consumeToken,
+    createParserState,
+    currentToken,
+    isNameLookup,
+    stripStringQuotes,
+    tokenIs,
+    updateParserState,
+    withoutWhitespace,
+} from "./parserHelpers.ts";
 import { tokenize } from "./tokenize.ts";
 import type {
     Ast,
     BinaryOperatorRule,
     Expression,
     ExpressionParseResult,
-    NameLookupExpression,
     ParseExpressionFunction,
     ParserState,
     Program,
     Result,
     StatementParseResult,
     Token,
-    TokenKinds
+    TokenKinds,
 } from "./types.ts";
-
-/** filter out whitespace tokens from a token list */
-function withoutWhitespace(tokens: Token[]): Token[] {
-    return tokens.filter((token) => token.kind !== "WhitespaceToken");
-}
-
-/** remove surrounding quote characters from a string token value */
-function stripStringQuotes(value: string): string {
-    if (value.length < 2) return value;
-    const firstChar = value[0];
-    const lastChar = value[value.length - 1];
-
-    if (firstChar !== lastChar) return value;
-    if (firstChar !== '"' && firstChar !== "'" && firstChar !== "`") {
-        return value;
-    }
-
-    return value.slice(1, value.length - 1);
-}
-
-function tokenIs<kind extends TokenKinds>(
-    token: Token | null | undefined,
-    kind: kind,
-): token is Extract<Token, { kind: kind }> {
-    return token != null && token.kind === kind;
-}
-
-function isNameLookup(expression: Expression): NameLookupExpression | null {
-    if (expression.kind === "NameLookupExpression") {
-        return expression;
-    }
-
-    return null;
-}
-
-function currentToken(state: ParserState): Token | null {
-    return state.tokens[state.index] || null;
-}
-
-/** advance the parser position by one token */
-function consumeToken(state: ParserState): void {
-    state.index += 1;
-}
-
-function ParserState(
-    tokens: Token[],
-    index: number,
-    insideFunction: boolean,
-    insideForLoop: boolean,
-): ParserState {
-    return {
-        tokens,
-        index,
-        insideFunction,
-        insideForLoop,
-    };
-}
-
-function updateParserState(
-    state: ParserState,
-    index: number,
-    overrides?: Partial<Pick<ParserState, "insideFunction" | "insideForLoop">>,
-): ParserState {
-    return {
-        tokens: state.tokens,
-        index,
-        insideFunction: overrides?.insideFunction ?? state.insideFunction,
-        insideForLoop: overrides?.insideForLoop ?? state.insideForLoop,
-    };
-}
 
 /** parse a single expression starting at the given token index */
 export function parseExpressionAt(
     tokens: Token[],
     index: number,
 ): Result<ExpressionParseResult> {
-    const state = ParserState(tokens, index, false, false);
+    const state = createParserState(tokens, index, false, false);
     const expression = parseLogicalOr(state);
     if (expression.kind === "Err") {
         return expression;
@@ -1070,7 +1009,7 @@ function parseStatement(state: ParserState): StatementParseResult {
 export function parseBlock(
     tokens: Token[],
     startIndex: number,
-    parentState: ParserState = ParserState(tokens, startIndex, false, false),
+    parentState: ParserState = createParserState(tokens, startIndex, false, false),
 ): {
     body: Ast[] | null;
     index: number;
@@ -1532,7 +1471,7 @@ function parseBreak(state: ParserState): StatementParseResult {
 function parseAllStatements(tokens: Token[], input: string): Result<Ast[]> {
     const statements: Ast[] = [];
     let index = 0;
-    const rootState = ParserState(tokens, index, false, false);
+    const rootState = createParserState(tokens, index, false, false);
 
     while (index < tokens.length) {
         if (tokenIs(tokens[index], "SemicolonToken")) {
@@ -1554,7 +1493,7 @@ function parseAllStatements(tokens: Token[], input: string): Result<Ast[]> {
                         parseBlock,
                         parseLetOrConst,
                         parseStatementAt,
-                        createParserState: ParserState,
+                        createParserState,
                         updateParserState,
                     }),
                 ),

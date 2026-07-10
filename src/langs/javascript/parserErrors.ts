@@ -3,23 +3,14 @@ import type {
     ParsedExpressionResult,
     ParsedStatementResult,
 } from "./parse.ts";
+import { tokenIs } from "./parserHelpers.ts";
 import type {
     DetailedParseError,
     Err,
     ParserState,
     SourceLocation,
     Token,
-    TokenKinds,
 } from "./types.ts";
-
-function tokenIs<kind extends TokenKinds>(
-    token: Token | null | undefined,
-    kind: kind,
-): token is Extract<Token, { kind: kind }> {
-    return (
-        token !== null && typeof token !== "undefined" && token.kind === kind
-    );
-}
 
 function tokenSummary(token: Token): string {
     switch (token.kind) {
