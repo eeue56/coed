@@ -39,7 +39,13 @@ function filterAst(ast: Ast, shouldKeep: (node: Ast) => boolean): Ast | null {
     }
 }
 
-export function filterAsts(ast: Ast[], shouldKeep: (node: Ast) => boolean) {
+/**
+ * failing branches will be completely removed
+ */
+export function filterAsts(
+    ast: Ast[],
+    shouldKeep: (node: Ast) => boolean,
+): Ast[] {
     const toReturn = [];
 
     for (const node of ast) {
@@ -51,6 +57,9 @@ export function filterAsts(ast: Ast[], shouldKeep: (node: Ast) => boolean) {
     return toReturn;
 }
 
+/**
+ * any child branch or leaf that fails `shouldKeep` will cause the entire branch to be removed
+ */
 export function filterExpression(
     expression: Expression,
     shouldKeep: (node: Expression) => boolean,
@@ -91,10 +100,12 @@ export function filterExpression(
         case "MoreThanExpression":
         case "LessThanOrEqualExpression":
         case "MoreThanOrEqualExpression": {
-            if (!shouldKeep(expression.left) || !shouldKeep(expression.right)) {
+            const left = filterExpression(expression.left, shouldKeep);
+            const right = filterExpression(expression.right, shouldKeep);
+            if (!left || !right) {
                 return null;
             }
-            return expression;
+            return { ...expression, left, right };
         }
         case "IncrementExpression":
         case "DecrementExpression": {
@@ -120,12 +131,16 @@ export function filterExpression(
             return { ...expression, values };
         }
         case "FunctionCallExpression": {
+            const args = [];
+
             for (const arg of expression.arguments) {
-                if (!shouldKeep(arg)) {
+                const filtered = filterExpression(arg, shouldKeep);
+                if (!filtered) {
                     return null;
                 }
+                args.push(filtered);
             }
-            return expression;
+            return { ...expression, arguments: args };
         }
         case "NameLookupExpression": {
             return expression;
@@ -146,7 +161,18 @@ export function filterExpression(
             ) {
                 return null;
             }
-            return expression;
+
+            const args = [];
+
+            for (const arg of expression.arguments) {
+                const filtered = filterExpression(arg, shouldKeep);
+                if (!filtered) {
+                    return null;
+                }
+                args.push(filtered);
+            }
+
+            return { ...expression, arguments: args };
         }
         case "ArrayAccessExpression": {
             if (
@@ -163,10 +189,12 @@ export function filterExpression(
         case "DivisionExpression":
         case "AndExpression":
         case "OrExpression": {
-            if (!shouldKeep(expression.left) || !shouldKeep(expression.right)) {
+            const left = filterExpression(expression.left, shouldKeep);
+            const right = filterExpression(expression.right, shouldKeep);
+            if (!left || !right) {
                 return null;
             }
-            return expression;
+            return { ...expression, left, right };
         }
     }
 }

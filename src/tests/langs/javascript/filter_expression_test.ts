@@ -298,17 +298,6 @@ export function testFilterExpressionHandlesNestedCombinations() {
     assert.deepStrictEqual(actual, {
         kind: "ObjectExpression",
         properties: {
-            stats: {
-                kind: "FunctionCallExpression",
-                functionName: "compute",
-                arguments: [
-                    {
-                        kind: "AdditionExpression",
-                        left: one,
-                        right: two,
-                    },
-                ],
-            },
             values: {
                 kind: "ArrayExpression",
                 elements: [
@@ -358,7 +347,7 @@ export function testFilterExpressionParsedMemberCallKeepsNestedArgumentValues() 
 
     const actual = filterExpression(expression, isNotTwoNumber);
 
-    assert.deepStrictEqual(actual, expression);
+    assert.strictEqual(actual, null);
 }
 
 export function testFilterExpressionParsedTemplateAndAccessCombination() {
@@ -366,7 +355,7 @@ export function testFilterExpressionParsedTemplateAndAccessCombination() {
 
     const actual = filterExpression(expression, isNotTwoNumber);
 
-    assert.deepStrictEqual(actual, expression);
+    assert.strictEqual(actual, null);
 }
 
 export function testFilterExpressionPolicyLimitsWindowLocationUsage() {
@@ -1574,19 +1563,11 @@ export function testFilterExpressionBroadShapeCase102ArithmeticDropsLeftOperand(
 }
 
 export function testFilterExpressionBroadShapeCase103ArithmeticNestedRightCollapse() {
-    assertPolicyCase(
-        "base + (tax + token)",
-        removeSensitiveNames,
-        "base + (tax + token)",
-    );
+    assertPolicyCaseNull("base + (tax + token)", removeSensitiveNames);
 }
 
 export function testFilterExpressionBroadShapeCase104ArithmeticNestedLeftCollapse() {
-    assertPolicyCase(
-        "(token + fee) + base",
-        removeSensitiveNames,
-        "(token + fee) + base",
-    );
+    assertPolicyCaseNull("(token + fee) + base", removeSensitiveNames);
 }
 
 export function testFilterExpressionBroadShapeCase105ArithmeticKeepsSafeNames() {
@@ -1622,10 +1603,9 @@ export function testFilterExpressionBroadShapeCase111FunctionCallDropsSensitiveA
 }
 
 export function testFilterExpressionBroadShapeCase112FunctionCallDropsSensitiveNestedArgument() {
-    assertPolicyCase(
+    assertPolicyCaseNull(
         "encrypt(payload, format(secret))",
         removeSensitiveNames,
-        "encrypt(payload, format(secret))",
     );
 }
 
@@ -1901,7 +1881,7 @@ export function testFilterExpressionBroadShapeCase146CombinedPredicateRemovesUns
 }
 
 export function testFilterExpressionBroadShapeCase147MethodCallWithArrayAccessArgumentPrunesSensitiveIndex() {
-    assertPolicyCase("render(items[0])", removeZeroNumbers, "render(items[0])");
+    assertPolicyCaseNull("render(items[0])", removeZeroNumbers);
 }
 
 export function testFilterExpressionBroadShapeCase148MethodCallWithSafeArrayAccessArgument() {
