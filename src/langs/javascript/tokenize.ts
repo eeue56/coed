@@ -104,6 +104,12 @@ const oneOffTokenInfo: Record<OneOffTokenizerState, TokenInfo> = {
     ReadNegation: { kind: "NegationToken", length: 1 },
 };
 
+function isOneOffTokenizerState(
+    state: TokenizerState,
+): state is OneOffTokenizerState {
+    return state in oneOffTokenInfo;
+}
+
 type OneOffTransition = {
     pattern: string;
     state: OneOffTokenizerState;
@@ -173,30 +179,12 @@ function getOneOffTransition(
     };
 }
 
-function isOneOffTokenizerState(
-    state: TokenizerState,
-): state is OneOffTokenizerState {
-    return state in oneOffTokenInfo;
-}
-
 type BufferingTokenizerState =
     | "ReadyForNextToken"
     | "ReadingNumber"
     | "ReadingIdentifier"
     | "ReadingString"
     | "ReadingWhitespace";
-
-function isBufferingTokenizerState(
-    state: TokenizerState,
-): state is BufferingTokenizerState {
-    return (
-        state === "ReadyForNextToken" ||
-        state === "ReadingNumber" ||
-        state === "ReadingIdentifier" ||
-        state === "ReadingString" ||
-        state === "ReadingWhitespace"
-    );
-}
 
 type TokenizerState = BufferingTokenizerState | OneOffTokenizerState;
 
@@ -219,7 +207,7 @@ function switchOneOffTokenState(
     tokens: Token[],
     currentIndex: number,
 ): void {
-    if (isBufferingTokenizerState(tokenizerModel.state)) {
+    if (tokenizerModel.state !== "ReadyForNextToken") {
         // clear out the old buffer
         switchTokenizerState(
             "ReadyForNextToken",
@@ -279,6 +267,56 @@ function switchIdentifierToken(
     pushToken(tokens, keywordKind, start, endIndex);
 }
 
+function flushCurrentBufferedToken(
+    currentState: TokenizerState,
+    tokenizerModel: TokenizerModel,
+    start: number,
+    endIndex: number,
+    tokens: Token[],
+): void {
+    switch (currentState) {
+        case "ReadingNumber": {
+            tokens.push({
+                kind: "NumberToken",
+                value: parseFloat(tokenizerModel.buffer),
+                startIndex: start,
+                endIndex: endIndex,
+            });
+            return;
+        }
+        case "ReadingIdentifier": {
+            switchIdentifierToken(
+                tokenizerModel.buffer,
+                start,
+                endIndex,
+                tokens,
+            );
+            return;
+        }
+        case "ReadingString": {
+            tokens.push({
+                kind: "StringToken",
+                value: tokenizerModel.buffer,
+                startIndex: start,
+                endIndex: endIndex,
+            });
+            return;
+        }
+        case "ReadingWhitespace": {
+            tokens.push({
+                kind: "WhitespaceToken",
+                value: tokenizerModel.buffer,
+                startIndex: start,
+                endIndex: endIndex,
+            });
+            return;
+        }
+        default: {
+            return;
+        }
+    }
+}
+
 function switchTokenizerState(
     newState: TokenizerState,
     tokenizerModel: TokenizerModel,
@@ -298,48 +336,7 @@ function switchTokenizerState(
 
     const start = tokenizerModel.currentTokenStartIndex;
     const endIndex = start + tokenizerModel.buffer.length;
-
-    switch (currentState) {
-        case "ReadyForNextToken": {
-            break;
-        }
-        case "ReadingNumber": {
-            tokens.push({
-                kind: "NumberToken",
-                value: parseFloat(tokenizerModel.buffer),
-                startIndex: start,
-                endIndex: endIndex,
-            });
-            break;
-        }
-        case "ReadingIdentifier": {
-            switchIdentifierToken(
-                tokenizerModel.buffer,
-                start,
-                endIndex,
-                tokens,
-            );
-            break;
-        }
-        case "ReadingString": {
-            tokens.push({
-                kind: "StringToken",
-                value: tokenizerModel.buffer,
-                startIndex: start,
-                endIndex: endIndex,
-            });
-            break;
-        }
-        case "ReadingWhitespace": {
-            tokens.push({
-                kind: "WhitespaceToken",
-                value: tokenizerModel.buffer,
-                startIndex: start,
-                endIndex: endIndex,
-            });
-            break;
-        }
-    }
+    flushCurrentBufferedToken(currentState, tokenizerModel, start, endIndex, tokens);
 
     tokenizerModel.state = newState;
     tokenizerModel.buffer = "";
@@ -371,12 +368,7 @@ function switchToReady(
     tokens: Token[],
     currentIndex: number,
 ): void {
-    switchTokenizerState(
-        "ReadyForNextToken",
-        tokenizerModel,
-        tokens,
-        currentIndex,
-    );
+    switchTokenizerState("ReadyForNextToken", tokenizerModel, tokens, currentIndex);
 }
 
 function appendOrSwitchToReady(
@@ -394,58 +386,57 @@ function appendOrSwitchToReady(
     tokenizerModel.buffer += char;
 }
 
+function shouldAppendBufferedChar(
+    state: "ReadingNumber" | "ReadingIdentifier" | "ReadingWhitespace",
+    char: string,
+    buffer: string,
+): boolean {
+    if (state === "ReadingNumber") {
+        return isNumberPart(char, buffer);
+    }
+
+    if (state === "ReadingIdentifier") {
+        return isIdentifierPart(char);
+    }
+
+    return isWhitespace(char);
+}
+
 function processBufferedState(
     tokenizerModel: TokenizerModel,
     tokens: Token[],
     currentIndex: number,
     char: string,
 ): boolean {
-    switch (tokenizerModel.state) {
-        case "ReadingString": {
-            const openingQuote = tokenizerModel.buffer[0];
-            tokenizerModel.buffer += char;
-
-            if (char === openingQuote) {
-                switchToReady(tokenizerModel, tokens, currentIndex);
-                return true;
-            }
-
-            return false;
-        }
-        case "ReadingNumber": {
-            appendOrSwitchToReady(
-                isNumberPart(char, tokenizerModel.buffer),
-                tokenizerModel,
-                tokens,
-                currentIndex,
-                char,
-            );
-            return false;
-        }
-        case "ReadingIdentifier": {
-            appendOrSwitchToReady(
-                isIdentifierPart(char),
-                tokenizerModel,
-                tokens,
-                currentIndex,
-                char,
-            );
-            return false;
-        }
-        case "ReadingWhitespace": {
-            appendOrSwitchToReady(
-                isWhitespace(char),
-                tokenizerModel,
-                tokens,
-                currentIndex,
-                char,
-            );
-            return false;
-        }
-        case "ReadyForNextToken": {
-            return false;
-        }
+    if (tokenizerModel.state === "ReadyForNextToken") {
+        return false;
     }
+
+    if (tokenizerModel.state === "ReadingString") {
+        const openingQuote = tokenizerModel.buffer[0];
+        tokenizerModel.buffer += char;
+
+        if (char === openingQuote) {
+            switchToReady(tokenizerModel, tokens, currentIndex);
+            return true;
+        }
+
+        return false;
+    }
+
+    appendOrSwitchToReady(
+        shouldAppendBufferedChar(
+            tokenizerModel.state,
+            char,
+            tokenizerModel.buffer,
+        ),
+        tokenizerModel,
+        tokens,
+        currentIndex,
+        char,
+    );
+
+    return false;
 }
 
 /** returns the amount to move the index along */
