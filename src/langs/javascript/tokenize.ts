@@ -165,10 +165,6 @@ function isRightBrace(char: string): boolean {
     return char === "}";
 }
 
-function isAssign(char: string): boolean {
-    return char === "=";
-}
-
 function isWhitespace(char: string): boolean {
     return char === " " || char === "\n" || char === "\r" || char === "\t";
 }
@@ -433,6 +429,29 @@ function switchStateAndBufferChar(
     tokenizerModel.buffer += char;
 }
 
+function switchToReady(
+    tokenizerModel: TokenizerModel,
+    tokens: Token[],
+    currentIndex: number,
+): void {
+    switchTokenizerState("ReadyForNextToken", tokenizerModel, tokens, currentIndex);
+}
+
+function appendOrSwitchToReady(
+    shouldAppend: boolean,
+    tokenizerModel: TokenizerModel,
+    tokens: Token[],
+    currentIndex: number,
+    char: string,
+): void {
+    if (!shouldAppend) {
+        switchToReady(tokenizerModel, tokens, currentIndex);
+        return;
+    }
+
+    tokenizerModel.buffer += char;
+}
+
 export function tokenize(string: string): Token[] {
     const tokens: Token[] = [];
     let tokenizerModel: TokenizerModel = {
@@ -449,49 +468,35 @@ export function tokenize(string: string): Token[] {
 
             if (char === openingQuote) {
                 tokenizerModel.buffer += char;
-                switchTokenizerState(
-                    "ReadyForNextToken",
-                    tokenizerModel,
-                    tokens,
-                    i,
-                );
+                switchToReady(tokenizerModel, tokens, i);
                 continue;
             } else {
                 tokenizerModel.buffer += char;
             }
         } else if (tokenizerModel.state === "ReadingNumber") {
-            if (!isNumberPart(char, tokenizerModel.buffer)) {
-                switchTokenizerState(
-                    "ReadyForNextToken",
-                    tokenizerModel,
-                    tokens,
-                    i,
-                );
-            } else {
-                tokenizerModel.buffer += char;
-            }
+            appendOrSwitchToReady(
+                isNumberPart(char, tokenizerModel.buffer),
+                tokenizerModel,
+                tokens,
+                i,
+                char,
+            );
         } else if (tokenizerModel.state === "ReadingIdentifier") {
-            if (!isIdentifierPart(char)) {
-                switchTokenizerState(
-                    "ReadyForNextToken",
-                    tokenizerModel,
-                    tokens,
-                    i,
-                );
-            } else {
-                tokenizerModel.buffer += char;
-            }
+            appendOrSwitchToReady(
+                isIdentifierPart(char),
+                tokenizerModel,
+                tokens,
+                i,
+                char,
+            );
         } else if (tokenizerModel.state === "ReadingWhitespace") {
-            if (!isWhitespace(char)) {
-                switchTokenizerState(
-                    "ReadyForNextToken",
-                    tokenizerModel,
-                    tokens,
-                    i,
-                );
-            } else {
-                tokenizerModel.buffer += char;
-            }
+            appendOrSwitchToReady(
+                isWhitespace(char),
+                tokenizerModel,
+                tokens,
+                i,
+                char,
+            );
         }
 
         if (tokenizerModel.state === "ReadyForNextToken") {
