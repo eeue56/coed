@@ -412,6 +412,27 @@ function switchTokenizerState(
     tokenizerModel.buffer = "";
 }
 
+function switchStateAtIndex(
+    newState: TokenizerState,
+    tokenizerModel: TokenizerModel,
+    tokens: Token[],
+    currentIndex: number,
+): void {
+    switchTokenizerState(newState, tokenizerModel, tokens, currentIndex);
+    tokenizerModel.currentTokenStartIndex = currentIndex;
+}
+
+function switchStateAndBufferChar(
+    newState: BufferingTokenizerState,
+    tokenizerModel: TokenizerModel,
+    tokens: Token[],
+    currentIndex: number,
+    char: string,
+): void {
+    switchStateAtIndex(newState, tokenizerModel, tokens, currentIndex);
+    tokenizerModel.buffer += char;
+}
+
 export function tokenize(string: string): Token[] {
     const tokens: Token[] = [];
     let tokenizerModel: TokenizerModel = {
@@ -475,201 +496,130 @@ export function tokenize(string: string): Token[] {
 
         if (tokenizerModel.state === "ReadyForNextToken") {
             if (isStringQuote(char)) {
-                switchTokenizerState(
+                switchStateAndBufferChar(
                     "ReadingString",
                     tokenizerModel,
                     tokens,
                     i,
+                    char,
                 );
-                tokenizerModel.currentTokenStartIndex = i;
-                tokenizerModel.buffer += char;
             } else if (isDigit(char)) {
-                switchTokenizerState(
+                switchStateAndBufferChar(
                     "ReadingNumber",
                     tokenizerModel,
                     tokens,
                     i,
+                    char,
                 );
-                tokenizerModel.currentTokenStartIndex = i;
-                tokenizerModel.buffer += char;
             } else if (isLeftParen(char)) {
-                switchTokenizerState(
-                    "ReadLeftParen",
-                    tokenizerModel,
-                    tokens,
-                    i,
-                );
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadLeftParen", tokenizerModel, tokens, i);
             } else if (isRightParen(char)) {
-                switchTokenizerState(
-                    "ReadRightParen",
-                    tokenizerModel,
-                    tokens,
-                    i,
-                );
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadRightParen", tokenizerModel, tokens, i);
             } else if (isLeftBracket(char)) {
-                switchTokenizerState(
+                switchStateAtIndex(
                     "ReadLeftBracket",
                     tokenizerModel,
                     tokens,
                     i,
                 );
-                tokenizerModel.currentTokenStartIndex = i;
             } else if (isRightBracket(char)) {
-                switchTokenizerState(
+                switchStateAtIndex(
                     "ReadRightBracket",
                     tokenizerModel,
                     tokens,
                     i,
                 );
-                tokenizerModel.currentTokenStartIndex = i;
             } else if (isLeftBrace(char)) {
-                switchTokenizerState(
-                    "ReadLeftBrace",
-                    tokenizerModel,
-                    tokens,
-                    i,
-                );
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadLeftBrace", tokenizerModel, tokens, i);
             } else if (isRightBrace(char)) {
-                switchTokenizerState(
-                    "ReadRightBrace",
-                    tokenizerModel,
-                    tokens,
-                    i,
-                );
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadRightBrace", tokenizerModel, tokens, i);
             } else if (isComma(char)) {
-                switchTokenizerState("ReadComma", tokenizerModel, tokens, i);
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadComma", tokenizerModel, tokens, i);
             } else if (isColon(char)) {
-                switchTokenizerState("ReadColon", tokenizerModel, tokens, i);
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadColon", tokenizerModel, tokens, i);
             } else if (isSemicolon(char)) {
-                switchTokenizerState(
-                    "ReadSemicolon",
-                    tokenizerModel,
-                    tokens,
-                    i,
-                );
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadSemicolon", tokenizerModel, tokens, i);
             } else if (isDot(char)) {
-                switchTokenizerState("ReadDot", tokenizerModel, tokens, i);
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadDot", tokenizerModel, tokens, i);
             } else if (isArrow(char, string[i + 1])) {
-                switchTokenizerState("ReadArrow", tokenizerModel, tokens, i);
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadArrow", tokenizerModel, tokens, i);
                 i += 1;
             } else if (isTripleEquals(char, string[i + 1], string[i + 2])) {
-                switchTokenizerState("ReadEquality", tokenizerModel, tokens, i);
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadEquality", tokenizerModel, tokens, i);
                 i += 2;
             } else if (isInequality(char, string[i + 1], string[i + 2])) {
-                switchTokenizerState(
-                    "ReadInequality",
-                    tokenizerModel,
-                    tokens,
-                    i,
-                );
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadInequality", tokenizerModel, tokens, i);
                 i += 2;
             } else if (isLessThanOrEqualTo(char, string[i + 1])) {
-                switchTokenizerState(
+                switchStateAtIndex(
                     "ReadLessThanOrEqual",
                     tokenizerModel,
                     tokens,
                     i,
                 );
-                tokenizerModel.currentTokenStartIndex = i;
                 i += 1;
             } else if (isGreaterThanOrEqualTo(char, string[i + 1])) {
-                switchTokenizerState(
+                switchStateAtIndex(
                     "ReadMoreThanOrEqual",
                     tokenizerModel,
                     tokens,
                     i,
                 );
-                tokenizerModel.currentTokenStartIndex = i;
                 i += 1;
             } else if (isAnd(char, string[i + 1])) {
-                switchTokenizerState("ReadAnd", tokenizerModel, tokens, i);
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadAnd", tokenizerModel, tokens, i);
                 i += 1;
             } else if (isOr(char, string[i + 1])) {
-                switchTokenizerState("ReadOr", tokenizerModel, tokens, i);
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadOr", tokenizerModel, tokens, i);
                 i += 1;
             } else if (isIncrement(char, string[i + 1])) {
-                switchTokenizerState(
-                    "ReadIncrement",
-                    tokenizerModel,
-                    tokens,
-                    i,
-                );
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadIncrement", tokenizerModel, tokens, i);
                 i += 1;
             } else if (isDecrement(char, string[i + 1])) {
-                switchTokenizerState(
-                    "ReadDecrement",
-                    tokenizerModel,
-                    tokens,
-                    i,
-                );
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadDecrement", tokenizerModel, tokens, i);
                 i += 1;
             } else if (isPlus(char)) {
-                switchTokenizerState("ReadAddition", tokenizerModel, tokens, i);
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadAddition", tokenizerModel, tokens, i);
             } else if (isMinus(char)) {
-                switchTokenizerState(
+                switchStateAtIndex(
                     "ReadSubtraction",
                     tokenizerModel,
                     tokens,
                     i,
                 );
-                tokenizerModel.currentTokenStartIndex = i;
             } else if (isAsterisk(char)) {
-                switchTokenizerState(
+                switchStateAtIndex(
                     "ReadMultiplication",
                     tokenizerModel,
                     tokens,
                     i,
                 );
-                tokenizerModel.currentTokenStartIndex = i;
             } else if (isForwardSlash(char)) {
-                switchTokenizerState("ReadDivision", tokenizerModel, tokens, i);
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadDivision", tokenizerModel, tokens, i);
             } else if (isLessThan(char)) {
-                switchTokenizerState("ReadLessThan", tokenizerModel, tokens, i);
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadLessThan", tokenizerModel, tokens, i);
             } else if (isGreaterThan(char)) {
-                switchTokenizerState("ReadMoreThan", tokenizerModel, tokens, i);
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadMoreThan", tokenizerModel, tokens, i);
             } else if (isExclamationMark(char)) {
-                switchTokenizerState("ReadNegation", tokenizerModel, tokens, i);
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadNegation", tokenizerModel, tokens, i);
             } else if (isEqualsSign(char)) {
-                switchTokenizerState("ReadAssign", tokenizerModel, tokens, i);
-                tokenizerModel.currentTokenStartIndex = i;
+                switchStateAtIndex("ReadAssign", tokenizerModel, tokens, i);
             } else if (isWhitespace(char)) {
-                switchTokenizerState(
+                switchStateAndBufferChar(
                     "ReadingWhitespace",
                     tokenizerModel,
                     tokens,
                     i,
+                    char,
                 );
-                tokenizerModel.currentTokenStartIndex = i;
-                tokenizerModel.buffer += char;
             } else if (isIdentifierStart(char)) {
-                switchTokenizerState(
+                switchStateAndBufferChar(
                     "ReadingIdentifier",
                     tokenizerModel,
                     tokens,
                     i,
+                    char,
                 );
-                tokenizerModel.currentTokenStartIndex = i;
-                tokenizerModel.buffer += char;
             } else {
                 tokenizerModel.buffer += char;
             }
