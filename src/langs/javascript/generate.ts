@@ -49,7 +49,7 @@ export function generateExpression(expression: Expression): string {
             return `[${expression.elements.map(generateExpression).join(", ")}]`;
         case "ObjectExpression": {
             const properties = Object.entries(expression.properties).map(
-                ([key, value]) => `${key}: ${generateExpression(value)}`,
+                ([key, value]) => `"${key}": ${generateExpression(value)}`,
             );
 
             if (properties.length === 0) {

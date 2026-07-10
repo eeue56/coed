@@ -182,7 +182,7 @@ export function testFilterPrunesHarmfulObjectProperties() {
 const sessionSnapshot = { route: window.location, title: documentTitle, cookie: document.cookie };
         `.trim(),
         `
-const sessionSnapshot = { title: documentTitle };
+const sessionSnapshot = { "title": documentTitle };
         `.trim(),
     );
 }
@@ -193,7 +193,7 @@ export function testFilterKeepsSafePropertiesAlongsideFilteredArrayValues() {
 let diagnostics = { endpoints: [apiBaseUrl, fetch(healthUrl)], route: window.location, status: statusLabel };
         `.trim(),
         `
-let diagnostics = { endpoints: [apiBaseUrl], status: statusLabel };
+let diagnostics = { "endpoints": [apiBaseUrl], "status": statusLabel };
         `.trim(),
     );
 }
@@ -285,7 +285,7 @@ function preparePreview(userId) {
         `.trim(),
         `
 function preparePreview(userId) {
-    const previewState = { title: previewTitle };
+    const previewState = { "title": previewTitle };
     let previewOwner = userId;
 }
         `.trim(),
