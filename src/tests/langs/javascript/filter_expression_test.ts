@@ -94,10 +94,7 @@ export function testFilterExpressionRecursivelyFiltersArrayObjectAndStringLitera
 
     assert.deepStrictEqual(
         filterExpression(stringLiteralExpression, isNotTwoNumber),
-        {
-            kind: "StringLiteralExpression",
-            values: [one, { kind: "NameLookupExpression", name: "suffix" }],
-        },
+        null,
     );
 }
 
@@ -300,15 +297,7 @@ export function testFilterExpressionHandlesNestedCombinations() {
         properties: {
             values: {
                 kind: "ArrayExpression",
-                elements: [
-                    {
-                        kind: "StringLiteralExpression",
-                        values: [
-                            { kind: "StringExpression", value: "count=" },
-                            one,
-                        ],
-                    },
-                ],
+                elements: [],
             },
         },
     });

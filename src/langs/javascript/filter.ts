@@ -126,9 +126,15 @@ export function filterExpression(
             return expression;
         }
         case "StringLiteralExpression": {
-            const values = expression.values.filter((value) =>
-                filterExpression(value, shouldKeep),
-            );
+            const values = [];
+
+            for (const value of expression.values) {
+                const filtered = filterExpression(value, shouldKeep);
+                if (!filtered) {
+                    return null;
+                }
+                values.push(filtered);
+            }
             return { ...expression, values };
         }
         case "FunctionCallExpression": {
