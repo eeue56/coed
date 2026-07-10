@@ -559,6 +559,12 @@ function switchTokenizerState(
                     startIndex: start,
                     endIndex: endIndex,
                 });
+            } else if (tokenizerModel.buffer === "as") {
+                tokens.push({
+                    kind: "AsToken",
+                    startIndex: start,
+                    endIndex: endIndex,
+                });
             } else if (tokenizerModel.buffer === "undefined") {
                 tokens.push({
                     kind: "UndefinedToken",

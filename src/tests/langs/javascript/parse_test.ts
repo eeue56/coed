@@ -294,6 +294,76 @@ export function testParseFunctionDeclaration() {
     });
 }
 
+export function testParseStripsTypeAnnotations() {
+    assert.deepStrictEqual(
+        parse(
+            "let retryCount: number = 3; const isReady: boolean = true; function formatName(name: string, count: number): string { return name; } const scale = (value: number): number => value; let finalName = value as string;",
+        ),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "LetStatement",
+                    name: "retryCount",
+                    value: { kind: "NumberExpression", value: 3 },
+                },
+                {
+                    kind: "ConstStatement",
+                    name: "isReady",
+                    value: { kind: "BooleanExpression", value: true },
+                },
+                {
+                    kind: "FunctionDeclaration",
+                    name: "formatName",
+                    parameters: ["name", "count"],
+                    body: [
+                        {
+                            kind: "ReturnStatement",
+                            value: {
+                                kind: "NameLookupExpression",
+                                name: "name",
+                            },
+                        },
+                    ],
+                },
+                {
+                    kind: "FunctionDeclaration",
+                    name: "scale",
+                    parameters: ["value"],
+                    body: [
+                        {
+                            kind: "LetStatement",
+                            name: "result",
+                            value: {
+                                kind: "NameLookupExpression",
+                                name: "value",
+                            },
+                        },
+                    ],
+                },
+                {
+                    kind: "LetStatement",
+                    name: "finalName",
+                    value: {
+                        kind: "NameLookupExpression",
+                        name: "value",
+                    },
+                },
+            ],
+        },
+    );
+}
+
+export function testParseStripsAsTypeAssertionsInExpressions() {
+    assert.deepStrictEqual(
+        expectOk(parseExpression(tokenize("(value as string)"))),
+        {
+            kind: "NameLookupExpression",
+            name: "value",
+        },
+    );
+}
+
 export function testParseVarUndefinedAsLetAndNull() {
     assert.deepStrictEqual(parse("var currentUser = undefined;"), {
         kind: "Ok",

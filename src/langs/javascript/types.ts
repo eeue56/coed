@@ -47,6 +47,7 @@ type NullToken = BaseToken & { kind: "NullToken" };
 type TrueToken = BaseToken & { kind: "TrueToken" };
 type FalseToken = BaseToken & { kind: "FalseToken" };
 type TypeofToken = BaseToken & { kind: "TypeofToken" };
+type AsToken = BaseToken & { kind: "AsToken" };
 type UndefinedToken = BaseToken & { kind: "UndefinedToken" };
 
 export type Token =
@@ -97,6 +98,7 @@ export type Token =
     | TrueToken
     | FalseToken
     | TypeofToken
+    | AsToken
     | UndefinedToken;
 
 export type NumberExpression = { kind: "NumberExpression"; value: number };

@@ -74,6 +74,31 @@ let retryCount = 3;
     );
 }
 
+export function testGenerateTypeStrippedDeclarationsAndFunctions() {
+    assertGeneratedFromSource(
+        `
+let retryCount: number = 3;
+const isReady: boolean = true;
+function formatName(name: string): string {
+    return name;
+}
+const scale = (value: number): number => value;
+let finalName = value as string;
+        `.trim(),
+        `
+let retryCount = 3;
+const isReady = true;
+function formatName(name) {
+    return name;
+}
+function scale(value) {
+    let result = value;
+}
+let finalName = value;
+        `.trim(),
+    );
+}
+
 export function testGenerateNullAndFallbackValues() {
     assertMatchingParsedAndGeneratedCode(
         `

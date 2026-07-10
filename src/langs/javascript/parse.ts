@@ -194,6 +194,47 @@ function parseCallArguments(state: ParserState): Result<Expression[]> {
     return args;
 }
 
+function parseAsTypeAssertion(
+    state: ParserState,
+    expression: Expression,
+): Result<Expression | null> {
+    consumeToken(state);
+
+    const afterType = consumeTypeSyntax(state.tokens, state.index, [
+        "SemicolonToken",
+        "CommaToken",
+        "RightParenToken",
+        "RightBracketToken",
+        "RightBraceToken",
+        "DotToken",
+        "AdditionToken",
+        "SubtractionToken",
+        "MultiplicationToken",
+        "DivisionToken",
+        "AndToken",
+        "OrToken",
+        "EqualityToken",
+        "InequalityToken",
+        "LessThanToken",
+        "MoreThanToken",
+        "LessThanOrEqualToken",
+        "MoreThanOrEqualToken",
+        "AssignToken",
+        "ArrowToken",
+        "IncrementToken",
+        "DecrementToken",
+    ]);
+    if (afterType === null) {
+        return errFromParserState(state);
+    }
+
+    state.index = afterType;
+    return {
+        kind: "Ok",
+        value: expression,
+    };
+}
+
 function parsePostfixStep(
     state: ParserState,
     expression: Expression,
@@ -373,6 +414,10 @@ function parsePostfixStep(
                 variable: asName.name,
             },
         };
+    }
+
+    if (token.kind === "AsToken") {
+        return parseAsTypeAssertion(state, expression);
     }
 
     return {
@@ -725,29 +770,97 @@ function parseStatementAt(state: ParserState): StatementParseResult {
     return parseStatement(state);
 }
 
-function parseArrowParameters(
+function consumeTypeSyntax(
     tokens: Token[],
     startIndex: number,
-): { parameters: string[]; arrowIndex: number } | null {
-    const firstToken = tokens[startIndex];
+    stopKinds: TokenKinds[],
+): number | null {
+    let index = startIndex;
+    let parenDepth = 0;
+    let bracketDepth = 0;
+    let braceDepth = 0;
+    let angleDepth = 0;
 
-    if (tokenIs(firstToken, "IdentifierToken")) {
-        if (!tokenIs(tokens[startIndex + 1], "ArrowToken")) {
-            return null;
+    while (index < tokens.length) {
+        const token = tokens[index];
+
+        if (
+            parenDepth === 0 &&
+            bracketDepth === 0 &&
+            braceDepth === 0 &&
+            angleDepth === 0 &&
+            stopKinds.includes(token.kind)
+        ) {
+            return index;
         }
 
-        return {
-            parameters: [firstToken.name],
-            arrowIndex: startIndex + 1,
-        };
+        switch (token.kind) {
+            case "LeftParenToken": {
+                parenDepth += 1;
+                break;
+            }
+            case "RightParenToken": {
+                if (parenDepth > 0) {
+                    parenDepth -= 1;
+                }
+                break;
+            }
+            case "LeftBracketToken": {
+                bracketDepth += 1;
+                break;
+            }
+            case "RightBracketToken": {
+                if (bracketDepth > 0) {
+                    bracketDepth -= 1;
+                }
+                break;
+            }
+            case "LeftBraceToken": {
+                braceDepth += 1;
+                break;
+            }
+            case "RightBraceToken": {
+                if (braceDepth > 0) {
+                    braceDepth -= 1;
+                }
+                break;
+            }
+            case "LessThanToken": {
+                angleDepth += 1;
+                break;
+            }
+            case "MoreThanToken": {
+                if (angleDepth > 0) {
+                    angleDepth -= 1;
+                }
+                break;
+            }
+        }
+
+        index += 1;
     }
 
-    if (!tokenIs(firstToken, "LeftParenToken")) {
-        return null;
+    return null;
+}
+
+function consumeOptionalTypeAnnotation(
+    tokens: Token[],
+    startIndex: number,
+    stopKinds: TokenKinds[],
+): number | null {
+    if (!tokenIs(tokens[startIndex], "ColonToken")) {
+        return startIndex;
     }
 
+    return consumeTypeSyntax(tokens, startIndex + 1, stopKinds);
+}
+
+function parseTypedParameterList(
+    tokens: Token[],
+    startIndex: number,
+): { parameters: string[]; afterRightParenIndex: number } | null {
     const parameters: string[] = [];
-    let index = startIndex + 1;
+    let index = startIndex;
 
     if (!tokenIs(tokens[index], "RightParenToken")) {
         while (true) {
@@ -758,6 +871,16 @@ function parseArrowParameters(
 
             parameters.push(parameter.name);
             index += 1;
+
+            const afterType = consumeOptionalTypeAnnotation(tokens, index, [
+                "CommaToken",
+                "RightParenToken",
+            ]);
+            if (afterType === null) {
+                return null;
+            }
+
+            index = afterType;
 
             if (tokenIs(tokens[index], "CommaToken")) {
                 index += 1;
@@ -772,13 +895,63 @@ function parseArrowParameters(
         return null;
     }
 
-    if (!tokenIs(tokens[index + 1], "ArrowToken")) {
+    return {
+        parameters,
+        afterRightParenIndex: index + 1,
+    };
+}
+
+function parseArrowParameters(
+    tokens: Token[],
+    startIndex: number,
+): { parameters: string[]; arrowIndex: number } | null {
+    const firstToken = tokens[startIndex];
+
+    if (tokenIs(firstToken, "IdentifierToken")) {
+        const afterType = consumeOptionalTypeAnnotation(
+            tokens,
+            startIndex + 1,
+            ["ArrowToken"],
+        );
+        if (afterType === null) {
+            return null;
+        }
+
+        if (!tokenIs(tokens[afterType], "ArrowToken")) {
+            return null;
+        }
+
+        return {
+            parameters: [firstToken.name],
+            arrowIndex: afterType,
+        };
+    }
+
+    if (!tokenIs(firstToken, "LeftParenToken")) {
+        return null;
+    }
+
+    const parsedParameters = parseTypedParameterList(tokens, startIndex + 1);
+    if (parsedParameters === null) {
+        return null;
+    }
+
+    const afterReturnType = consumeOptionalTypeAnnotation(
+        tokens,
+        parsedParameters.afterRightParenIndex,
+        ["ArrowToken"],
+    );
+    if (afterReturnType === null) {
+        return null;
+    }
+
+    if (!tokenIs(tokens[afterReturnType], "ArrowToken")) {
         return null;
     }
 
     return {
-        parameters,
-        arrowIndex: index + 1,
+        parameters: parsedParameters.parameters,
+        arrowIndex: afterReturnType,
     };
 }
 
@@ -958,6 +1131,15 @@ export function parseLetOrConst(
     }
 
     index += 1;
+
+    const afterType = consumeOptionalTypeAnnotation(state.tokens, index, [
+        "AssignToken",
+    ]);
+    if (afterType === null) {
+        return { statement: null, index: state.index };
+    }
+
+    index = afterType;
     if (!tokenIs(state.tokens[index], "AssignToken")) {
         return { statement: null, index: state.index };
     }
@@ -1053,6 +1235,63 @@ function parseWhile(state: ParserState): StatementParseResult {
 }
 
 /** parse an if statement, including optional else/else-if branches */
+function parseIfElseIfBranch(
+    state: ParserState,
+    condition: ExpressionParseResult,
+    thenBranch: Ast[],
+    index: number,
+): StatementParseResult | null {
+    if (!tokenIs(state.tokens[index], "ElseToken")) {
+        return null;
+    }
+
+    const elseIndex = index + 1;
+    if (!tokenIs(state.tokens[elseIndex], "IfToken")) {
+        return null;
+    }
+
+    const elseIf = parseStatementAt(updateParserState(state, elseIndex));
+    if (elseIf.statement === null || elseIf.statement.kind !== "IfStatement") {
+        return { statement: null, index: state.index };
+    }
+
+    return {
+        statement: {
+            kind: "IfStatement",
+            condition: condition.expression,
+            thenBranch,
+            elseBranch: [elseIf.statement],
+        },
+        index: elseIf.index,
+    };
+}
+
+function parseIfElseBranch(
+    state: ParserState,
+    condition: ExpressionParseResult,
+    thenBranch: Ast[],
+    index: number,
+): StatementParseResult | null {
+    if (!tokenIs(state.tokens[index], "ElseToken")) {
+        return null;
+    }
+
+    const elseBranch = parseBlock(state.tokens, index + 1, state);
+    if (elseBranch.body === null) {
+        return { statement: null, index: state.index };
+    }
+
+    return {
+        statement: {
+            kind: "IfStatement",
+            condition: condition.expression,
+            thenBranch,
+            elseBranch: elseBranch.body,
+        },
+        index: elseBranch.index,
+    };
+}
+
 function parseIf(state: ParserState): StatementParseResult {
     const condition = parseParenthesizedExpressionFrom(
         state.tokens,
@@ -1071,42 +1310,24 @@ function parseIf(state: ParserState): StatementParseResult {
 
     index = thenBranch.index;
 
-    if (tokenIs(state.tokens[index], "ElseToken")) {
-        index += 1;
-        if (tokenIs(state.tokens[index], "IfToken")) {
-            const elseIf = parseStatementAt(updateParserState(state, index));
-            if (
-                elseIf.statement === null ||
-                elseIf.statement.kind !== "IfStatement"
-            ) {
-                return { statement: null, index: state.index };
-            }
+    const elseIfBranch = parseIfElseIfBranch(
+        state,
+        condition,
+        thenBranch.body,
+        index,
+    );
+    if (elseIfBranch !== null) {
+        return elseIfBranch;
+    }
 
-            return {
-                statement: {
-                    kind: "IfStatement",
-                    condition: condition.expression,
-                    thenBranch: thenBranch.body,
-                    elseBranch: [elseIf.statement],
-                },
-                index: elseIf.index,
-            };
-        }
-
-        const elseBranch = parseBlock(state.tokens, index, state);
-        if (elseBranch.body === null) {
-            return { statement: null, index: state.index };
-        }
-
-        return {
-            statement: {
-                kind: "IfStatement",
-                condition: condition.expression,
-                thenBranch: thenBranch.body,
-                elseBranch: elseBranch.body,
-            },
-            index: elseBranch.index,
-        };
+    const elseBranch = parseIfElseBranch(
+        state,
+        condition,
+        thenBranch.body,
+        index,
+    );
+    if (elseBranch !== null) {
+        return elseBranch;
     }
 
     return {
@@ -1196,32 +1417,21 @@ function parseFunction(state: ParserState): StatementParseResult {
     if (!tokenIs(state.tokens[index], "LeftParenToken")) {
         return { statement: null, index: state.index };
     }
-    index += 1;
 
-    const parameters: string[] = [];
-    if (!tokenIs(state.tokens[index], "RightParenToken")) {
-        while (true) {
-            const parameter = state.tokens[index];
-            if (!tokenIs(parameter, "IdentifierToken")) {
-                return { statement: null, index: state.index };
-            }
-
-            parameters.push(parameter.name);
-            index += 1;
-
-            if (tokenIs(state.tokens[index], "CommaToken")) {
-                index += 1;
-                continue;
-            }
-
-            break;
-        }
-    }
-
-    if (!tokenIs(state.tokens[index], "RightParenToken")) {
+    const parsedParameters = parseTypedParameterList(state.tokens, index + 1);
+    if (parsedParameters === null) {
         return { statement: null, index: state.index };
     }
-    index += 1;
+
+    index = parsedParameters.afterRightParenIndex;
+    const afterReturnType = consumeOptionalTypeAnnotation(state.tokens, index, [
+        "LeftBraceToken",
+    ]);
+    if (afterReturnType === null) {
+        return { statement: null, index: state.index };
+    }
+
+    index = afterReturnType;
 
     const body = parseBlock(
         state.tokens,
@@ -1239,7 +1449,7 @@ function parseFunction(state: ParserState): StatementParseResult {
         statement: {
             kind: "FunctionDeclaration",
             name: name.name,
-            parameters,
+            parameters: parsedParameters.parameters,
             body: body.body,
         },
         index: body.index,

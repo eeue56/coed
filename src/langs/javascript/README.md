@@ -13,6 +13,8 @@ Some accepted input is normalized into canonical subset nodes:
 - `while (condition) { ... }` becomes a synthetic `for` loop
 - `const name = (args) => expr;` becomes a named `function` declaration
 - `let name = () => { ... };` becomes a named `function` declaration
+- Type annotations on `let`/`const`, function parameters, and function return types are stripped
+- `expr as Type` assertions are also stripped
 
 ### Supported statements
 
