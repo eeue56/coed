@@ -12,6 +12,98 @@ function isFalse(buffer: string): boolean {
     return buffer === "false";
 }
 
+function isEqualsSign(char: string): boolean {
+    return char === "=";
+}
+
+function isExclamationMark(char: string): boolean {
+    return char === "!";
+}
+
+function isAmpersand(char: string): boolean {
+    return char === "&";
+}
+
+function isPipe(char: string): boolean {
+    return char === "|";
+}
+
+function isPlus(char: string): boolean {
+    return char === "+";
+}
+
+function isMinus(char: string): boolean {
+    return char === "-";
+}
+
+function isAsterisk(char: string): boolean {
+    return char === "*";
+}
+
+function isForwardSlash(char: string): boolean {
+    return char === "/";
+}
+
+function isLessThan(char: string): boolean {
+    return char === "<";
+}
+
+function isGreaterThan(char: string): boolean {
+    return char === ">";
+}
+
+function isArrow(char: string, nextChar: string): boolean {
+    return isEqualsSign(char) && nextChar === ">";
+}
+
+function isTripleEquals(
+    char: string,
+    nextChar: string,
+    nextNextChar: string,
+): boolean {
+    return (
+        isEqualsSign(char) &&
+        isEqualsSign(nextChar) &&
+        isEqualsSign(nextNextChar)
+    );
+}
+
+function isInequality(
+    char: string,
+    nextChar: string,
+    nextNextChar: string,
+): boolean {
+    return (
+        isExclamationMark(char) &&
+        isEqualsSign(nextChar) &&
+        isEqualsSign(nextNextChar)
+    );
+}
+
+function isLessThanOrEqualTo(char: string, nextChar: string): boolean {
+    return isLessThan(char) && isEqualsSign(nextChar);
+}
+
+function isGreaterThanOrEqualTo(char: string, nextChar: string): boolean {
+    return isGreaterThan(char) && isEqualsSign(nextChar);
+}
+
+function isAnd(char: string, nextChar: string): boolean {
+    return isAmpersand(char) && isAmpersand(nextChar);
+}
+
+function isOr(char: string, nextChar: string): boolean {
+    return isPipe(char) && isPipe(nextChar);
+}
+
+function isIncrement(char: string, nextChar: string): boolean {
+    return isPlus(char) && isPlus(nextChar);
+}
+
+function isDecrement(char: string, nextChar: string): boolean {
+    return isMinus(char) && isMinus(nextChar);
+}
+
 function isIdentifierStart(char: string): boolean {
     return (
         (char >= "a" && char <= "z") ||
@@ -750,23 +842,15 @@ export function tokenize(string: string): Token[] {
             } else if (isDot(char)) {
                 switchTokenizerState("ReadDot", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
-            } else if (char === "=" && string[i + 1] === ">") {
+            } else if (isArrow(char, string[i + 1])) {
                 switchTokenizerState("ReadArrow", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
                 i += 1;
-            } else if (
-                char === "=" &&
-                string[i + 1] === "=" &&
-                string[i + 2] === "="
-            ) {
+            } else if (isTripleEquals(char, string[i + 1], string[i + 2])) {
                 switchTokenizerState("ReadEquality", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
                 i += 2;
-            } else if (
-                char === "!" &&
-                string[i + 1] === "=" &&
-                string[i + 2] === "="
-            ) {
+            } else if (isInequality(char, string[i + 1], string[i + 2])) {
                 switchTokenizerState(
                     "ReadInequality",
                     tokenizerModel,
@@ -775,7 +859,7 @@ export function tokenize(string: string): Token[] {
                 );
                 tokenizerModel.currentTokenStartIndex = i;
                 i += 2;
-            } else if (char === "<" && string[i + 1] === "=") {
+            } else if (isLessThanOrEqualTo(char, string[i + 1])) {
                 switchTokenizerState(
                     "ReadLessThanOrEqual",
                     tokenizerModel,
@@ -784,7 +868,7 @@ export function tokenize(string: string): Token[] {
                 );
                 tokenizerModel.currentTokenStartIndex = i;
                 i += 1;
-            } else if (char === ">" && string[i + 1] === "=") {
+            } else if (isGreaterThanOrEqualTo(char, string[i + 1])) {
                 switchTokenizerState(
                     "ReadMoreThanOrEqual",
                     tokenizerModel,
@@ -793,15 +877,15 @@ export function tokenize(string: string): Token[] {
                 );
                 tokenizerModel.currentTokenStartIndex = i;
                 i += 1;
-            } else if (char === "&" && string[i + 1] === "&") {
+            } else if (isAnd(char, string[i + 1])) {
                 switchTokenizerState("ReadAnd", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
                 i += 1;
-            } else if (char === "|" && string[i + 1] === "|") {
+            } else if (isOr(char, string[i + 1])) {
                 switchTokenizerState("ReadOr", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
                 i += 1;
-            } else if (char === "+" && string[i + 1] === "+") {
+            } else if (isIncrement(char, string[i + 1])) {
                 switchTokenizerState(
                     "ReadIncrement",
                     tokenizerModel,
@@ -810,7 +894,7 @@ export function tokenize(string: string): Token[] {
                 );
                 tokenizerModel.currentTokenStartIndex = i;
                 i += 1;
-            } else if (char === "-" && string[i + 1] === "-") {
+            } else if (isDecrement(char, string[i + 1])) {
                 switchTokenizerState(
                     "ReadDecrement",
                     tokenizerModel,
@@ -819,10 +903,10 @@ export function tokenize(string: string): Token[] {
                 );
                 tokenizerModel.currentTokenStartIndex = i;
                 i += 1;
-            } else if (char === "+") {
+            } else if (isPlus(char)) {
                 switchTokenizerState("ReadAddition", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
-            } else if (char === "-") {
+            } else if (isMinus(char)) {
                 switchTokenizerState(
                     "ReadSubtraction",
                     tokenizerModel,
@@ -830,7 +914,7 @@ export function tokenize(string: string): Token[] {
                     i,
                 );
                 tokenizerModel.currentTokenStartIndex = i;
-            } else if (char === "*") {
+            } else if (isAsterisk(char)) {
                 switchTokenizerState(
                     "ReadMultiplication",
                     tokenizerModel,
@@ -838,19 +922,19 @@ export function tokenize(string: string): Token[] {
                     i,
                 );
                 tokenizerModel.currentTokenStartIndex = i;
-            } else if (char === "/") {
+            } else if (isForwardSlash(char)) {
                 switchTokenizerState("ReadDivision", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
-            } else if (char === "<") {
+            } else if (isLessThan(char)) {
                 switchTokenizerState("ReadLessThan", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
-            } else if (char === ">") {
+            } else if (isGreaterThan(char)) {
                 switchTokenizerState("ReadMoreThan", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
-            } else if (char === "!") {
+            } else if (isExclamationMark(char)) {
                 switchTokenizerState("ReadNegation", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
-            } else if (isAssign(char)) {
+            } else if (isEqualsSign(char)) {
                 switchTokenizerState("ReadAssign", tokenizerModel, tokens, i);
                 tokenizerModel.currentTokenStartIndex = i;
             } else if (isWhitespace(char)) {
