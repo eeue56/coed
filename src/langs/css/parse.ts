@@ -1,3 +1,4 @@
+import type { Result } from "../javascript/types.ts";
 import type {
     CssBlock,
     Declaration,
@@ -180,7 +181,7 @@ export function parseDeclarations(str: string): Declaration[] {
 type CssParserState = "ReadingSelector" | "ReadingBody";
 
 /** parse css blocks from a string, failing gracefully */
-export function parseCssBlocks(css: string): CssBlock[] {
+export function parseCssBlocks(css: string): Result<CssBlock[]> {
     let state: CssParserState = "ReadingSelector";
     let buffer: string[] = [];
     let selector: null | string = null;
@@ -206,11 +207,15 @@ export function parseCssBlocks(css: string): CssBlock[] {
                     const maybeSelector = parseSelector(selector || "");
 
                     if (maybeSelector.kind === "Media") {
-                        blocks.push({
-                            kind: "MediaQuery",
-                            selector: maybeSelector,
-                            body: parseCssBlocks(buffer.join("").trim()),
-                        });
+                        const body = parseCssBlocks(buffer.join("").trim());
+
+                        if (body.kind === "Ok") {
+                            blocks.push({
+                                kind: "MediaQuery",
+                                selector: maybeSelector,
+                                body: body.value,
+                            });
+                        }
                     } else {
                         blocks.push({
                             kind: "Regular",
@@ -234,7 +239,7 @@ export function parseCssBlocks(css: string): CssBlock[] {
         }
     }
 
-    return blocks;
+    return { kind: "Ok", value: blocks };
 }
 
 /**
@@ -437,4 +442,8 @@ ${rules}
 }`;
         }
     }
+}
+
+export function generate(blocks: CssBlock[]): string {
+    return blocks.map(cssBlockToString).join("\n");
 }

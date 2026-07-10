@@ -290,4 +290,25 @@ export type BinaryOperatorRule = {
 
 export type TokenKinds = Token["kind"];
 
-export type Program = Ast[];
+export function isExpression(node: JsNode): node is Expression {
+    return !isAst(node);
+}
+
+export function isAst(node: JsNode): node is Ast {
+    const kind = node.kind;
+
+    return (
+        kind === "LetStatement" ||
+        kind === "ConstStatement" ||
+        kind === "IfStatement" ||
+        kind === "ForLoop" ||
+        kind === "FunctionDeclaration" ||
+        kind === "ReturnStatement" ||
+        kind === "ContinueStatement" ||
+        kind === "BreakStatement"
+    );
+}
+
+export type JsNode = Ast | Expression;
+
+export type Program = JsNode[];

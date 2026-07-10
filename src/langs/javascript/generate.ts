@@ -1,4 +1,9 @@
-import type { Ast, Expression, Program } from "./types.ts";
+import {
+    isExpression,
+    type Ast,
+    type Expression,
+    type Program,
+} from "./types.ts";
 
 function indent(level: number, str: string): string {
     if (level === 0) {
@@ -219,5 +224,12 @@ export function generateAST(ast: Ast, level: number): string {
 }
 
 export function generateProgram(program: Program): string {
-    return program.map((ast) => generateAST(ast, 0)).join("\n");
+    return program
+        .map((node) => {
+            if (isExpression(node)) {
+                return generateExpression(node);
+            }
+            return generateAST(node, 0);
+        })
+        .join("\n");
 }

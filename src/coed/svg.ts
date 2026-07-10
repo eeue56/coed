@@ -5,7 +5,7 @@ import {
     nodeNS,
     type Tag,
     voidNodeNS,
-} from "./coed.ts";
+} from "../coed.ts";
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 

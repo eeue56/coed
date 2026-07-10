@@ -1,12 +1,36 @@
 import * as assert from "assert";
-import { filterAsts } from "../../../langs/javascript/filter.ts";
-import type { Ast, Expression } from "../../../langs/javascript/types.ts";
+import { filterAsts as filterAstsWithResults } from "../../../langs/javascript/filter.ts";
+import type {
+    Ast,
+    Expression,
+    JsNode,
+} from "../../../langs/javascript/types.ts";
+import type { FilterRule } from "../../../langs/types.ts";
 
 const one: Expression = { kind: "NumberExpression", value: 1 };
 const two: Expression = { kind: "NumberExpression", value: 2 };
 
-function keepNonLetNodes(node: Ast): boolean {
-    return node.kind !== "LetStatement";
+const keepNonLetNodes: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        return node.kind !== "LetStatement";
+    },
+    reason: "Only let statements not allowed",
+};
+
+const removeFunctionAndForLoop: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode) => {
+        return node.kind !== "FunctionDeclaration" && node.kind !== "ForLoop";
+    },
+    reason: "FunctionDeclaration and ForLoop nodes are not allowed",
+};
+
+const keepAllNodes: FilterRule<JsNode> = {
+    shouldKeep: () => true,
+    reason: "Keep all nodes",
+};
+
+function filterAsts(ast: Ast[], filterRules: FilterRule<JsNode>[]): Ast[] {
+    return filterAstsWithResults(ast, filterRules).values;
 }
 
 export function testFilterAstsRemovesTopLevelNodes() {
@@ -15,7 +39,7 @@ export function testFilterAstsRemovesTopLevelNodes() {
         { kind: "ConstStatement", name: "b", value: two },
     ];
 
-    assert.deepStrictEqual(filterAsts(input, keepNonLetNodes), [
+    assert.deepStrictEqual(filterAsts(input, [keepNonLetNodes]), [
         { kind: "ConstStatement", name: "b", value: two },
     ]);
 }
@@ -38,7 +62,7 @@ export function testFilterAstsFiltersForLoopBodyRecursively() {
         },
     ];
 
-    assert.deepStrictEqual(filterAsts(input, keepNonLetNodes), [
+    assert.deepStrictEqual(filterAsts(input, [keepNonLetNodes]), [
         {
             kind: "ForLoop",
             init: { kind: "LetStatement", name: "i", value: one },
@@ -76,7 +100,7 @@ export function testFilterAstsFiltersFunctionAndIfBranchesRecursively() {
         },
     ];
 
-    assert.deepStrictEqual(filterAsts(input, keepNonLetNodes), [
+    assert.deepStrictEqual(filterAsts(input, [keepNonLetNodes]), [
         {
             kind: "FunctionDeclaration",
             name: "main",
@@ -109,7 +133,7 @@ export function testFilterAstsHandlesIfStatementWithoutElseBranch() {
         },
     ];
 
-    assert.deepStrictEqual(filterAsts(input, keepNonLetNodes), [
+    assert.deepStrictEqual(filterAsts(input, [keepNonLetNodes]), [
         {
             kind: "IfStatement",
             condition: { kind: "BooleanExpression", value: true },
@@ -141,9 +165,7 @@ export function testFilterAstsCanRemoveContainerNodes() {
         { kind: "ConstStatement", name: "z", value: one },
     ];
 
-    const actual = filterAsts(input, (node) => {
-        return node.kind !== "FunctionDeclaration" && node.kind !== "ForLoop";
-    });
+    const actual = filterAsts(input, [removeFunctionAndForLoop]);
 
     assert.deepStrictEqual(actual, [
         { kind: "ConstStatement", name: "z", value: one },
@@ -206,8 +228,5 @@ export function testFilterAstsKeepsAllAstTypesWhenPredicateAlwaysTrue() {
         },
     ];
 
-    assert.deepStrictEqual(
-        filterAsts(input, () => true),
-        expected,
-    );
+    assert.deepStrictEqual(filterAsts(input, [keepAllNodes]), expected);
 }

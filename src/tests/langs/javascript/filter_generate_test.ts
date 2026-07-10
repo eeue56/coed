@@ -2,14 +2,13 @@ import * as assert from "assert";
 import { filterExpression } from "../../../langs/javascript/filter.ts";
 import { generateProgram } from "../../../langs/javascript/generate.ts";
 import { parse } from "../../../langs/javascript/parser/parse.ts";
-import type {
-    Ast,
-    Expression,
-    Program,
-    Result,
+import {
+    isAst,
+    type Ast,
+    type JsNode,
+    type Result,
 } from "../../../langs/javascript/types.ts";
-
-type ExpressionPredicate = (node: Expression) => boolean;
+import type { FilterRule } from "../../../langs/types.ts";
 
 function expectOk<T>(result: Result<T>): T {
     if (result.kind !== "Ok") {
@@ -20,68 +19,78 @@ function expectOk<T>(result: Result<T>): T {
 }
 
 function sanitizeProgram(
-    program: Program,
-    predicate: ExpressionPredicate,
-): Program {
+    program: Ast[],
+    filterRule: FilterRule<JsNode>,
+): Ast[] {
     return program.flatMap((statement) => {
-        const sanitized = sanitizeAst(statement, predicate);
-        return sanitized ? [sanitized] : [];
+        if (isAst(statement)) {
+            const sanitized = sanitizeAst(statement, filterRule);
+            return sanitized ? [sanitized] : [];
+        }
+        return [];
     });
 }
 
-function sanitizeAst(ast: Ast, predicate: ExpressionPredicate): Ast | null {
+function sanitizeAst(ast: Ast, filterRule: FilterRule<JsNode>): Ast | null {
     switch (ast.kind) {
         case "LetStatement": {
-            const value = filterExpression(ast.value, predicate);
-            return value ? { ...ast, value } : null;
+            const value = filterExpression(ast.value, [filterRule]);
+
+            if (value.values.length === 0) {
+                return null;
+            }
+            return { ...ast, value: value.values[0] };
         }
         case "ConstStatement": {
-            const value = filterExpression(ast.value, predicate);
-            return value ? { ...ast, value } : null;
+            const value = filterExpression(ast.value, [filterRule]);
+            if (value.values.length === 0) {
+                return null;
+            }
+            return { ...ast, value: value.values[0] };
         }
         case "IfStatement": {
-            const condition = filterExpression(ast.condition, predicate);
-            if (condition === null) {
+            const condition = filterExpression(ast.condition, [filterRule]);
+            if (condition.values.length === 0) {
                 return null;
             }
 
-            const thenBranch = sanitizeProgram(ast.thenBranch, predicate);
+            const thenBranch = sanitizeProgram(ast.thenBranch, filterRule);
             const elseBranch = ast.elseBranch
-                ? sanitizeProgram(ast.elseBranch, predicate)
+                ? sanitizeProgram(ast.elseBranch, filterRule)
                 : undefined;
 
             return {
                 ...ast,
-                condition,
+                condition: condition.values[0],
                 thenBranch,
                 elseBranch,
             };
         }
         case "ForLoop": {
-            const initValue = filterExpression(ast.init.value, predicate);
-            const condition = filterExpression(ast.condition, predicate);
-            const increment = filterExpression(ast.increment, predicate);
+            const initValue = filterExpression(ast.init.value, [filterRule]);
+            const condition = filterExpression(ast.condition, [filterRule]);
+            const increment = filterExpression(ast.increment, [filterRule]);
 
             if (
-                initValue === null ||
-                condition === null ||
-                increment === null
+                initValue.values.length === 0 ||
+                condition.values.length === 0 ||
+                increment.values.length === 0
             ) {
                 return null;
             }
 
             return {
                 ...ast,
-                init: { ...ast.init, value: initValue },
-                condition,
-                increment,
-                body: sanitizeProgram(ast.body, predicate),
+                init: { ...ast.init, value: initValue.values[0] },
+                condition: condition.values[0],
+                increment: increment.values[0],
+                body: sanitizeProgram(ast.body, filterRule),
             };
         }
         case "FunctionDeclaration": {
             return {
                 ...ast,
-                body: sanitizeProgram(ast.body, predicate),
+                body: sanitizeProgram(ast.body, filterRule),
             };
         }
         case "ReturnStatement": {
@@ -89,8 +98,11 @@ function sanitizeAst(ast: Ast, predicate: ExpressionPredicate): Ast | null {
                 return ast;
             }
 
-            const value = filterExpression(ast.value, predicate);
-            return value ? { ...ast, value } : null;
+            const value = filterExpression(ast.value, [filterRule]);
+            if (value.values.length === 0) {
+                return null;
+            }
+            return { ...ast, value: value.values[0] };
         }
         case "ContinueStatement": {
             return ast;
@@ -101,55 +113,61 @@ function sanitizeAst(ast: Ast, predicate: ExpressionPredicate): Ast | null {
     }
 }
 
-function isHarmfulExpression(node: Expression): boolean {
-    if (node.kind === "FunctionCallExpression") {
-        return node.functionName !== "fetch";
-    }
-
-    if (node.kind === "ObjectPropertyExpression") {
-        const objectName = node.object.name;
-        const propertyName =
-            node.property.kind === "NameLookupExpression"
-                ? node.property.name
-                : null;
-
-        if (objectName === "window" && propertyName === "location") {
-            return false;
+const isHarmfulExpression: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind === "FunctionCallExpression") {
+            return node.functionName !== "fetch";
         }
 
-        if (objectName === "document" && propertyName === "cookie") {
-            return false;
-        }
-    }
+        if (node.kind === "ObjectPropertyExpression") {
+            const objectName = node.object.name;
+            const propertyName =
+                node.property.kind === "NameLookupExpression"
+                    ? node.property.name
+                    : null;
 
-    if (node.kind === "ObjectMethodCallExpression") {
-        const objectName = node.object.name;
-        const methodName =
-            node.method.kind === "NameLookupExpression"
-                ? node.method.name
-                : null;
+            if (objectName === "window" && propertyName === "location") {
+                return false;
+            }
 
-        if (
-            objectName === "window" &&
-            (methodName === "open" || methodName === "assign")
-        ) {
-            return false;
+            if (objectName === "document" && propertyName === "cookie") {
+                return false;
+            }
         }
 
-        if (
-            objectName === "localStorage" &&
-            (methodName === "getItem" || methodName === "setItem")
-        ) {
-            return false;
-        }
-    }
+        if (node.kind === "ObjectMethodCallExpression") {
+            const objectName = node.object.name;
+            const methodName =
+                node.method.kind === "NameLookupExpression"
+                    ? node.method.name
+                    : null;
 
-    return true;
-}
+            if (
+                objectName === "window" &&
+                (methodName === "open" || methodName === "assign")
+            ) {
+                return false;
+            }
+
+            if (
+                objectName === "localStorage" &&
+                (methodName === "getItem" || methodName === "setItem")
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    },
+    reason: "Remove harmful expressions",
+};
 
 function assertSanitizedCode(input: string, expected: string): void {
     const program = expectOk(parse(input));
-    const sanitized = sanitizeProgram(program, isHarmfulExpression);
+    const sanitized = sanitizeProgram(
+        program.filter(isAst),
+        isHarmfulExpression,
+    );
 
     assert.strictEqual(generateProgram(sanitized), expected);
 }

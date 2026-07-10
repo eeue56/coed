@@ -119,7 +119,7 @@ type None = {
     kind: "none";
 };
 
-type StringAttribute = {
+export type StringAttribute = {
     kind: "string";
     key: string;
     value: string;
@@ -819,138 +819,6 @@ export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
         }
         case "html-string": {
             return tree;
-        }
-    }
-}
-
-/**
- * filters a tree, removing any nodes that don't match. Replaces nodes which don't match with empty text nodes.
- */
-export function filter<A>(
-    shouldKeep: (leaf: HtmlNode<A>) => boolean,
-    tree: HtmlNode<A>,
-): HtmlNode<A> {
-    if (tree.kind === "text" || tree.kind === "html-string") {
-        return shouldKeep(tree) ? tree : text("");
-    }
-
-    const treeWithSplitClasses: Exclude<
-        HtmlNode<A>,
-        { kind: "text" } | { kind: "html-string" }
-    > = {
-        ...tree,
-        attributes: tree.attributes.flatMap((attr) => {
-            if (attr.kind === "string" && attr.key === "class") {
-                return splitClassAttribute(attr as StringAttributeWithClass);
-            }
-            return [attr];
-        }),
-    };
-
-    if (!shouldKeep(treeWithSplitClasses)) {
-        return text("");
-    }
-
-    switch (treeWithSplitClasses.kind) {
-        case "void":
-        case "ns-void": {
-            return tree;
-        }
-        case "regular":
-        case "ns-regular": {
-            const children = treeWithSplitClasses.children.map((child) =>
-                filter(shouldKeep, child),
-            );
-            return {
-                ...treeWithSplitClasses,
-                children,
-            };
-        }
-    }
-}
-
-type StringAttributeWithClass = StringAttribute & { key: "class" };
-
-/**
- * since classnames are joined into one string, we need to split when filtering
- */
-function splitClassAttribute(
-    attribute: StringAttributeWithClass,
-): StringAttributeWithClass[] {
-    return attribute.value
-        .split(" ")
-        .map((className: string) => ({ ...attribute, value: className }));
-}
-
-/**
- * filters a tree, removing any attributes that don't match.
- */
-export function filterAttributes<A>(
-    shouldKeep: (attribute: Attribute) => boolean,
-    tree: HtmlNode<A>,
-): HtmlNode<A> {
-    if (tree.kind === "text" || tree.kind === "html-string") {
-        return tree;
-    }
-
-    const attributes = tree.attributes.flatMap((attribute) => {
-        if (attribute.kind === "string" && attribute.key === "class") {
-            return splitClassAttribute(
-                attribute as StringAttributeWithClass,
-            ).filter(shouldKeep);
-        }
-        return shouldKeep(attribute) ? [attribute] : [];
-    });
-
-    switch (tree.kind) {
-        case "void":
-        case "ns-void": {
-            return { ...tree, attributes };
-        }
-        case "regular":
-        case "ns-regular": {
-            const children = tree.children.map((child) =>
-                filterAttributes(shouldKeep, child),
-            );
-
-            return {
-                ...tree,
-                attributes,
-                children,
-            };
-        }
-    }
-}
-
-/**
- * filters a tree, removing any events that don't match.
- */
-export function filterEvents<A>(
-    shouldKeep: (event: Event<A>) => boolean,
-    tree: HtmlNode<A>,
-): HtmlNode<A> {
-    if (tree.kind === "text" || tree.kind === "html-string") {
-        return tree;
-    }
-
-    const events = tree.events.filter(shouldKeep);
-
-    switch (tree.kind) {
-        case "void":
-        case "ns-void": {
-            return { ...tree, events };
-        }
-        case "regular":
-        case "ns-regular": {
-            const children = tree.children.map((child) =>
-                filterEvents(shouldKeep, child),
-            );
-
-            return {
-                ...tree,
-                events,
-                children,
-            };
         }
     }
 }

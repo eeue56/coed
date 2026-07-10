@@ -1,40 +1,73 @@
-import type { Ast, Expression } from "./types.ts";
+import type { FilterResults, FilterRule, FinalFilterResult } from "../types.ts";
+import {
+    isAst,
+    isExpression,
+    type Ast,
+    type Expression,
+    type JsNode,
+    type Program,
+} from "./types.ts";
 
-function filterAst(ast: Ast, shouldKeep: (node: Ast) => boolean): Ast | null {
-    if (!shouldKeep(ast)) {
-        return null;
+/**
+ *
+ * @param ast ast to filter
+ * @param filterRules rules to use
+ * @returns the ast if it should be kept, otherwise the reason why it was removed
+ */
+function filterAst(
+    ast: Ast,
+    filterRules: FilterRule<JsNode>[],
+): FilterResults<Ast> {
+    for (const filterRule of filterRules) {
+        if (!filterRule.shouldKeep(ast)) {
+            return { values: [], errors: [filterRule.reason] };
+        }
     }
 
     switch (ast.kind) {
         case "ConstStatement": {
-            return ast;
+            return { values: [ast], errors: [] };
         }
         case "ForLoop": {
-            const body = filterAsts(ast.body, shouldKeep);
-            return { ...ast, body };
+            const body = filterAsts(ast.body, filterRules);
+            return {
+                values: [{ ...ast, body: body.values }],
+                errors: body.errors,
+            };
         }
         case "FunctionDeclaration": {
-            const body = filterAsts(ast.body, shouldKeep);
-            return { ...ast, body };
+            const body = filterAsts(ast.body, filterRules);
+            return {
+                values: [{ ...ast, body: body.values }],
+                errors: body.errors,
+            };
         }
         case "IfStatement": {
-            const thenBranch = filterAsts(ast.thenBranch, shouldKeep);
+            const thenBranch = filterAsts(ast.thenBranch, filterRules);
             const elseBranch = ast.elseBranch
-                ? filterAsts(ast.elseBranch, shouldKeep)
+                ? filterAsts(ast.elseBranch, filterRules)
                 : undefined;
-            return { ...ast, thenBranch, elseBranch };
+            const ifs = {
+                ...ast,
+                thenBranch: thenBranch.values,
+                elseBranch: elseBranch?.values,
+            };
+            return {
+                values: [ifs],
+                errors: [...thenBranch.errors, ...(elseBranch?.errors || [])],
+            };
         }
         case "LetStatement": {
-            return ast;
+            return { values: [ast], errors: [] };
         }
         case "ReturnStatement": {
-            return ast;
+            return { values: [ast], errors: [] };
         }
         case "ContinueStatement": {
-            return ast;
+            return { values: [ast], errors: [] };
         }
         case "BreakStatement": {
-            return ast;
+            return { values: [ast], errors: [] };
         }
     }
 }
@@ -44,17 +77,18 @@ function filterAst(ast: Ast, shouldKeep: (node: Ast) => boolean): Ast | null {
  */
 export function filterAsts(
     ast: Ast[],
-    shouldKeep: (node: Ast) => boolean,
-): Ast[] {
+    filterRules: FilterRule<JsNode>[],
+): FilterResults<Ast> {
     const toReturn = [];
+    const errors = [];
 
     for (const node of ast) {
-        const filtered = filterAst(node, shouldKeep);
-        if (filtered !== null) {
-            toReturn.push(filtered);
-        }
+        const filtered = filterAst(node, filterRules);
+
+        toReturn.push(...filtered.values);
+        errors.push(...filtered.errors);
     }
-    return toReturn;
+    return { values: toReturn, errors };
 }
 
 /**
@@ -62,36 +96,53 @@ export function filterAsts(
  */
 export function filterExpression(
     expression: Expression,
-    shouldKeep: (node: Expression) => boolean,
-): Expression | null {
-    if (!shouldKeep(expression)) {
-        return null;
+    filterRules: FilterRule<JsNode>[],
+): FilterResults<Expression> {
+    for (const rule of filterRules) {
+        if (!rule.shouldKeep(expression)) {
+            return { errors: [rule.reason], values: [] };
+        }
     }
 
     switch (expression.kind) {
         case "NumberExpression": {
-            return expression;
+            return { values: [expression], errors: [] };
         }
         case "StringExpression": {
-            return expression;
+            return { values: [expression], errors: [] };
         }
         case "ArrayExpression": {
-            const elements = expression.elements.flatMap((element) => {
-                const filtered = filterExpression(element, shouldKeep);
-                return filtered ? [filtered] : [];
-            });
-            return { ...expression, elements };
+            const elements: Expression[] = [];
+            const errors: string[] = [];
+
+            for (const element of expression.elements) {
+                const filtered = filterExpression(element, filterRules);
+                elements.push(...filtered.values);
+                errors.push(...filtered.errors);
+            }
+
+            return { values: [{ ...expression, elements }], errors };
         }
         case "ObjectExpression": {
-            const properties = Object.entries(expression.properties).flatMap(
-                ([key, value]) => {
-                    const filtered = filterExpression(value, shouldKeep);
-                    return filtered ? [[key, filtered]] : [];
-                },
-            );
+            const properties: [string, Expression][] = [];
+            const errors: string[] = [];
+
+            Object.entries(expression.properties).forEach(([key, value]) => {
+                const filtered = filterExpression(value, filterRules);
+                if (filtered.values.length > 0) {
+                    properties.push([key, filtered.values[0]]);
+                }
+                errors.push(...filtered.errors);
+            });
+
             return {
-                ...expression,
-                properties: Object.fromEntries(properties),
+                values: [
+                    {
+                        ...expression,
+                        properties: Object.fromEntries(properties),
+                    },
+                ],
+                errors,
             };
         }
         case "EqualityExpression":
@@ -100,104 +151,146 @@ export function filterExpression(
         case "MoreThanExpression":
         case "LessThanOrEqualExpression":
         case "MoreThanOrEqualExpression": {
-            const left = filterExpression(expression.left, shouldKeep);
-            const right = filterExpression(expression.right, shouldKeep);
-            if (!left || !right) {
-                return null;
+            const left = filterExpression(expression.left, filterRules);
+            const right = filterExpression(expression.right, filterRules);
+            if (left.values.length === 0 || right.values.length === 0) {
+                return {
+                    values: [],
+                    errors: [...left.errors, ...right.errors],
+                };
             }
-            return { ...expression, left, right };
+            const exp = {
+                ...expression,
+                left: left.values[0],
+                right: right.values[0],
+            };
+            return { values: [exp], errors: [...left.errors, ...right.errors] };
         }
         case "IncrementExpression":
         case "DecrementExpression": {
-            return expression;
+            return { values: [expression], errors: [] };
         }
         case "IncreaseExpression":
         case "DecreaseExpression": {
-            const amount = filterExpression(expression.amount, shouldKeep);
-            if (!amount) {
-                return null;
+            const amount = filterExpression(expression.amount, filterRules);
+            if (amount.values.length === 0) {
+                return { values: [], errors: [...amount.errors] };
             }
-            return { ...expression, amount };
+            return {
+                values: [{ ...expression, amount: amount.values[0] }],
+                errors: [...amount.errors],
+            };
         }
         case "NullExpression": {
-            return expression;
+            return { values: [expression], errors: [] };
         }
         case "BooleanExpression": {
-            return expression;
+            return { values: [expression], errors: [] };
         }
         case "StringLiteralExpression": {
             const values = [];
+            const errors = [];
 
             for (const value of expression.values) {
-                const filtered = filterExpression(value, shouldKeep);
-                if (!filtered) {
-                    return null;
+                const filtered = filterExpression(value, filterRules);
+                if (filtered.values.length === 0) {
+                    return { values: [], errors: [...filtered.errors] };
                 }
-                values.push(filtered);
+                values.push(filtered.values[0]);
+                errors.push(...filtered.errors);
             }
-            return { ...expression, values };
+            return {
+                values: [{ ...expression, values }],
+                errors,
+            };
         }
         case "FunctionCallExpression": {
             const args = [];
-
+            const errors = [];
             for (const arg of expression.arguments) {
-                const filtered = filterExpression(arg, shouldKeep);
-                if (!filtered) {
-                    return null;
+                const filtered = filterExpression(arg, filterRules);
+                if (filtered.values.length === 0) {
+                    return { values: [], errors: [...filtered.errors] };
                 }
-                args.push(filtered);
+                args.push(filtered.values[0]);
+                errors.push(...filtered.errors);
             }
-            return { ...expression, arguments: args };
+            return { values: [{ ...expression, arguments: args }], errors };
         }
         case "NameLookupExpression": {
-            return expression;
+            return { values: [expression], errors: [] };
         }
         case "ObjectPropertyExpression": {
-            const object = filterExpression(expression.object, shouldKeep);
-            const property = filterExpression(expression.property, shouldKeep);
-            if (!object || !property) {
-                return null;
+            const object = filterExpression(expression.object, filterRules);
+            const property = filterExpression(expression.property, filterRules);
+            if (object.values.length === 0 || property.values.length === 0) {
+                return {
+                    values: [],
+                    errors: [...object.errors, ...property.errors],
+                };
             }
             return {
-                ...expression,
-                object: object as typeof expression.object,
-                property: property as typeof expression.property,
+                values: [
+                    {
+                        ...expression,
+                        object: object.values[0] as typeof expression.object,
+                        property: property
+                            .values[0] as typeof expression.property,
+                    },
+                ],
+                errors: [...object.errors, ...property.errors],
             };
         }
         case "ObjectMethodCallExpression": {
-            const object = filterExpression(expression.object, shouldKeep);
-            const method = filterExpression(expression.method, shouldKeep);
-            if (!object || !method) {
-                return null;
+            const object = filterExpression(expression.object, filterRules);
+            const method = filterExpression(expression.method, filterRules);
+            if (object.values.length === 0 || method.values.length === 0) {
+                return {
+                    values: [],
+                    errors: [...object.errors, ...method.errors],
+                };
             }
 
             const args = [];
 
             for (const arg of expression.arguments) {
-                const filtered = filterExpression(arg, shouldKeep);
-                if (!filtered) {
-                    return null;
+                const filtered = filterExpression(arg, filterRules);
+                if (filtered.values.length === 0) {
+                    return { values: [], errors: [...filtered.errors] };
                 }
-                args.push(filtered);
+                args.push(filtered.values[0]);
             }
 
             return {
-                ...expression,
-                object: object as typeof expression.object,
-                method: method as typeof expression.method,
-                arguments: args,
+                values: [
+                    {
+                        ...expression,
+                        object: object.values[0] as typeof expression.object,
+                        method: method.values[0] as typeof expression.method,
+                        arguments: args,
+                    },
+                ],
+                errors: [...object.errors, ...method.errors],
             };
         }
         case "ArrayAccessExpression": {
-            const array = filterExpression(expression.array, shouldKeep);
-            const index = filterExpression(expression.index, shouldKeep);
-            if (!array || !index) {
-                return null;
+            const array = filterExpression(expression.array, filterRules);
+            const index = filterExpression(expression.index, filterRules);
+            if (array.values.length === 0 || index.values.length === 0) {
+                return {
+                    values: [],
+                    errors: [...array.errors, ...index.errors],
+                };
             }
             return {
-                ...expression,
-                array: array as typeof expression.array,
-                index: index as typeof expression.index,
+                values: [
+                    {
+                        ...expression,
+                        array: array.values[0] as typeof expression.array,
+                        index: index.values[0] as typeof expression.index,
+                    },
+                ],
+                errors: [...array.errors, ...index.errors],
             };
         }
         case "AdditionExpression":
@@ -206,12 +299,51 @@ export function filterExpression(
         case "DivisionExpression":
         case "AndExpression":
         case "OrExpression": {
-            const left = filterExpression(expression.left, shouldKeep);
-            const right = filterExpression(expression.right, shouldKeep);
-            if (!left || !right) {
-                return null;
+            const left = filterExpression(expression.left, filterRules);
+            const right = filterExpression(expression.right, filterRules);
+            if (left.values.length === 0 || right.values.length === 0) {
+                return {
+                    values: [],
+                    errors: [...left.errors, ...right.errors],
+                };
             }
-            return { ...expression, left, right };
+            return {
+                values: [
+                    {
+                        ...expression,
+                        left: left.values[0] as typeof expression.left,
+                        right: right.values[0] as typeof expression.right,
+                    },
+                ],
+                errors: [...left.errors, ...right.errors],
+            };
         }
     }
+}
+
+function filterNode(
+    node: JsNode,
+    filterRules: FilterRule<JsNode>[],
+): FilterResults<JsNode> {
+    if (isExpression(node)) {
+        return filterExpression(node, filterRules);
+    } else if (isAst(node)) {
+        return filterAst(node, filterRules);
+    }
+    return { values: [], errors: [] };
+}
+
+export function filterProgram(
+    program: Program,
+    filterRules: FilterRule<JsNode>[],
+): FinalFilterResult<Program> {
+    const filteredStatements = program.map((node) =>
+        filterNode(node, filterRules),
+    );
+
+    const values = filteredStatements.flatMap((result) => result.values);
+    const errors = filteredStatements.flatMap((result) => result.errors);
+    const program_: Program = values;
+
+    return { value: program_, errors };
 }

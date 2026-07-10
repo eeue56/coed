@@ -12,8 +12,9 @@ import {
     type HtmlNode,
     type HtmlNodeKind,
     type Tag,
-} from "./coed.ts";
-import { type SvgTag } from "./svg.ts";
+} from "../../coed.ts";
+import { type SvgTag } from "../../coed/svg.ts";
+import type { Result } from "../javascript/types.ts";
 
 /**
  * Parse a fragment of html string into Coed.
@@ -32,10 +33,15 @@ export function parseFragment(string: string): HtmlNode<never>[] {
  *
  * e.g `<html><body><div>hello world</div></body></html>`
  */
-export function parse(string: string): HtmlNode<never> {
+export function parse(string: string): Result<HtmlNode<never>> {
     const parser = new jsdom.JSDOM(string, { contentType: "text/html" });
 
-    return walk(parser.window.document.documentElement)[0] as HtmlNode<never>;
+    return {
+        value: walk(
+            parser.window.document.documentElement,
+        )[0] as HtmlNode<never>,
+        kind: "Ok",
+    };
 }
 
 function namespaceNodeKind(tagName: string, namespace: string): HtmlNodeKind {

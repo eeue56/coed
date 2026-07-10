@@ -1,6 +1,7 @@
 import { deepStrictEqual } from "assert";
-import { filter } from "../../../langs/css/filter.ts";
+import { css } from "../../../langs/css/index.ts";
 import type { CssBlock } from "../../../langs/css/types.ts";
+import type { FinalFilterResult } from "../../../langs/types.ts";
 
 export function testTagFiltering() {
     const input: CssBlock = {
@@ -14,20 +15,33 @@ export function testTagFiltering() {
         ],
     };
 
-    const output: CssBlock = {
-        kind: "Never",
+    const output: FinalFilterResult<CssBlock[]> = {
+        value: [
+            {
+                kind: "Never",
+            },
+        ],
+        errors: [],
     };
 
-    const actualBlocks = filter((leaf) => {
-        if (
-            leaf.kind === "Regular" &&
-            leaf.selector.kind === "Tag" &&
-            leaf.selector.tag === "h1"
-        ) {
-            return false;
-        }
-        return true;
-    }, input);
+    const actualBlocks: FinalFilterResult<CssBlock[]> = css.filter(
+        [
+            {
+                shouldKeep: (leaf) => {
+                    if (
+                        leaf.kind === "Regular" &&
+                        leaf.selector.kind === "Tag" &&
+                        leaf.selector.tag === "h1"
+                    ) {
+                        return false;
+                    }
+                    return true;
+                },
+                reason: "Filtering out h1 tags",
+            },
+        ],
+        [input],
+    );
 
     deepStrictEqual(actualBlocks, output);
 }
@@ -44,20 +58,33 @@ export function testClassFiltering() {
         ],
     };
 
-    const output: CssBlock = {
-        kind: "Never",
+    const output: FinalFilterResult<CssBlock[]> = {
+        value: [
+            {
+                kind: "Never",
+            },
+        ],
+        errors: [],
     };
 
-    const actualBlocks = filter((leaf) => {
-        if (
-            leaf.kind === "Regular" &&
-            leaf.selector.kind === "Class" &&
-            leaf.selector.class === "hello"
-        ) {
-            return false;
-        }
-        return true;
-    }, input);
+    const actualBlocks = css.filter(
+        [
+            {
+                shouldKeep: (leaf) => {
+                    if (
+                        leaf.kind === "Regular" &&
+                        leaf.selector.kind === "Class" &&
+                        leaf.selector.class === "hello"
+                    ) {
+                        return false;
+                    }
+                    return true;
+                },
+                reason: "Filtering out hello class",
+            },
+        ],
+        [input],
+    );
 
     deepStrictEqual(actualBlocks, output);
 }
@@ -74,20 +101,33 @@ export function testIdFiltering() {
         ],
     };
 
-    const output: CssBlock = {
-        kind: "Never",
+    const output: FinalFilterResult<CssBlock[]> = {
+        value: [
+            {
+                kind: "Never",
+            },
+        ],
+        errors: [],
     };
 
-    const actualBlocks = filter((leaf) => {
-        if (
-            leaf.kind === "Regular" &&
-            leaf.selector.kind === "Id" &&
-            leaf.selector.id === "hello"
-        ) {
-            return false;
-        }
-        return true;
-    }, input);
+    const actualBlocks = css.filter(
+        [
+            {
+                shouldKeep: (leaf) => {
+                    if (
+                        leaf.kind === "Regular" &&
+                        leaf.selector.kind === "Id" &&
+                        leaf.selector.id === "hello"
+                    ) {
+                        return false;
+                    }
+                    return true;
+                },
+                reason: "Filtering out hello id",
+            },
+        ],
+        [input],
+    );
 
     deepStrictEqual(actualBlocks, output);
 }
@@ -104,16 +144,32 @@ export function testAllFiltering() {
         ],
     };
 
-    const output: CssBlock = {
-        kind: "Never",
+    const output: FinalFilterResult<CssBlock[]> = {
+        value: [
+            {
+                kind: "Never",
+            },
+        ],
+        errors: [],
     };
 
-    const actualBlocks = filter((leaf) => {
-        if (leaf.kind === "Regular" && leaf.selector.kind === "All") {
-            return false;
-        }
-        return true;
-    }, input);
+    const actualBlocks = css.filter(
+        [
+            {
+                shouldKeep: (leaf) => {
+                    if (
+                        leaf.kind === "Regular" &&
+                        leaf.selector.kind === "All"
+                    ) {
+                        return false;
+                    }
+                    return true;
+                },
+                reason: "Filtering out all selectors",
+            },
+        ],
+        [input],
+    );
 
     deepStrictEqual(actualBlocks, output);
 }
@@ -138,16 +194,29 @@ export function testChildFilteringEntireTree() {
         ],
     };
 
-    const output: CssBlock = {
-        kind: "Never",
+    const output: FinalFilterResult<CssBlock[]> = {
+        value: [
+            {
+                kind: "Never",
+            },
+        ],
+        errors: [],
     };
 
-    const actualBlocks = filter((leaf) => {
-        if (leaf.kind === "Regular") {
-            return false;
-        }
-        return true;
-    }, input);
+    const actualBlocks = css.filter(
+        [
+            {
+                shouldKeep: (leaf) => {
+                    if (leaf.kind === "Regular") {
+                        return false;
+                    }
+                    return true;
+                },
+                reason: "Filtering out all regular blocks",
+            },
+        ],
+        [input],
+    );
 
     deepStrictEqual(actualBlocks, output);
 }
@@ -171,16 +240,29 @@ export function testSiblingFiltering() {
         ],
     };
 
-    const output: CssBlock = {
-        kind: "Never",
+    const output: FinalFilterResult<CssBlock[]> = {
+        value: [
+            {
+                kind: "Never",
+            },
+        ],
+        errors: [],
     };
 
-    const actualBlocks = filter((leaf) => {
-        if (leaf.kind === "Regular") {
-            return false;
-        }
-        return true;
-    }, input);
+    const actualBlocks = css.filter(
+        [
+            {
+                shouldKeep: (leaf) => {
+                    if (leaf.kind === "Regular") {
+                        return false;
+                    }
+                    return true;
+                },
+                reason: "Filtering out all regular blocks",
+            },
+        ],
+        [input],
+    );
 
     deepStrictEqual(actualBlocks, output);
 }
@@ -201,22 +283,35 @@ export function testPsuedoFiltering() {
         ],
     };
 
-    const output: CssBlock = {
-        kind: "Never",
+    const output: FinalFilterResult<CssBlock[]> = {
+        value: [
+            {
+                kind: "Never",
+            },
+        ],
+        errors: [],
     };
 
-    const actualBlocks = filter((leaf) => {
-        if (
-            leaf.kind === "Regular" &&
-            leaf.selector.kind === "Psuedo" &&
-            leaf.selector.psuedo === "hover" &&
-            leaf.selector.selector.kind === "Tag" &&
-            leaf.selector.selector.tag === "h1"
-        ) {
-            return false;
-        }
-        return true;
-    }, input);
+    const actualBlocks = css.filter(
+        [
+            {
+                shouldKeep: (leaf) => {
+                    if (
+                        leaf.kind === "Regular" &&
+                        leaf.selector.kind === "Psuedo" &&
+                        leaf.selector.psuedo === "hover" &&
+                        leaf.selector.selector.kind === "Tag" &&
+                        leaf.selector.selector.tag === "h1"
+                    ) {
+                        return false;
+                    }
+                    return true;
+                },
+                reason: "Filtering out hover psuedo selectors",
+            },
+        ],
+        [input],
+    );
 
     deepStrictEqual(actualBlocks, output);
 }
@@ -237,21 +332,34 @@ export function testPsuedoElementFiltering() {
         ],
     };
 
-    const actualBlocks = filter((leaf) => {
-        if (
-            leaf.kind === "Regular" &&
-            leaf.selector.kind === "PsuedoElement" &&
-            leaf.selector.element === "before" &&
-            leaf.selector.selector.kind === "Tag" &&
-            leaf.selector.selector.tag === "h1"
-        ) {
-            return false;
-        }
-        return true;
-    }, input);
+    const actualBlocks = css.filter(
+        [
+            {
+                shouldKeep: (leaf) => {
+                    if (
+                        leaf.kind === "Regular" &&
+                        leaf.selector.kind === "PsuedoElement" &&
+                        leaf.selector.element === "before" &&
+                        leaf.selector.selector.kind === "Tag" &&
+                        leaf.selector.selector.tag === "h1"
+                    ) {
+                        return false;
+                    }
+                    return true;
+                },
+                reason: "Filtering out before psuedo elements",
+            },
+        ],
+        [input],
+    );
 
-    const output: CssBlock = {
-        kind: "Never",
+    const output: FinalFilterResult<CssBlock[]> = {
+        value: [
+            {
+                kind: "Never",
+            },
+        ],
+        errors: [],
     };
 
     deepStrictEqual(actualBlocks, output);
@@ -284,15 +392,31 @@ export function testMultipleFiltering() {
         ],
     };
 
-    const actualBlocks = filter((leaf) => {
-        if (leaf.kind === "Regular" && leaf.selector.kind === "Multiple") {
-            return false;
-        }
-        return true;
-    }, input);
+    const actualBlocks = css.filter(
+        [
+            {
+                shouldKeep: (leaf) => {
+                    if (
+                        leaf.kind === "Regular" &&
+                        leaf.selector.kind === "Multiple"
+                    ) {
+                        return false;
+                    }
+                    return true;
+                },
+                reason: "Filtering out multiple selectors",
+            },
+        ],
+        [input],
+    );
 
-    const output: CssBlock = {
-        kind: "Never",
+    const output: FinalFilterResult<CssBlock[]> = {
+        value: [
+            {
+                kind: "Never",
+            },
+        ],
+        errors: [],
     };
 
     deepStrictEqual(actualBlocks, output);
@@ -338,24 +462,36 @@ export function testMediaFiltering() {
         ],
     };
 
-    const actualBlocks = filter((leaf) => {
-        if (leaf.kind === "Regular" && leaf.selector.kind === "Multiple") {
-            return false;
-        }
-        return true;
-    }, input);
-
-    const output: CssBlock = {
-        kind: "MediaQuery",
-        selector: {
-            kind: "Media",
-            query: "(min-width: 1100px)",
-        },
-        body: [
+    const actualBlocks = css.filter(
+        [
             {
-                kind: "Never",
+                shouldKeep: (leaf) => {
+                    if (
+                        leaf.kind === "Regular" &&
+                        leaf.selector.kind === "Multiple"
+                    ) {
+                        return false;
+                    }
+                    return true;
+                },
+                reason: "Filtering out multiple selectors",
             },
         ],
+        [input],
+    );
+
+    const output: FinalFilterResult<CssBlock[]> = {
+        value: [
+            {
+                kind: "MediaQuery",
+                selector: {
+                    kind: "Media",
+                    query: "(min-width: 1100px)",
+                },
+                body: [],
+            },
+        ],
+        errors: [],
     };
 
     deepStrictEqual(actualBlocks, output);

@@ -1,21 +1,107 @@
 import * as assert from "assert";
-import { filterExpression } from "../../../langs/javascript/filter.ts";
+import { filterExpression as filterExpressionWithResults } from "../../../langs/javascript/filter.ts";
 import { parseExpression } from "../../../langs/javascript/parser/parse.ts";
 import { tokenize } from "../../../langs/javascript/parser/tokenize.ts";
 import type {
     Expression,
+    JsNode,
     NumberExpression,
     Result,
 } from "../../../langs/javascript/types.ts";
+import type { FilterRule } from "../../../langs/types.ts";
 
 const one: NumberExpression = { kind: "NumberExpression", value: 1 };
 const two: NumberExpression = { kind: "NumberExpression", value: 2 };
 const three: NumberExpression = { kind: "NumberExpression", value: 3 };
-const keep: (node: Expression) => boolean = () => true;
+const keep: FilterRule<JsNode> = {
+    shouldKeep: () => true,
+    reason: "Always keep",
+};
 
-function isNotTwoNumber(node: Expression): boolean {
-    return !(node.kind === "NumberExpression" && node.value === 2);
-}
+const dontKeep: FilterRule<JsNode> = {
+    shouldKeep: () => false,
+    reason: "Never keep",
+};
+
+const isNotTwoNumber: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        return !(node.kind === "NumberExpression" && node.value === 2);
+    },
+    reason: "No number 2s are allowed",
+};
+
+const removePropertyLiteral: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        return node.kind !== "StringLiteralExpression";
+    },
+    reason: "Remove string literal properties",
+};
+
+const limitWindowLocationApis: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind !== "ObjectPropertyExpression") {
+            return true;
+        }
+
+        const isWindowObject =
+            node.object.kind === "NameLookupExpression" &&
+            node.object.name === "window";
+        const isLocationProperty =
+            node.property.kind === "NameLookupExpression" &&
+            node.property.name === "location";
+
+        return !(isWindowObject && isLocationProperty);
+    },
+    reason: "Limit window.location API usage",
+};
+
+const removeDocumentCookies: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind !== "ObjectPropertyExpression") {
+            return true;
+        }
+
+        const isDocumentObject =
+            node.object.kind === "NameLookupExpression" &&
+            node.object.name === "document";
+        const isCookiesProperty =
+            node.property.kind === "NameLookupExpression" &&
+            node.property.name === "cookies";
+
+        return !(isDocumentObject && isCookiesProperty);
+    },
+    reason: "Remove access to document.cookies",
+};
+
+const removeSensitiveStorageApis: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind === "ObjectMethodCallExpression") {
+            const isStorageRead =
+                (node.object.name === "localStorage" ||
+                    node.object.name === "sessionStorage") &&
+                node.method.kind === "NameLookupExpression" &&
+                (node.method.name === "getItem" ||
+                    node.method.name === "setItem");
+            if (isStorageRead) {
+                return false;
+            }
+        }
+
+        if (node.kind === "ObjectPropertyExpression") {
+            const isCookieAccess =
+                node.object.kind === "NameLookupExpression" &&
+                node.object.name === "document" &&
+                node.property.kind === "NameLookupExpression" &&
+                node.property.name === "cookie";
+            if (isCookieAccess) {
+                return false;
+            }
+        }
+
+        return true;
+    },
+    reason: "Remove sensitive storage and cookie accesses",
+};
 
 function expectOk<T>(result: Result<T>): T {
     if (result.kind === "Err") {
@@ -29,10 +115,18 @@ function parseFromCode(input: string): Expression {
     return expectOk(parseExpression(tokenize(input)));
 }
 
+function filterExpression(
+    expression: Expression,
+    filterRules: FilterRule<JsNode>[],
+): Expression | null {
+    const result = filterExpressionWithResults(expression, filterRules);
+    return result.values[0] ?? null;
+}
+
 export function testFilterExpressionReturnsNullWhenRootFailsPredicate() {
     const expression: Expression = { kind: "StringExpression", value: "x" };
 
-    const actual = filterExpression(expression, () => false);
+    const actual = filterExpression(expression, [dontKeep]);
 
     assert.strictEqual(actual, null);
 }
@@ -49,7 +143,10 @@ export function testFilterExpressionKeepsLeafExpressionsWhenPredicateAlwaysTrue(
     ];
 
     for (const expression of cases) {
-        assert.deepStrictEqual(filterExpression(expression, keep), expression);
+        assert.deepStrictEqual(
+            filterExpression(expression, [keep]),
+            expression,
+        );
     }
 }
 
@@ -76,24 +173,30 @@ export function testFilterExpressionRecursivelyFiltersArrayObjectAndStringLitera
         values: [one, two, { kind: "NameLookupExpression", name: "suffix" }],
     };
 
-    assert.deepStrictEqual(filterExpression(arrayExpression, isNotTwoNumber), {
-        kind: "ArrayExpression",
-        elements: [one, three],
-    });
-
-    assert.deepStrictEqual(filterExpression(objectExpression, isNotTwoNumber), {
-        kind: "ObjectExpression",
-        properties: {
-            kept: one,
-            nested: {
-                kind: "ArrayExpression",
-                elements: [one],
-            },
+    assert.deepStrictEqual(
+        filterExpression(arrayExpression, [isNotTwoNumber]),
+        {
+            kind: "ArrayExpression",
+            elements: [one, three],
         },
-    });
+    );
 
     assert.deepStrictEqual(
-        filterExpression(stringLiteralExpression, isNotTwoNumber),
+        filterExpression(objectExpression, [isNotTwoNumber]),
+        {
+            kind: "ObjectExpression",
+            properties: {
+                kept: one,
+                nested: {
+                    kind: "ArrayExpression",
+                    elements: [one],
+                },
+            },
+        },
+    );
+
+    assert.deepStrictEqual(
+        filterExpression(stringLiteralExpression, [isNotTwoNumber]),
         null,
     );
 }
@@ -133,8 +236,14 @@ export function testFilterExpressionComparisonExpressionsRequireBothSides() {
     ];
 
     for (const expression of comparisons) {
-        assert.strictEqual(filterExpression(expression, isNotTwoNumber), null);
-        assert.deepStrictEqual(filterExpression(expression, keep), expression);
+        assert.strictEqual(
+            filterExpression(expression, [isNotTwoNumber]),
+            null,
+        );
+        assert.deepStrictEqual(
+            filterExpression(expression, [keep]),
+            expression,
+        );
     }
 }
 
@@ -152,20 +261,20 @@ export function testFilterExpressionIncreaseAndDecreaseRequireAmount() {
     };
 
     assert.strictEqual(
-        filterExpression(increaseExpression, isNotTwoNumber),
+        filterExpression(increaseExpression, [isNotTwoNumber]),
         null,
     );
     assert.strictEqual(
-        filterExpression(decreaseExpression, isNotTwoNumber),
+        filterExpression(decreaseExpression, [isNotTwoNumber]),
         null,
     );
 
     assert.deepStrictEqual(
-        filterExpression(increaseExpression, keep),
+        filterExpression(increaseExpression, [keep]),
         increaseExpression,
     );
     assert.deepStrictEqual(
-        filterExpression(decreaseExpression, keep),
+        filterExpression(decreaseExpression, [keep]),
         decreaseExpression,
     );
 }
@@ -177,8 +286,8 @@ export function testFilterExpressionFunctionCallRequiresAllArguments() {
         arguments: [one, two],
     };
 
-    assert.strictEqual(filterExpression(expression, isNotTwoNumber), null);
-    assert.deepStrictEqual(filterExpression(expression, keep), expression);
+    assert.strictEqual(filterExpression(expression, [isNotTwoNumber]), null);
+    assert.deepStrictEqual(filterExpression(expression, [keep]), expression);
 }
 
 export function testFilterExpressionObjectPropertyRequiresObjectAndProperty() {
@@ -191,15 +300,11 @@ export function testFilterExpressionObjectPropertyRequiresObjectAndProperty() {
         },
     };
 
-    const removePropertyLiteral = (node: Expression): boolean => {
-        return node.kind !== "StringLiteralExpression";
-    };
-
     assert.strictEqual(
-        filterExpression(expression, removePropertyLiteral),
+        filterExpression(expression, [removePropertyLiteral]),
         null,
     );
-    assert.deepStrictEqual(filterExpression(expression, keep), expression);
+    assert.deepStrictEqual(filterExpression(expression, [keep]), expression);
 }
 
 export function testFilterExpressionObjectMethodCallRequiresObjectAndMethod() {
@@ -210,12 +315,17 @@ export function testFilterExpressionObjectMethodCallRequiresObjectAndMethod() {
         arguments: [one, two],
     };
 
-    const removeMethodName = (node: Expression): boolean => {
-        return !(node.kind === "NameLookupExpression" && node.name === "doIt");
+    const removeMethodName: FilterRule<JsNode> = {
+        shouldKeep: (node: JsNode): boolean => {
+            return !(
+                node.kind === "NameLookupExpression" && node.name === "doIt"
+            );
+        },
+        reason: "No methods named doIt",
     };
 
-    assert.strictEqual(filterExpression(expression, removeMethodName), null);
-    assert.deepStrictEqual(filterExpression(expression, keep), expression);
+    assert.strictEqual(filterExpression(expression, [removeMethodName]), null);
+    assert.deepStrictEqual(filterExpression(expression, [keep]), expression);
 }
 
 export function testFilterExpressionArrayAccessRequiresArrayAndIndex() {
@@ -225,8 +335,8 @@ export function testFilterExpressionArrayAccessRequiresArrayAndIndex() {
         index: two,
     };
 
-    assert.strictEqual(filterExpression(expression, isNotTwoNumber), null);
-    assert.deepStrictEqual(filterExpression(expression, keep), expression);
+    assert.strictEqual(filterExpression(expression, [isNotTwoNumber]), null);
+    assert.deepStrictEqual(filterExpression(expression, [keep]), expression);
 }
 
 export function testFilterExpressionArithmeticExpressionsRequireBothSides() {
@@ -254,8 +364,14 @@ export function testFilterExpressionArithmeticExpressionsRequireBothSides() {
     ];
 
     for (const expression of arithmetic) {
-        assert.strictEqual(filterExpression(expression, isNotTwoNumber), null);
-        assert.deepStrictEqual(filterExpression(expression, keep), expression);
+        assert.strictEqual(
+            filterExpression(expression, [isNotTwoNumber]),
+            null,
+        );
+        assert.deepStrictEqual(
+            filterExpression(expression, [keep]),
+            expression,
+        );
     }
 }
 
@@ -290,7 +406,7 @@ export function testFilterExpressionHandlesNestedCombinations() {
         },
     };
 
-    const actual = filterExpression(expression, isNotTwoNumber);
+    const actual = filterExpression(expression, [isNotTwoNumber]);
 
     assert.deepStrictEqual(actual, {
         kind: "ObjectExpression",
@@ -308,7 +424,7 @@ export function testFilterExpressionParsedObjectLiteralPrunesNestedCollections()
         '{ title: "orders", buckets: [1, 2, 3], summary: { min: 1, max: 2 } }',
     );
 
-    const actual = filterExpression(expression, isNotTwoNumber);
+    const actual = filterExpression(expression, [isNotTwoNumber]);
 
     assert.deepStrictEqual(actual, {
         kind: "ObjectExpression",
@@ -334,7 +450,7 @@ export function testFilterExpressionParsedObjectLiteralPrunesNestedCollections()
 export function testFilterExpressionParsedMemberCallKeepsNestedArgumentValues() {
     const expression = parseFromCode("stats.compute(1 + 2, points[2])");
 
-    const actual = filterExpression(expression, isNotTwoNumber);
+    const actual = filterExpression(expression, [isNotTwoNumber]);
 
     assert.strictEqual(actual, null);
 }
@@ -342,7 +458,7 @@ export function testFilterExpressionParsedMemberCallKeepsNestedArgumentValues() 
 export function testFilterExpressionParsedTemplateAndAccessCombination() {
     const expression = parseFromCode("`users=` + users[2]");
 
-    const actual = filterExpression(expression, isNotTwoNumber);
+    const actual = filterExpression(expression, [isNotTwoNumber]);
 
     assert.strictEqual(actual, null);
 }
@@ -352,22 +468,7 @@ export function testFilterExpressionPolicyLimitsWindowLocationUsage() {
         "[window.location, appState.currentUrl, fetch('/api/health')]",
     );
 
-    const limitWindowLocationApis = (node: Expression): boolean => {
-        if (node.kind !== "ObjectPropertyExpression") {
-            return true;
-        }
-
-        const isWindowObject =
-            node.object.kind === "NameLookupExpression" &&
-            node.object.name === "window";
-        const isLocationProperty =
-            node.property.kind === "NameLookupExpression" &&
-            node.property.name === "location";
-
-        return !(isWindowObject && isLocationProperty);
-    };
-
-    const actual = filterExpression(expression, limitWindowLocationApis);
+    const actual = filterExpression(expression, [limitWindowLocationApis]);
 
     assert.deepStrictEqual(actual, {
         kind: "ArrayExpression",
@@ -391,22 +492,7 @@ export function testFilterExpressionPolicyRemovesDocumentCookiesAccess() {
         "[document.cookies, document.title, analytics.track('ready')]",
     );
 
-    const removeDocumentCookies = (node: Expression): boolean => {
-        if (node.kind !== "ObjectPropertyExpression") {
-            return true;
-        }
-
-        const isDocumentObject =
-            node.object.kind === "NameLookupExpression" &&
-            node.object.name === "document";
-        const isCookiesProperty =
-            node.property.kind === "NameLookupExpression" &&
-            node.property.name === "cookies";
-
-        return !(isDocumentObject && isCookiesProperty);
-    };
-
-    const actual = filterExpression(expression, removeDocumentCookies);
+    const actual = filterExpression(expression, [removeDocumentCookies]);
 
     assert.deepStrictEqual(actual, {
         kind: "ArrayExpression",
@@ -431,23 +517,26 @@ export function testFilterExpressionPolicyAllowsOnlyNetworkCalls() {
         "[fetch('/api/users'), renderUserCard(user), navigator.sendBeacon('/metrics')]",
     );
 
-    const keepOnlyNetworkCalls = (node: Expression): boolean => {
-        if (node.kind === "FunctionCallExpression") {
-            return node.functionName === "fetch";
-        }
+    const keepOnlyNetworkCalls: FilterRule<JsNode> = {
+        shouldKeep: (node: JsNode): boolean => {
+            if (node.kind === "FunctionCallExpression") {
+                return node.functionName === "fetch";
+            }
 
-        if (node.kind === "ObjectMethodCallExpression") {
-            return (
-                node.object.name === "navigator" &&
-                node.method.kind === "NameLookupExpression" &&
-                node.method.name === "sendBeacon"
-            );
-        }
+            if (node.kind === "ObjectMethodCallExpression") {
+                return (
+                    node.object.name === "navigator" &&
+                    node.method.kind === "NameLookupExpression" &&
+                    node.method.name === "sendBeacon"
+                );
+            }
 
-        return true;
+            return true;
+        },
+        reason: "Keep only network calls",
     };
 
-    const actual = filterExpression(expression, keepOnlyNetworkCalls);
+    const actual = filterExpression(expression, [keepOnlyNetworkCalls]);
 
     assert.deepStrictEqual(actual, {
         kind: "ArrayExpression",
@@ -472,15 +561,20 @@ export function testFilterExpressionPolicyBlocksEvalLikeExecutionCalls() {
         "[eval(userInput), Function('return 1'), parseInt(raw, 10)]",
     );
 
-    const removeDynamicExecutionCalls = (node: Expression): boolean => {
-        if (node.kind !== "FunctionCallExpression") {
-            return true;
-        }
+    const removeDynamicExecutionCalls: FilterRule<JsNode> = {
+        shouldKeep: (node: JsNode): boolean => {
+            if (node.kind !== "FunctionCallExpression") {
+                return true;
+            }
 
-        return node.functionName !== "eval" && node.functionName !== "Function";
+            return (
+                node.functionName !== "eval" && node.functionName !== "Function"
+            );
+        },
+        reason: "Remove dynamic execution calls",
     };
 
-    const actual = filterExpression(expression, removeDynamicExecutionCalls);
+    const actual = filterExpression(expression, [removeDynamicExecutionCalls]);
 
     assert.deepStrictEqual(actual, {
         kind: "ArrayExpression",
@@ -502,34 +596,7 @@ export function testFilterExpressionPolicyBlocksSensitiveStorageAndCookieWrites(
         "[localStorage.getItem('token'), document.cookie, document.title, fetch('/api/session')]",
     );
 
-    const removeSensitiveStorageApis = (node: Expression): boolean => {
-        if (node.kind === "ObjectMethodCallExpression") {
-            const isStorageRead =
-                (node.object.name === "localStorage" ||
-                    node.object.name === "sessionStorage") &&
-                node.method.kind === "NameLookupExpression" &&
-                (node.method.name === "getItem" ||
-                    node.method.name === "setItem");
-            if (isStorageRead) {
-                return false;
-            }
-        }
-
-        if (node.kind === "ObjectPropertyExpression") {
-            const isCookieAccess =
-                node.object.kind === "NameLookupExpression" &&
-                node.object.name === "document" &&
-                node.property.kind === "NameLookupExpression" &&
-                node.property.name === "cookie";
-            if (isCookieAccess) {
-                return false;
-            }
-        }
-
-        return true;
-    };
-
-    const actual = filterExpression(expression, removeSensitiveStorageApis);
+    const actual = filterExpression(expression, [removeSensitiveStorageApis]);
 
     assert.deepStrictEqual(actual, {
         kind: "ArrayExpression",
@@ -555,32 +622,36 @@ export function testFilterExpressionPolicyBlocksNavigationAndPopupApis() {
         "[window.open(url), location.assign(nextUrl), history.pushState(data, title, '/dashboard'), fetch('/api/next')]",
     );
 
-    const removeNavigationAndPopupApis = (node: Expression): boolean => {
-        if (node.kind !== "ObjectMethodCallExpression") {
-            return true;
-        }
+    const removeNavigationAndPopupApis: FilterRule<JsNode> = {
+        shouldKeep: (node: JsNode): boolean => {
+            if (node.kind !== "ObjectMethodCallExpression") {
+                return true;
+            }
 
-        const isBlockedWindowMethod =
-            node.object.name === "window" &&
-            node.method.kind === "NameLookupExpression" &&
-            node.method.name === "open";
-        const isBlockedLocationMethod =
-            node.object.name === "location" &&
-            node.method.kind === "NameLookupExpression" &&
-            (node.method.name === "assign" || node.method.name === "replace");
-        const isBlockedHistoryMethod =
-            node.object.name === "history" &&
-            node.method.kind === "NameLookupExpression" &&
-            node.method.name === "pushState";
+            const isBlockedWindowMethod =
+                node.object.name === "window" &&
+                node.method.kind === "NameLookupExpression" &&
+                node.method.name === "open";
+            const isBlockedLocationMethod =
+                node.object.name === "location" &&
+                node.method.kind === "NameLookupExpression" &&
+                (node.method.name === "assign" ||
+                    node.method.name === "replace");
+            const isBlockedHistoryMethod =
+                node.object.name === "history" &&
+                node.method.kind === "NameLookupExpression" &&
+                node.method.name === "pushState";
 
-        return !(
-            isBlockedWindowMethod ||
-            isBlockedLocationMethod ||
-            isBlockedHistoryMethod
-        );
+            return !(
+                isBlockedWindowMethod ||
+                isBlockedLocationMethod ||
+                isBlockedHistoryMethod
+            );
+        },
+        reason: "Remove navigation and popup APIs",
     };
 
-    const actual = filterExpression(expression, removeNavigationAndPopupApis);
+    const actual = filterExpression(expression, [removeNavigationAndPopupApis]);
 
     assert.deepStrictEqual(actual, {
         kind: "ArrayExpression",
@@ -596,109 +667,128 @@ export function testFilterExpressionPolicyBlocksNavigationAndPopupApis() {
 
 type ExpressionPredicate = (node: Expression) => boolean;
 
-function removeWindowLocationProperty(node: Expression): boolean {
-    if (node.kind !== "ObjectPropertyExpression") {
-        return true;
-    }
+const removeWindowLocationProperty: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind !== "ObjectPropertyExpression") {
+            return true;
+        }
 
-    return !(
-        node.object.kind === "NameLookupExpression" &&
-        node.object.name === "window" &&
-        node.property.kind === "NameLookupExpression" &&
-        node.property.name === "location"
-    );
-}
+        return !(
+            node.object.kind === "NameLookupExpression" &&
+            node.object.name === "window" &&
+            node.property.kind === "NameLookupExpression" &&
+            node.property.name === "location"
+        );
+    },
+    reason: "Remove window.location properties",
+};
 
-function removeDocumentCookieProperties(node: Expression): boolean {
-    if (node.kind !== "ObjectPropertyExpression") {
-        return true;
-    }
+const removeDocumentCookieProperties: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind !== "ObjectPropertyExpression") {
+            return true;
+        }
 
-    const isDocumentObject =
-        node.object.kind === "NameLookupExpression" &&
-        node.object.name === "document";
-    const isCookieProperty =
-        node.property.kind === "NameLookupExpression" &&
-        (node.property.name === "cookie" || node.property.name === "cookies");
+        const isDocumentObject =
+            node.object.kind === "NameLookupExpression" &&
+            node.object.name === "document";
+        const isCookieProperty =
+            node.property.kind === "NameLookupExpression" &&
+            (node.property.name === "cookie" ||
+                node.property.name === "cookies");
 
-    return !(isDocumentObject && isCookieProperty);
-}
+        return !(isDocumentObject && isCookieProperty);
+    },
+    reason: "Remove document.cookie properties",
+};
 
-function removeStorageMethods(node: Expression): boolean {
-    if (node.kind !== "ObjectMethodCallExpression") {
-        return true;
-    }
+const removeStorageMethods: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind !== "ObjectMethodCallExpression") {
+            return true;
+        }
 
-    if (
-        node.object.name !== "localStorage" &&
-        node.object.name !== "sessionStorage"
-    ) {
-        return true;
-    }
+        if (
+            node.object.name !== "localStorage" &&
+            node.object.name !== "sessionStorage"
+        ) {
+            return true;
+        }
 
-    if (node.method.kind !== "NameLookupExpression") {
-        return true;
-    }
+        if (node.method.kind !== "NameLookupExpression") {
+            return true;
+        }
 
-    return !["getItem", "setItem", "removeItem", "clear", "key"].includes(
-        node.method.name,
-    );
-}
-
-function removeDynamicExecution(node: Expression): boolean {
-    if (node.kind !== "FunctionCallExpression") {
-        return true;
-    }
-
-    return node.functionName !== "eval" && node.functionName !== "Function";
-}
-
-function removeNavigationAndPopupMethods(node: Expression): boolean {
-    if (node.kind !== "ObjectMethodCallExpression") {
-        return true;
-    }
-
-    if (node.method.kind !== "NameLookupExpression") {
-        return true;
-    }
-
-    const isWindowOpen =
-        node.object.name === "window" && node.method.name === "open";
-    const isLocationNavigation =
-        node.object.name === "location" &&
-        ["assign", "replace", "reload"].includes(node.method.name);
-    const isHistoryNavigation =
-        node.object.name === "history" &&
-        ["pushState", "replaceState", "back", "forward", "go"].includes(
+        return !["getItem", "setItem", "removeItem", "clear", "key"].includes(
             node.method.name,
         );
+    },
+    reason: "Remove localStorage and sessionStorage methods",
+};
 
-    return !(isWindowOpen || isLocationNavigation || isHistoryNavigation);
-}
+const removeDynamicExecution: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind !== "FunctionCallExpression") {
+            return true;
+        }
 
-function keepOnlyNetworkCalls(node: Expression): boolean {
-    if (node.kind === "FunctionCallExpression") {
-        return node.functionName === "fetch";
-    }
+        return node.functionName !== "eval" && node.functionName !== "Function";
+    },
+    reason: "Remove dynamic execution methods",
+};
 
-    if (node.kind === "ObjectMethodCallExpression") {
-        return (
-            node.object.name === "navigator" &&
-            node.method.kind === "NameLookupExpression" &&
-            node.method.name === "sendBeacon"
-        );
-    }
+const removeNavigationAndPopupMethods: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind !== "ObjectMethodCallExpression") {
+            return true;
+        }
 
-    return true;
-}
+        if (node.method.kind !== "NameLookupExpression") {
+            return true;
+        }
+
+        const isWindowOpen =
+            node.object.name === "window" && node.method.name === "open";
+        const isLocationNavigation =
+            node.object.name === "location" &&
+            ["assign", "replace", "reload"].includes(node.method.name);
+        const isHistoryNavigation =
+            node.object.name === "history" &&
+            ["pushState", "replaceState", "back", "forward", "go"].includes(
+                node.method.name,
+            );
+
+        return !(isWindowOpen || isLocationNavigation || isHistoryNavigation);
+    },
+    reason: "Remove navigation and popup methods",
+};
+
+const keepOnlyNetworkCalls: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind === "FunctionCallExpression") {
+            return node.functionName === "fetch";
+        }
+
+        if (node.kind === "ObjectMethodCallExpression") {
+            return (
+                node.object.name === "navigator" &&
+                node.method.kind === "NameLookupExpression" &&
+                node.method.name === "sendBeacon"
+            );
+        }
+
+        return true;
+    },
+    reason: "Keep only network calls",
+};
 
 function assertPolicyCase(
     input: string,
-    predicate: ExpressionPredicate,
+    filterRule: FilterRule<JsNode>,
     expected: string,
 ): void {
     const expression = parseFromCode(input);
-    const actual = filterExpression(expression, predicate);
+    const actual = filterExpression(expression, [filterRule]);
 
     assert.deepStrictEqual(actual, parseFromCode(expected));
 }
@@ -1505,43 +1595,54 @@ export function testFilterExpressionGeneratedRealWorldCase100() {
 
 function assertPolicyCaseNull(
     input: string,
-    predicate: ExpressionPredicate,
+    filterRule: FilterRule<JsNode>,
 ): void {
     const expression = parseFromCode(input);
-    const actual = filterExpression(expression, predicate);
+    const actual = filterExpression(expression, [filterRule]);
 
     assert.strictEqual(actual, null);
 }
 
-function removeSensitiveNames(node: Expression): boolean {
-    if (node.kind !== "NameLookupExpression") {
-        return true;
-    }
+const removeSensitiveNames: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind !== "NameLookupExpression") {
+            return true;
+        }
 
-    return !["token", "secret", "unsafeInput", "password"].includes(node.name);
-}
+        return !["token", "secret", "unsafeInput", "password"].includes(
+            node.name,
+        );
+    },
+    reason: "Remove sensitive names",
+};
 
-function removeUnsafeFunctionCalls(node: Expression): boolean {
-    if (node.kind !== "FunctionCallExpression") {
-        return true;
-    }
+const removeUnsafeFunctionCalls: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind !== "FunctionCallExpression") {
+            return true;
+        }
 
-    return !["eval", "Function", "setTimeout", "setInterval"].includes(
-        node.functionName,
-    );
-}
+        return !["eval", "Function", "setTimeout", "setInterval"].includes(
+            node.functionName,
+        );
+    },
+    reason: "Remove unsafe function calls",
+};
 
-function removeAnalyticsTrackCalls(node: Expression): boolean {
-    if (node.kind !== "ObjectMethodCallExpression") {
-        return true;
-    }
+const removeAnalyticsTrackCalls: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind !== "ObjectMethodCallExpression") {
+            return true;
+        }
 
-    return !(
-        node.object.name === "analytics" &&
-        node.method.kind === "NameLookupExpression" &&
-        node.method.name === "track"
-    );
-}
+        return !(
+            node.object.name === "analytics" &&
+            node.method.kind === "NameLookupExpression" &&
+            node.method.name === "track"
+        );
+    },
+    reason: "Remove analytics track calls",
+};
 
 export function testFilterExpressionBroadShapeCase101ArithmeticDropsRightOperand() {
     assertPolicyCaseNull("total + token", removeSensitiveNames);
@@ -1712,10 +1813,13 @@ export function testFilterExpressionBroadShapeCase129ObjectLiteralKeepsSafeNeste
 }
 
 export function testFilterExpressionBroadShapeCase130ObjectLiteralDropsWholeNestedBranchWhenLeafRequired() {
-    const removePasswords = (node: Expression): boolean => {
-        return !(
-            node.kind === "NameLookupExpression" && node.name === "password"
-        );
+    const removePasswords: FilterRule<JsNode> = {
+        shouldKeep: (node: JsNode): boolean => {
+            return !(
+                node.kind === "NameLookupExpression" && node.name === "password"
+            );
+        },
+        reason: "Remove password values",
     };
 
     assertPolicyCase(
@@ -1814,8 +1918,14 @@ export function testFilterExpressionBroadShapeCase141NestedFunctionCallPruneInsi
 }
 
 export function testFilterExpressionBroadShapeCase142MultiplePredicatesCanBeComposed() {
-    const combined = (node: Expression): boolean => {
-        return removeSensitiveNames(node) && removeUnsafeFunctionCalls(node);
+    const combined: FilterRule<JsNode> = {
+        shouldKeep: (node: JsNode): boolean => {
+            return (
+                removeSensitiveNames.shouldKeep(node) &&
+                removeUnsafeFunctionCalls.shouldKeep(node)
+            );
+        },
+        reason: "Remove sensitive names and unsafe calls",
     };
 
     assertPolicyCase(
@@ -1826,8 +1936,14 @@ export function testFilterExpressionBroadShapeCase142MultiplePredicatesCanBeComp
 }
 
 export function testFilterExpressionBroadShapeCase143CombinedPredicateOnObjectLiteral() {
-    const combined = (node: Expression): boolean => {
-        return removeSensitiveNames(node) && removeUnsafeFunctionCalls(node);
+    const combined: FilterRule<JsNode> = {
+        shouldKeep: (node: JsNode): boolean => {
+            return (
+                removeSensitiveNames.shouldKeep(node) &&
+                removeUnsafeFunctionCalls.shouldKeep(node)
+            );
+        },
+        reason: "Remove sensitive names and unsafe calls",
     };
 
     assertPolicyCase(
@@ -1838,8 +1954,14 @@ export function testFilterExpressionBroadShapeCase143CombinedPredicateOnObjectLi
 }
 
 export function testFilterExpressionBroadShapeCase144CombinedPredicateOnComparison() {
-    const combined = (node: Expression): boolean => {
-        return removeSensitiveNames(node) && removeUnsafeFunctionCalls(node);
+    const combined: FilterRule<JsNode> = {
+        shouldKeep: (node: JsNode): boolean => {
+            return (
+                removeSensitiveNames.shouldKeep(node) &&
+                removeUnsafeFunctionCalls.shouldKeep(node)
+            );
+        },
+        reason: "Remove sensitive names and unsafe calls",
     };
 
     assertPolicyCase(
@@ -1850,16 +1972,28 @@ export function testFilterExpressionBroadShapeCase144CombinedPredicateOnComparis
 }
 
 export function testFilterExpressionBroadShapeCase145CombinedPredicateOnArrayAccess() {
-    const combined = (node: Expression): boolean => {
-        return removeSensitiveNames(node) && removeUnsafeFunctionCalls(node);
+    const combined: FilterRule<JsNode> = {
+        shouldKeep: (node: JsNode): boolean => {
+            return (
+                removeSensitiveNames.shouldKeep(node) &&
+                removeUnsafeFunctionCalls.shouldKeep(node)
+            );
+        },
+        reason: "Remove sensitive names and unsafe calls",
     };
 
     assertPolicyCase("rows[1]", combined, "rows[1]");
 }
 
 export function testFilterExpressionBroadShapeCase146CombinedPredicateRemovesUnsafeIndexBuilder() {
-    const combined = (node: Expression): boolean => {
-        return removeSensitiveNames(node) && removeUnsafeFunctionCalls(node);
+    const combined: FilterRule<JsNode> = {
+        shouldKeep: (node: JsNode): boolean => {
+            return (
+                removeSensitiveNames.shouldKeep(node) &&
+                removeUnsafeFunctionCalls.shouldKeep(node)
+            );
+        },
+        reason: "Remove sensitive names and unsafe calls",
     };
 
     assertPolicyCase(
@@ -1893,12 +2027,15 @@ export function testFilterExpressionBroadShapeCase150DeepNestedShapeKeepsValidBr
     );
 }
 
-function removeMutationExpressions(node: Expression): boolean {
-    return (
-        node.kind !== "IncrementExpression" &&
-        node.kind !== "DecrementExpression"
-    );
-}
+const removeMutationExpressions: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        return (
+            node.kind !== "IncrementExpression" &&
+            node.kind !== "DecrementExpression"
+        );
+    },
+    reason: "Remove mutation expressions",
+};
 
 function isStringLiteralValue(node: Expression, expected: string): boolean {
     return (
@@ -1909,36 +2046,48 @@ function isStringLiteralValue(node: Expression, expected: string): boolean {
     );
 }
 
-function removeSensitivePropertyAccess(node: Expression): boolean {
-    if (node.kind !== "ObjectPropertyExpression") {
-        return true;
-    }
+const removeSensitivePropertyAccess: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind !== "ObjectPropertyExpression") {
+            return true;
+        }
 
-    if (node.property.kind === "NameLookupExpression") {
-        return !["password", "token"].includes(node.property.name);
-    }
+        if (node.property.kind === "NameLookupExpression") {
+            return !["password", "token"].includes(node.property.name);
+        }
 
-    return !(
-        isStringLiteralValue(node.property, "password") ||
-        isStringLiteralValue(node.property, "token")
-    );
-}
+        return !(
+            isStringLiteralValue(node.property, "password") ||
+            isStringLiteralValue(node.property, "token")
+        );
+    },
+    reason: "Remove sensitive property access",
+};
 
-function removeNullAndFalseLiterals(node: Expression): boolean {
-    if (node.kind === "NullExpression") {
-        return false;
-    }
+const removeNullAndFalseLiterals: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        if (node.kind === "NullExpression") {
+            return false;
+        }
 
-    return !(node.kind === "BooleanExpression" && node.value === false);
-}
+        return !(node.kind === "BooleanExpression" && node.value === false);
+    },
+    reason: "Remove null and false literals",
+};
 
-function removeZeroNumbers(node: Expression): boolean {
-    return !(node.kind === "NumberExpression" && node.value === 0);
-}
+const removeZeroNumbers: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        return !(node.kind === "NumberExpression" && node.value === 0);
+    },
+    reason: "Remove zero numbers",
+};
 
-function removeStringLiteralExpressions(node: Expression): boolean {
-    return node.kind !== "StringLiteralExpression";
-}
+const removeStringLiteralExpressions: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode): boolean => {
+        return node.kind !== "StringLiteralExpression";
+    },
+    reason: "Remove string literal expressions",
+};
 
 export function testFilterExpressionBroadShapeCase151MutationIncrementRootIsRemoved() {
     assertPolicyCaseNull("count++", removeMutationExpressions);

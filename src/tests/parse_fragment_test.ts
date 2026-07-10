@@ -29,8 +29,8 @@ import {
     title,
     u,
 } from "../coed.ts";
-import { parseFragment } from "../parse.ts";
-import { circle, svg } from "../svg.ts";
+import { circle, svg } from "../coed/svg.ts";
+import { parseFragment } from "../langs/html/parse.ts";
 
 export function testParseText() {
     const html = `Hello world!`;
