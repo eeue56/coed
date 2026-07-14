@@ -332,9 +332,6 @@ function cssBlockToTagsAndClasses(block: CssBlock): ExtractedTagsAndClasses {
 
             return result;
         }
-        case "Never": {
-            return { tags: [], classes: [] };
-        }
     }
 }
 
@@ -421,9 +418,6 @@ export function declarationsToString(declarations: Declaration[]): string {
 
 export function cssBlockToString(block: CssBlock): string {
     switch (block.kind) {
-        case "Never": {
-            return "";
-        }
         case "MediaQuery": {
             const query = selectorToString(block.selector);
             const inner = (block.body as CssBlock[])

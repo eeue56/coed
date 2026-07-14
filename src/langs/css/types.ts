@@ -29,9 +29,6 @@ export type CssBlock =
           kind: "MediaQuery";
           selector: { kind: "Media"; query: string };
           body: CssBlock[];
-      }
-    | {
-          kind: "Never";
       };
 
 export type ExtractedTagsAndClasses = {
@@ -44,8 +41,7 @@ export type CssNode = CssBlock | Declaration;
 export function isCssBlock(node: CssNode): node is CssBlock {
     return (
         (node as CssBlock).kind == "Regular" ||
-        (node as CssBlock).kind == "MediaQuery" ||
-        (node as CssBlock).kind == "Never"
+        (node as CssBlock).kind == "MediaQuery"
     );
 }
 

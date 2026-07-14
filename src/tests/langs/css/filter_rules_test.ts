@@ -27,7 +27,7 @@ export function testTagFiltering() {
                 ],
             },
         ],
-        errors: [],
+        errors: ["Filtering out width properties"],
     };
 
     const actualBlocks: FinalFilterResult<CssBlock[]> = css.filterDeclariations(
@@ -139,7 +139,11 @@ export function testMediaFiltering() {
                 ],
             },
         ],
-        errors: [],
+        errors: [
+            "Filtering out non-width properties",
+            "Filtering out non-width properties",
+            "Filtering out non-width properties",
+        ],
     };
 
     deepStrictEqual(actualBlocks, output);

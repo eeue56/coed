@@ -16,12 +16,8 @@ export function testTagFiltering() {
     };
 
     const output: FinalFilterResult<CssBlock[]> = {
-        value: [
-            {
-                kind: "Never",
-            },
-        ],
-        errors: [],
+        value: [],
+        errors: ["Filtering out h1 tags"],
     };
 
     const actualBlocks: FinalFilterResult<CssBlock[]> = css.filter(
@@ -59,12 +55,8 @@ export function testClassFiltering() {
     };
 
     const output: FinalFilterResult<CssBlock[]> = {
-        value: [
-            {
-                kind: "Never",
-            },
-        ],
-        errors: [],
+        value: [],
+        errors: ["Filtering out hello class"],
     };
 
     const actualBlocks = css.filter(
@@ -102,12 +94,8 @@ export function testIdFiltering() {
     };
 
     const output: FinalFilterResult<CssBlock[]> = {
-        value: [
-            {
-                kind: "Never",
-            },
-        ],
-        errors: [],
+        value: [],
+        errors: ["Filtering out hello id"],
     };
 
     const actualBlocks = css.filter(
@@ -145,12 +133,8 @@ export function testAllFiltering() {
     };
 
     const output: FinalFilterResult<CssBlock[]> = {
-        value: [
-            {
-                kind: "Never",
-            },
-        ],
-        errors: [],
+        value: [],
+        errors: ["Filtering out all selectors"],
     };
 
     const actualBlocks = css.filter(
@@ -195,12 +179,8 @@ export function testChildFilteringEntireTree() {
     };
 
     const output: FinalFilterResult<CssBlock[]> = {
-        value: [
-            {
-                kind: "Never",
-            },
-        ],
-        errors: [],
+        value: [],
+        errors: ["Filtering out all regular blocks"],
     };
 
     const actualBlocks = css.filter(
@@ -241,12 +221,8 @@ export function testSiblingFiltering() {
     };
 
     const output: FinalFilterResult<CssBlock[]> = {
-        value: [
-            {
-                kind: "Never",
-            },
-        ],
-        errors: [],
+        value: [],
+        errors: ["Filtering out all regular blocks"],
     };
 
     const actualBlocks = css.filter(
@@ -284,12 +260,8 @@ export function testPsuedoFiltering() {
     };
 
     const output: FinalFilterResult<CssBlock[]> = {
-        value: [
-            {
-                kind: "Never",
-            },
-        ],
-        errors: [],
+        value: [],
+        errors: ["Filtering out hover psuedo selectors"],
     };
 
     const actualBlocks = css.filter(
@@ -354,12 +326,8 @@ export function testPsuedoElementFiltering() {
     );
 
     const output: FinalFilterResult<CssBlock[]> = {
-        value: [
-            {
-                kind: "Never",
-            },
-        ],
-        errors: [],
+        value: [],
+        errors: ["Filtering out before psuedo elements"],
     };
 
     deepStrictEqual(actualBlocks, output);
@@ -411,12 +379,8 @@ export function testMultipleFiltering() {
     );
 
     const output: FinalFilterResult<CssBlock[]> = {
-        value: [
-            {
-                kind: "Never",
-            },
-        ],
-        errors: [],
+        value: [],
+        errors: ["Filtering out multiple selectors"],
     };
 
     deepStrictEqual(actualBlocks, output);
@@ -491,7 +455,70 @@ export function testMediaFiltering() {
                 body: [],
             },
         ],
-        errors: [],
+        errors: ["Filtering out multiple selectors"],
+    };
+
+    deepStrictEqual(actualBlocks, output);
+}
+
+export function testRootMediaQueryFiltering() {
+    const input: CssBlock = {
+        kind: "MediaQuery",
+        selector: {
+            kind: "Media",
+            query: "(min-width: 1100px)",
+        },
+        body: [
+            {
+                kind: "Regular",
+                selector: {
+                    kind: "Multiple",
+                    selectors: [
+                        { kind: "Class", class: "hello" },
+                        {
+                            kind: "Psuedo",
+                            psuedo: "hover",
+                            selector: { kind: "Tag", tag: "h1" },
+                        },
+                        {
+                            kind: "Child",
+                            parent: { kind: "Id", id: "world" },
+                            child: { kind: "Tag", tag: "div" },
+                        },
+                    ],
+                },
+                body: [
+                    {
+                        kind: "Property",
+                        name: "border-color",
+                        value: "red",
+                    },
+                    { kind: "Property", name: "width", value: "20px" },
+                    { kind: "Property", name: "padding", value: "1rem" },
+                    { kind: "Property", name: "height", value: "20vh" },
+                ],
+            },
+        ],
+    };
+
+    const actualBlocks = css.filter(
+        [
+            {
+                shouldKeep: (leaf) => {
+                    if (leaf.kind === "MediaQuery") {
+                        return false;
+                    }
+                    return true;
+                },
+                reason: "Filtering out media query",
+            },
+        ],
+        [input],
+    );
+
+    const output: FinalFilterResult<CssBlock[]> = {
+        value: [],
+        errors: ["Filtering out media query"],
     };
 
     deepStrictEqual(actualBlocks, output);

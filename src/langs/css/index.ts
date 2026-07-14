@@ -1,5 +1,5 @@
 import type { FilterRule, FinalFilterResult, Language } from "../types.ts";
-import { filter, filterCssRules } from "./filter.ts";
+import { filter, filterCssDeclarations } from "./filter.ts";
 import { generate, parseCssBlocks } from "./parse.ts";
 import type { CssBlock, Declaration } from "./types.ts";
 
@@ -28,5 +28,5 @@ export const css: CssLanguage = {
     parse: parseCssBlocks,
     filter,
     generate,
-    filterDeclariations: filterCssRules,
+    filterDeclariations: filterCssDeclarations,
 };
