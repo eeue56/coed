@@ -31,10 +31,7 @@ h1 {
     const actualBlocks: Result<CssBlock[]> = css.parse(input);
 
     deepStrictEqual(actualBlocks, output);
-
-    if (output.kind === "Ok") {
-        deepStrictEqual(css.generate(actualBlocks.value), input);
-    }
+    deepStrictEqual(css.generate(actualBlocks.value), input);
 }
 
 export function testClassParsing() {
@@ -65,9 +62,7 @@ export function testClassParsing() {
     const actualBlocks = css.parse(input);
 
     deepStrictEqual(actualBlocks, output);
-    if (output.kind === "Ok") {
-        deepStrictEqual(css.generate(actualBlocks.value), input);
-    }
+    deepStrictEqual(css.generate(actualBlocks.value), input);
 }
 
 export function testIdParsing() {
@@ -98,9 +93,7 @@ export function testIdParsing() {
     const actualBlocks = css.parse(input);
 
     deepStrictEqual(actualBlocks, output);
-    if (output.kind === "Ok") {
-        deepStrictEqual(css.generate(actualBlocks.value), input);
-    }
+    deepStrictEqual(css.generate(actualBlocks.value), input);
 }
 
 export function testAllParsing() {
@@ -131,9 +124,7 @@ export function testAllParsing() {
     const actualBlocks = css.parse(input);
 
     deepStrictEqual(actualBlocks, output);
-    if (output.kind === "Ok") {
-        deepStrictEqual(css.generate(actualBlocks.value), input);
-    }
+    deepStrictEqual(css.generate(actualBlocks.value), input);
 }
 
 export function testChildParsing() {
@@ -172,9 +163,7 @@ h1 > .hello > #world {
     const actualBlocks = css.parse(input);
 
     deepStrictEqual(actualBlocks, output);
-    if (output.kind === "Ok") {
-        deepStrictEqual(css.generate(actualBlocks.value), input);
-    }
+    deepStrictEqual(css.generate(actualBlocks.value), input);
 }
 
 export function testSiblingParsing() {
@@ -212,9 +201,7 @@ h1 .hello #world {
     const actualBlocks = css.parse(input);
 
     deepStrictEqual(actualBlocks, output);
-    if (output.kind === "Ok") {
-        deepStrictEqual(css.generate(actualBlocks.value), input);
-    }
+    deepStrictEqual(css.generate(actualBlocks.value), input);
 }
 
 export function testPsuedoParsing() {
@@ -249,9 +236,7 @@ h1:hover {
     const actualBlocks = css.parse(input);
 
     deepStrictEqual(actualBlocks, output);
-    if (output.kind === "Ok") {
-        deepStrictEqual(css.generate(actualBlocks.value), input);
-    }
+    deepStrictEqual(css.generate(actualBlocks.value), input);
 }
 
 export function testPsuedoElementParsing() {
@@ -286,9 +271,7 @@ h1::before {
     const actualBlocks = css.parse(input);
 
     deepStrictEqual(actualBlocks, output);
-    if (output.kind === "Ok") {
-        deepStrictEqual(css.generate(actualBlocks.value), input);
-    }
+    deepStrictEqual(css.generate(actualBlocks.value), input);
 }
 
 export function testMultipleParsing() {
@@ -334,9 +317,7 @@ export function testMultipleParsing() {
     const actualBlocks = css.parse(input);
 
     deepStrictEqual(actualBlocks, output);
-    if (output.kind === "Ok") {
-        deepStrictEqual(css.generate(actualBlocks.value), input);
-    }
+    deepStrictEqual(css.generate(actualBlocks.value), input);
 }
 
 export function testMediaParsing() {
@@ -403,9 +384,7 @@ export function testMediaParsing() {
     const actualBlocks = css.parse(input);
 
     deepStrictEqual(actualBlocks, output);
-    if (output.kind === "Ok") {
-        deepStrictEqual(css.generate(actualBlocks.value), input);
-    }
+    deepStrictEqual(css.generate(actualBlocks.value), input);
 }
 
 export function testEntireFileParsing() {
@@ -511,7 +490,5 @@ h1 {
     const actualBlocks = css.parse(input);
 
     deepStrictEqual(actualBlocks, output);
-    if (output.kind === "Ok") {
-        deepStrictEqual(css.generate(actualBlocks.value), input);
-    }
+    deepStrictEqual(css.generate(actualBlocks.value), input);
 }
