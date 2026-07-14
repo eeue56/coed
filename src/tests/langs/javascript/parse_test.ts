@@ -417,6 +417,90 @@ export function testParseWhileAsForLoop() {
     );
 }
 
+export function testParseWhileWithBreak() {
+    assert.deepStrictEqual(
+        parse(
+            "while (hasPendingSync) { let syncAttempt = retryCount; break; }",
+        ),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "ForLoop",
+                    init: {
+                        kind: "LetStatement",
+                        name: "__while_0",
+                        value: { kind: "NumberExpression", value: 0 },
+                    },
+                    condition: {
+                        kind: "NameLookupExpression",
+                        name: "hasPendingSync",
+                    },
+                    increment: {
+                        kind: "IncrementExpression",
+                        variable: "__while_0",
+                    },
+                    body: [
+                        {
+                            kind: "LetStatement",
+                            name: "syncAttempt",
+                            value: {
+                                kind: "NameLookupExpression",
+                                name: "retryCount",
+                            },
+                        },
+                        {
+                            kind: "BreakStatement",
+                        },
+                    ],
+                },
+            ],
+        },
+    );
+}
+
+export function testParseWhileWithContinue() {
+    assert.deepStrictEqual(
+        parse(
+            "while (hasPendingSync) { let syncAttempt = retryCount; continue; }",
+        ),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "ForLoop",
+                    init: {
+                        kind: "LetStatement",
+                        name: "__while_0",
+                        value: { kind: "NumberExpression", value: 0 },
+                    },
+                    condition: {
+                        kind: "NameLookupExpression",
+                        name: "hasPendingSync",
+                    },
+                    increment: {
+                        kind: "IncrementExpression",
+                        variable: "__while_0",
+                    },
+                    body: [
+                        {
+                            kind: "LetStatement",
+                            name: "syncAttempt",
+                            value: {
+                                kind: "NameLookupExpression",
+                                name: "retryCount",
+                            },
+                        },
+                        {
+                            kind: "ContinueStatement",
+                        },
+                    ],
+                },
+            ],
+        },
+    );
+}
+
 export function testParseWithReturnsErr() {
     const result = parse(
         "with (dashboardState) { const selectedTheme = themeName; }",

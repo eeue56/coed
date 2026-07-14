@@ -973,16 +973,33 @@ function createIfStatement(
         : { kind: "IfStatement", condition, thenBranch, elseBranch };
 }
 
+/**
+ * turns a while into a for
+ *
+ * handles the `break` and `continue` too
+ */
 function parseWhile(state: ParserState): StatementParseResult {
-    const parsedLoop = parseConditionAndBlock(state, state.index + 1);
-    if (parsedLoop === null) {
+    const condition = parseParenthesizedExpressionFrom(
+        state.tokens,
+        state.index + 1,
+    );
+
+    if (condition === null) {
+        return createFailedStatement(state);
+    }
+
+    const body = tryParseBlockAt(state, condition.index, {
+        insideForLoop: true,
+    });
+
+    if (body === null) {
         return createFailedStatement(state);
     }
 
     const loopVariable = `__while_${state.index}`;
     const whileLoopParts = createWhileLoopParts(
         loopVariable,
-        parsedLoop.condition,
+        condition.expression,
     );
 
     return statementResult(
@@ -990,9 +1007,9 @@ function parseWhile(state: ParserState): StatementParseResult {
             whileLoopParts.init,
             whileLoopParts.condition,
             whileLoopParts.increment,
-            parsedLoop.body,
+            body.body,
         ),
-        parsedLoop.nextIndex,
+        body.index,
     );
 }
 
