@@ -1,26 +1,9 @@
-import type { FilterRule, FinalFilterResult } from "../types.ts";
+import {
+    returnReplacerOrEmptyList,
+    type FilterRule,
+    type FinalFilterResult,
+} from "../types.ts";
 import type { CssBlock, Declaration } from "./types.ts";
-
-/**
- * If a replacer existes, return that value
- * otherwise return nothing
- *
- * With error reason
- *
- * todo: could possibly clean up all filter apis to use this helper
- */
-function returnReplacerOrNothing<a>(
-    filterRule: FilterRule<a>,
-    value: a,
-): FinalFilterResult<a[]> {
-    if (filterRule.replacer) {
-        return {
-            value: [filterRule.replacer(value)],
-            errors: [filterRule.reason],
-        };
-    }
-    return { value: [], errors: [filterRule.reason] };
-}
 
 /**
  * filters a tree, removing any nodes that don't match. Replaces nodes which don't match with rules
@@ -37,7 +20,7 @@ function filterCssBlock(
         }
 
         // a rule failed on the top level block, return nothing
-        return returnReplacerOrNothing(rule, tree);
+        return returnReplacerOrEmptyList(rule, tree);
     }
 
     if (tree.kind !== "MediaQuery") {
@@ -77,7 +60,7 @@ function shouldKeepDeclaration(
             continue;
         }
 
-        return returnReplacerOrNothing(filterRule, rule);
+        return returnReplacerOrEmptyList(filterRule, rule);
     }
     return { value: [rule], errors: [] };
 }

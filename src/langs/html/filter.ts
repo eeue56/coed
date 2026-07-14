@@ -5,7 +5,32 @@ import {
     type StringAttribute,
     text,
 } from "../../coed.ts";
-import type { FilterRule, FinalFilterResult } from "../types.ts";
+import {
+    type FilterRule,
+    type FinalFilterResult,
+    returnReplacerOrEmptyList,
+} from "../types.ts";
+
+/**
+ * If a replacer existes, return that value
+ * otherwise return nothing
+ *
+ * With error reason
+ *
+ * todo: could possibly clean up all filter apis to use this helper
+ */
+function returnReplacerOrEmptyText<a>(
+    filterRule: FilterRule<HtmlNode<a>>,
+    value: HtmlNode<a>,
+): FinalFilterResult<HtmlNode<a>> {
+    if (filterRule.replacer) {
+        return {
+            value: filterRule.replacer(value),
+            errors: [filterRule.reason],
+        };
+    }
+    return { value: text(""), errors: [filterRule.reason] };
+}
 
 type HtmlNodesWithAttributes<a> = Exclude<
     HtmlNode<a>,
@@ -30,13 +55,7 @@ export function filter<a>(
     if (tree.kind === "text" || tree.kind === "html-string") {
         for (const rule of filterRules) {
             if (!rule.shouldKeep(tree)) {
-                if (rule.replacer) {
-                    return {
-                        value: rule.replacer(tree),
-                        errors: [rule.reason],
-                    };
-                }
-                return { value: text(""), errors: [rule.reason] };
+                return returnReplacerOrEmptyText(rule, tree);
             }
         }
         return { value: tree, errors: [] };
@@ -54,13 +73,7 @@ export function filter<a>(
 
     for (const rule of filterRules) {
         if (!rule.shouldKeep(treeWithSplitClasses)) {
-            if (rule.replacer) {
-                return {
-                    value: rule.replacer(treeWithSplitClasses),
-                    errors: [rule.reason],
-                };
-            }
-            return { value: text(""), errors: [rule.reason] };
+            return returnReplacerOrEmptyText(rule, treeWithSplitClasses);
         }
     }
 
@@ -142,10 +155,7 @@ function filterAttribute(
             continue;
         }
 
-        if (rule.replacer) {
-            return { value: [rule.replacer(attribute)], errors: [rule.reason] };
-        }
-        return { value: [], errors: [rule.reason] };
+        return returnReplacerOrEmptyList(rule, attribute);
     }
 
     return { value: [attribute], errors: [] };
