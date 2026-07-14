@@ -14,6 +14,12 @@ type HtmlNodesWithAttributes<a> = Exclude<
 
 type StringAttributeWithClass = StringAttribute & { key: "class" };
 
+function isStringAttributeWithClass(
+    attribute: Attribute,
+): attribute is StringAttributeWithClass {
+    return attribute.kind === "string" && attribute.key === "class";
+}
+
 /**
  * filters a tree, removing any nodes that don't match. Replaces nodes which don't match with empty text nodes.
  */
@@ -39,8 +45,8 @@ export function filter<a>(
     const treeWithSplitClasses: HtmlNodesWithAttributes<a> = {
         ...tree,
         attributes: tree.attributes.flatMap((attr) => {
-            if (attr.kind === "string" && attr.key === "class") {
-                return splitClassAttribute(attr as StringAttributeWithClass);
+            if (isStringAttributeWithClass(attr)) {
+                return splitClassAttribute(attr);
             }
             return [attr];
         }),
@@ -66,10 +72,12 @@ export function filter<a>(
         case "regular":
         case "ns-regular": {
             const children: HtmlNode<a>[] = [];
+            const errors = [];
 
             for (const child of treeWithSplitClasses.children) {
                 const result = filter(filterRules, child);
                 children.push(result.value);
+                errors.push(...result.errors);
             }
 
             const node: HtmlNodesWithAttributes<a> = {
@@ -77,7 +85,7 @@ export function filter<a>(
                 children,
             };
 
-            return { value: node, errors: [] };
+            return { value: node, errors };
         }
     }
 }
@@ -94,6 +102,56 @@ function splitClassAttribute(
 }
 
 /**
+ * filters `class` attributes
+ *
+ * todo: perf optimization
+ */
+function filterClassAttributes(
+    attributes: StringAttributeWithClass[],
+    filterRules: FilterRule<Attribute>[],
+): FinalFilterResult<Attribute[]> {
+    const filteredAttributes: Attribute[] = [];
+    const errors: string[] = [];
+
+    for (const attr of attributes) {
+        const result = filterAttribute(attr, filterRules);
+        filteredAttributes.push(...result.value);
+        errors.push(...result.errors);
+    }
+
+    return { value: filteredAttributes, errors };
+}
+
+/**
+ * todo: add tests for `replacer` and error surfacing
+ */
+function filterAttribute(
+    attribute: Attribute,
+    filterRules: FilterRule<Attribute>[],
+): FinalFilterResult<Attribute[]> {
+    if (isStringAttributeWithClass(attribute)) {
+        const splitAttributes = splitClassAttribute(attribute);
+
+        if (splitAttributes.length > 1) {
+            return filterClassAttributes(splitAttributes, filterRules);
+        }
+    }
+
+    for (const rule of filterRules) {
+        if (rule.shouldKeep(attribute)) {
+            continue;
+        }
+
+        if (rule.replacer) {
+            return { value: [rule.replacer(attribute)], errors: [rule.reason] };
+        }
+        return { value: [], errors: [rule.reason] };
+    }
+
+    return { value: [attribute], errors: [] };
+}
+
+/**
  * filters a tree, removing any attributes that don't match.
  */
 export function filterAttributes<a>(
@@ -104,23 +162,19 @@ export function filterAttributes<a>(
         return { value: tree, errors: [] };
     }
 
-    const attributes = tree.attributes.flatMap((attribute) => {
-        if (attribute.kind === "string" && attribute.key === "class") {
-            return splitClassAttribute(
-                attribute as StringAttributeWithClass,
-            ).filter((attr) =>
-                filterRules.every((rule) => rule.shouldKeep(attr)),
-            );
-        }
-        return filterRules.every((rule) => rule.shouldKeep(attribute))
-            ? [attribute]
-            : [];
-    });
+    const errors: string[] = [];
+    const attributes: Attribute[] = [];
+
+    for (const attribute of tree.attributes) {
+        const result = filterAttribute(attribute, filterRules);
+        attributes.push(...result.value);
+        errors.push(...result.errors);
+    }
 
     switch (tree.kind) {
         case "void":
         case "ns-void": {
-            return { value: { ...tree, attributes }, errors: [] };
+            return { value: { ...tree, attributes }, errors };
         }
         case "regular":
         case "ns-regular": {
@@ -129,6 +183,7 @@ export function filterAttributes<a>(
             for (const child of tree.children) {
                 const result = filterAttributes(filterRules, child);
                 children.push(result.value);
+                errors.push(...result.errors);
             }
 
             return {
@@ -137,7 +192,7 @@ export function filterAttributes<a>(
                     attributes,
                     children,
                 },
-                errors: [],
+                errors,
             };
         }
     }
@@ -154,22 +209,33 @@ export function filterEvents<a>(
         return { value: tree, errors: [] };
     }
 
-    const events = tree.events.flatMap((event) => {
+    const events: Event<a>[] = [];
+    const errors: string[] = [];
+
+    /** todo: refactor this into separate function */
+    for (const event of tree.events) {
+        let shouldKeep = true;
         for (const rule of filterRules) {
-            if (!rule.shouldKeep(event)) {
-                if (rule.replacer) {
-                    return [rule.replacer(event)];
-                }
-                return [];
+            if (rule.shouldKeep(event)) {
+                continue;
             }
+
+            shouldKeep = false;
+            if (rule.replacer) {
+                events.push(rule.replacer(event));
+            }
+            errors.push(rule.reason);
         }
-        return [event];
-    });
+
+        if (shouldKeep) {
+            events.push(event);
+        }
+    }
 
     switch (tree.kind) {
         case "void":
         case "ns-void": {
-            return { value: { ...tree, events }, errors: [] };
+            return { value: { ...tree, events }, errors };
         }
         case "regular":
         case "ns-regular": {
@@ -178,6 +244,7 @@ export function filterEvents<a>(
             for (const child of tree.children) {
                 const result = filterEvents(filterRules, child);
                 children.push(result.value);
+                errors.push(...result.errors);
             }
 
             return {
@@ -186,7 +253,7 @@ export function filterEvents<a>(
                     events,
                     children,
                 },
-                errors: [],
+                errors,
             };
         }
     }

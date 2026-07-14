@@ -31,11 +31,11 @@ export type HtmlLanguage<a> = Language<HtmlNode<a>, HtmlNode<a>> &
 /**
  * filters, parser, and generator for working with raw html, or html nodes (i.e `coed`'s fundemental structure)
  *
- * `filter`: filter `HtmlNode` by the node themselves
- * `filterAttributes`: filter the attributes of `HtmlNode`s
- * `filterEvents`: filter the events of `HtmlNode`s
- * `generate`: generate HTML string from a `HtmlNode`
- * `parse`: turn a string into a `HtmlNode` tree, or string if parsing failed (`Result` type)
+ * @property `filter`: filter `HtmlNode` by the node themselves
+ * @property `filterAttributes`: filter the attributes of `HtmlNode`s
+ * @property `filterEvents`: filter the events of `HtmlNode`s
+ * @property `generate`: generate HTML string from a `HtmlNode`
+ * @property `parse`: turn a string into a `HtmlNode` tree, or string if parsing failed (`Result` type)
  */
 export const html: HtmlLanguage<unknown> = {
     filter: filter,
