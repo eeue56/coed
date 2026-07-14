@@ -4,7 +4,7 @@ import {
     parseExpression,
 } from "../../../langs/javascript/parser/parse.ts";
 import { tokenize } from "../../../langs/javascript/parser/tokenize.ts";
-import type { Result } from "../../../langs/javascript/types.ts";
+import type { Result } from "../../../langs/types.ts";
 
 function expectOk<T>(result: Result<T>): T {
     if (result.kind !== "Ok") {

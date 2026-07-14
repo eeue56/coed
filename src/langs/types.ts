@@ -1,13 +1,22 @@
+export type Ok<value> = {
+    kind: "Ok";
+    value: value;
+};
+
+export type Err = {
+    kind: "Err";
+    error: string;
+};
+
+export type Result<value> = Ok<value> | Err;
+
 /**
  * Rules that each of the sub-coed languages use
  *
- * reason: explain to the user why the filter rule exists/was applied
- * shouldKeep: callback to assess if the item should be filtered
- * replacer: optional field with a callback that converts from one AST item to another
+ * @prop `reason`: explain to the user why the filter rule exists/was applied
+ * @prop `shouldKeep`: callback to assess if the item should be filtered
+ * @prop `replacer`: optional field with a callback that converts from one AST item to another
  */
-
-import type { Result } from "./javascript/types.ts";
-
 export type FilterRule<value> = {
     reason: string;
     shouldKeep: (value: value) => boolean;

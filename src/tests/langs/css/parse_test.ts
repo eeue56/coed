@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "assert";
 import { css } from "../../../langs/css/index.ts";
 import type { CssBlock } from "../../../langs/css/types.ts";
-import type { Result } from "../../../langs/javascript/types.ts";
+import type { Result } from "../../../langs/types.ts";
 
 export function testTagParsing() {
     const input = `

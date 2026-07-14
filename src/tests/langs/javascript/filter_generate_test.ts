@@ -6,9 +6,9 @@ import {
     isAst,
     type Ast,
     type JsNode,
-    type Result,
+    type Program,
 } from "../../../langs/javascript/types.ts";
-import type { FilterRule } from "../../../langs/types.ts";
+import type { FilterRule, Result } from "../../../langs/types.ts";
 
 function expectOk<T>(result: Result<T>): T {
     if (result.kind !== "Ok") {
@@ -163,7 +163,7 @@ const isHarmfulExpression: FilterRule<JsNode> = {
 };
 
 function assertSanitizedCode(input: string, expected: string): void {
-    const program = expectOk(parse(input));
+    const program = expectOk<Program>(parse(input));
     const sanitized = sanitizeProgram(
         program.filter(isAst),
         isHarmfulExpression,

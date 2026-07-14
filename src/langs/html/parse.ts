@@ -14,7 +14,7 @@ import {
     type Tag,
 } from "../../coed.ts";
 import { type SvgTag } from "../../coed/svg.ts";
-import type { Result } from "../javascript/types.ts";
+import type { Result } from "../types.ts";
 
 /**
  * Parse a fragment of html string into Coed.

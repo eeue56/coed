@@ -1,4 +1,4 @@
-import type { Result } from "../javascript/types.ts";
+import type { Result } from "../types.ts";
 import type {
     CssBlock,
     Declaration,

@@ -6,9 +6,8 @@ import type {
     Expression,
     JsNode,
     NumberExpression,
-    Result,
 } from "../../../langs/javascript/types.ts";
-import type { FilterRule } from "../../../langs/types.ts";
+import type { FilterRule, Result } from "../../../langs/types.ts";
 
 const one: NumberExpression = { kind: "NumberExpression", value: 1 };
 const two: NumberExpression = { kind: "NumberExpression", value: 2 };

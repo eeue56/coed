@@ -3,9 +3,10 @@ import type {
     Expression,
     ExpressionParseResult,
     ParserState,
-    Result,
     StatementParseResult,
 } from "../types.ts";
+
+import type { Result } from "../../types.ts";
 
 type BaseToken = { startIndex: number; endIndex: number };
 type NumberToken = BaseToken & { kind: "NumberToken"; value: number };

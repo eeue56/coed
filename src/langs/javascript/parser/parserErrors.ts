@@ -1,6 +1,6 @@
+import type { Err } from "../../types.ts";
 import type {
     DetailedParseError,
-    Err,
     ParserState,
     SourceLocation,
 } from "../types.ts";

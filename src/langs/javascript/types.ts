@@ -1,3 +1,4 @@
+import type { Result } from "../types.ts";
 import type { Token } from "./parser/types.ts";
 
 export type NumberExpression = { kind: "NumberExpression"; value: number };
@@ -224,18 +225,6 @@ export type Ast =
     | ReturnStatement
     | ContinueStatement
     | BreakStatement;
-
-export type Ok<value> = {
-    kind: "Ok";
-    value: value;
-};
-
-export type Err = {
-    kind: "Err";
-    error: string;
-};
-
-export type Result<value> = Ok<value> | Err;
 
 export type ExpressionParseResult = {
     expression: Expression;

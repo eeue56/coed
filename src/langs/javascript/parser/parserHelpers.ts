@@ -1,8 +1,8 @@
+import type { Result } from "../../types.ts";
 import type {
     Ast,
     Expression,
     ParserState,
-    Result,
     StatementParseResult,
     TokenKinds,
 } from "../types.ts";

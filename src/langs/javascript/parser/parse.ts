@@ -1,3 +1,4 @@
+import type { Result } from "../../types.ts";
 import type {
     Ast,
     BinaryOperatorRule,
@@ -6,10 +7,10 @@ import type {
     ParseExpressionFunction,
     ParserState,
     Program,
-    Result,
     StatementParseResult,
     TokenKinds,
 } from "../types.ts";
+
 import {
     buildStatementFailureContext,
     createExpressionParseError,
