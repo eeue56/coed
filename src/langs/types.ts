@@ -47,7 +47,7 @@ export type Language<value, node> = {
 };
 
 /**
- * If a replacer existes, return that value
+ * If a replacer exists, return that value
  * otherwise return nothing
  *
  * With error reason
