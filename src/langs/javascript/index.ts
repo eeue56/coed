@@ -1,8 +1,8 @@
-import { Language } from "../types.ts";
+import type { Language } from "../types.ts";
 import { filterProgram } from "./filter.ts";
 import { generateProgram } from "./generate.ts";
 import { parse } from "./parser/index.ts";
-import { JsNode, Program } from "./types.ts";
+import type { JsNode, Program } from "./types.ts";
 
 /**
  * filters, parser, and generator for working with raw JavaScript, or JavaScript nodes

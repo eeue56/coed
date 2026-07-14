@@ -40,7 +40,7 @@ import type { Result } from "../langs/types.ts";
 export function testParseText() {
     const rawHtml = `<!doctype html><html><body>Hello world!</body></html>`;
 
-    const coedEquvilient: Result<HtmlNode<never>> = {
+    const expectedCoed: Result<HtmlNode<never>> = {
         kind: "Ok",
         value: html(
             [],
@@ -51,13 +51,13 @@ export function testParseText() {
 
     const parsed = parse(rawHtml);
 
-    assert.deepStrictEqual(parsed, coedEquvilient);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseSingleElement() {
     const rawHtml = `<!doctype html><html><body><p>Hello world!</p></body></html>`;
 
-    const coedEquvilient: Result<HtmlNode<never>> = {
+    const expectedCoed: Result<HtmlNode<never>> = {
         kind: "Ok",
         value: html(
             [],
@@ -71,13 +71,13 @@ export function testParseSingleElement() {
 
     const parsed = parse(rawHtml);
 
-    assert.deepStrictEqual(parsed, coedEquvilient);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseDeeplyNestedElements() {
     const rawHtml = `<!doctype html><html><body><div><p><span><a><b><i><u><em><strong><mark><small><sub><sup><code><s><del><ins>Deeply nested elements</ins></del></s></code></sup></sub></small></mark></strong></em></u></i></b></a></span></p></div></body></html>`;
 
-    const coedEquivilent: Result<HtmlNode<never>> = {
+    const expectedCoed: Result<HtmlNode<never>> = {
         kind: "Ok",
         value: html(
             [],
@@ -201,13 +201,13 @@ export function testParseDeeplyNestedElements() {
 
     const parsed = parse(rawHtml);
 
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithStyles() {
     const rawHtml = `<!doctype html><html><body><div class="test"><p>Hello <span style="color: red;">world</span>!</p></div></body></html>`;
 
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -245,14 +245,14 @@ export function testParseWithStyles() {
 
     const parsed = parse(rawHtml);
 
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithNamespace() {
     const rawHtml = `<!doctype html><html><body><svg xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" stroke="green" stroke-width="4" fill="yellow" /></svg></body></html>`;
     const parsed = parse(rawHtml);
 
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -286,14 +286,14 @@ export function testParseWithNamespace() {
         ),
     };
 
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseSvg() {
     const rawHtml = `<!doctype html><html><body><svg><circle cx="50" cy="50" r="40" stroke="green" stroke-width="4" fill="yellow" /></svg></body></html>`;
     const parsed = parse(rawHtml);
 
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -327,13 +327,13 @@ export function testParseSvg() {
         ),
     };
 
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithMultipleRootElements() {
     const rawHtml = `<!doctype html><html><body><p>Hello</p><p>world!</p></body></html>`;
     const parsed = parse(rawHtml);
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -349,14 +349,14 @@ export function testParseWithMultipleRootElements() {
         ),
     };
 
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithWhitespace() {
     const rawHtml = `<!doctype html><html><body>   <p>Hello</p>   <p>world!</p>   </body></html>`;
     const parsed = parse(rawHtml);
 
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -378,14 +378,14 @@ export function testParseWithWhitespace() {
         ),
     };
 
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithComments() {
     const rawHtml = `<!doctype html><html><body><p>Hello<!-- This is a comment --> world!</p></body></html>`;
     const parsed = parse(rawHtml);
 
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -397,14 +397,14 @@ export function testParseWithComments() {
         ),
     };
 
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithDoctype() {
     const rawHtml = `<!DOCTYPE html><html><body><p>Hello world!</p></body></html>`;
     const parsed = parse(rawHtml);
 
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -416,14 +416,14 @@ export function testParseWithDoctype() {
         ),
     };
 
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithSelfClosingTags() {
     const rawHtml = `<!doctype html><html><body><p>Hello<br>world!</p></body></html>`;
     const parsed = parse(rawHtml);
 
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -438,13 +438,13 @@ export function testParseWithSelfClosingTags() {
             ],
         ),
     };
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithDeeplyNestedElementsAndWhitespace() {
     const rawHtml = `<!doctype html><html><body><div><p><span><a><b><i><u><em><strong><mark><small><sub><sup><code><s><del><ins>   Deeply nested elements   </ins></del></s></code></sup></sub></small></mark></strong></em></u></i></b></a></span></p></div></body></html>`;
     const parsed = parse(rawHtml);
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -566,13 +566,13 @@ export function testParseWithDeeplyNestedElementsAndWhitespace() {
         ),
     };
 
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseScriptTag() {
     const rawHtml = `<!DOCTYPE html><html><body><script>console.log("Hello world!");</script></body></html>`;
     const parsed = parse(rawHtml);
-    const coedEquivilent: Result<HtmlNode<never>> = {
+    const expectedCoed: Result<HtmlNode<never>> = {
         kind: "Ok",
         value: html(
             [],
@@ -587,13 +587,13 @@ export function testParseScriptTag() {
             ],
         ),
     };
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseStyleTag() {
     const rawHtml = `<!DOCTYPE html><html><body><style>body { background-color: red; }</style></body></html>`;
     const parsed = parse(rawHtml);
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -608,13 +608,13 @@ export function testParseStyleTag() {
             ],
         ),
     };
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseAttributes() {
     const rawHtml = `<!DOCTYPE html><html><body><p class="test" id="test-id" data-test="test-data">Hello world!</p></body></html>`;
     const parsed = parse(rawHtml);
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -639,14 +639,14 @@ export function testParseAttributes() {
             ],
         ),
     };
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseBooleanAttributes() {
     const rawHtml = `<!DOCTYPE html><html><body><input type="checkbox" checked disabled></body></html>`;
     const parsed = parse(rawHtml);
 
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -671,13 +671,13 @@ export function testParseBooleanAttributes() {
         ),
     };
 
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithInvalidHtml() {
     const rawHtml = `<!DOCTYPE html><html><body><p>Hello world!</p></body></html>`;
     const parsed = parse(rawHtml);
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -689,14 +689,14 @@ export function testParseWithInvalidHtml() {
         ),
     };
 
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithInvalidHtml2() {
     const rawHtml = `<!DOCTYPE html><html><body><p>Hello <span>world!</span></p></body></html>`;
     const parsed = parse(rawHtml);
 
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -718,14 +718,14 @@ export function testParseWithInvalidHtml2() {
         ),
     };
 
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithInvalidHtml3() {
     const rawHtml = `<!DOCTYPE html><html><body><p>Hello <span>world!</span></p></body></html>`;
     const parsed = parse(rawHtml);
 
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -747,13 +747,13 @@ export function testParseWithInvalidHtml3() {
         ),
     };
 
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithIframes() {
     const rawHtml = `<!DOCTYPE html><html><body><iframe src="https://www.example.com"></iframe></body></html>`;
     const parsed = parse(rawHtml);
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -775,23 +775,23 @@ export function testParseWithIframes() {
         ),
     };
 
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseEmptyString() {
     const rawHtml = ``;
     const parsed = parse(rawHtml);
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html([], [], [head([], [], []), body([], [], [])]),
     };
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseHtml() {
     const rawHtml = `<!DOCTYPE html><html><head><title>Test</title></head><body><p>Hello world!</p></body></html>`;
     const parsed = parse(rawHtml);
-    const coedEquivilent: Result<HtmlNode<unknown>> = {
+    const expectedCoed: Result<HtmlNode<unknown>> = {
         kind: "Ok",
         value: html(
             [],
@@ -802,5 +802,5 @@ export function testParseHtml() {
             ],
         ),
     };
-    assert.deepStrictEqual(parsed, coedEquivilent);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
