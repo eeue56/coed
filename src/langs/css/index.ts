@@ -8,7 +8,7 @@ export * from "./parse.ts";
 export * from "./types.ts";
 
 type RuleFilter = {
-    filterDeclariations: (
+    filterDeclarations: (
         filterRules: FilterRule<Declaration>[],
         tree: CssBlock[],
     ) => FinalFilterResult<CssBlock[]>;
@@ -28,5 +28,5 @@ export const css: CssLanguage = {
     parse: parseCssBlocks,
     filter,
     generate,
-    filterDeclariations: filterCssDeclarations,
+    filterDeclarations: filterCssDeclarations,
 };

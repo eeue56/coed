@@ -30,7 +30,7 @@ export function testTagFiltering() {
         errors: ["Filtering out width properties"],
     };
 
-    const actualBlocks: FinalFilterResult<CssBlock[]> = css.filterDeclariations(
+    const actualBlocks: FinalFilterResult<CssBlock[]> = css.filterDeclarations(
         [
             {
                 shouldKeep: (leaf) => {
@@ -88,7 +88,7 @@ export function testMediaFiltering() {
         ],
     };
 
-    const actualBlocks: FinalFilterResult<CssBlock[]> = css.filterDeclariations(
+    const actualBlocks: FinalFilterResult<CssBlock[]> = css.filterDeclarations(
         [
             {
                 shouldKeep: (leaf) => {
