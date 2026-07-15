@@ -119,7 +119,7 @@ function filterExpression(
     filterRules: FilterRule<JsNode>[],
 ): Expression | null {
     const result = filterExpressionWithResults(expression, filterRules);
-    return result.values[0] ?? null;
+    return result.value[0] ?? null;
 }
 
 export function testFilterExpressionReturnsNullWhenRootFailsPredicate() {

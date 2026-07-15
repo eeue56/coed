@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "assert";
 import { css } from "../../../langs/css/index.ts";
 import type { CssBlock } from "../../../langs/css/types.ts";
-import type { FinalFilterResult } from "../../../langs/types.ts";
+import type { FilterResult } from "../../../langs/types.ts";
 
 export function testTagFiltering() {
     const input: CssBlock = {
@@ -15,12 +15,12 @@ export function testTagFiltering() {
         ],
     };
 
-    const output: FinalFilterResult<CssBlock[]> = {
+    const output: FilterResult<CssBlock[]> = {
         value: [],
         errors: ["Filtering out h1 tags"],
     };
 
-    const actualBlocks: FinalFilterResult<CssBlock[]> = css.filter(
+    const actualBlocks: FilterResult<CssBlock[]> = css.filter(
         [
             {
                 shouldKeep: (leaf) => {
@@ -54,7 +54,7 @@ export function testClassFiltering() {
         ],
     };
 
-    const output: FinalFilterResult<CssBlock[]> = {
+    const output: FilterResult<CssBlock[]> = {
         value: [],
         errors: ["Filtering out hello class"],
     };
@@ -93,7 +93,7 @@ export function testIdFiltering() {
         ],
     };
 
-    const output: FinalFilterResult<CssBlock[]> = {
+    const output: FilterResult<CssBlock[]> = {
         value: [],
         errors: ["Filtering out hello id"],
     };
@@ -132,7 +132,7 @@ export function testAllFiltering() {
         ],
     };
 
-    const output: FinalFilterResult<CssBlock[]> = {
+    const output: FilterResult<CssBlock[]> = {
         value: [],
         errors: ["Filtering out all selectors"],
     };
@@ -178,7 +178,7 @@ export function testChildFilteringEntireTree() {
         ],
     };
 
-    const output: FinalFilterResult<CssBlock[]> = {
+    const output: FilterResult<CssBlock[]> = {
         value: [],
         errors: ["Filtering out all regular blocks"],
     };
@@ -220,7 +220,7 @@ export function testSiblingFiltering() {
         ],
     };
 
-    const output: FinalFilterResult<CssBlock[]> = {
+    const output: FilterResult<CssBlock[]> = {
         value: [],
         errors: ["Filtering out all regular blocks"],
     };
@@ -259,7 +259,7 @@ export function testPsuedoFiltering() {
         ],
     };
 
-    const output: FinalFilterResult<CssBlock[]> = {
+    const output: FilterResult<CssBlock[]> = {
         value: [],
         errors: ["Filtering out hover psuedo selectors"],
     };
@@ -325,7 +325,7 @@ export function testPsuedoElementFiltering() {
         [input],
     );
 
-    const output: FinalFilterResult<CssBlock[]> = {
+    const output: FilterResult<CssBlock[]> = {
         value: [],
         errors: ["Filtering out before psuedo elements"],
     };
@@ -378,7 +378,7 @@ export function testMultipleFiltering() {
         [input],
     );
 
-    const output: FinalFilterResult<CssBlock[]> = {
+    const output: FilterResult<CssBlock[]> = {
         value: [],
         errors: ["Filtering out multiple selectors"],
     };
@@ -444,7 +444,7 @@ export function testMediaFiltering() {
         [input],
     );
 
-    const output: FinalFilterResult<CssBlock[]> = {
+    const output: FilterResult<CssBlock[]> = {
         value: [
             {
                 kind: "MediaQuery",
@@ -516,7 +516,7 @@ export function testRootMediaQueryFiltering() {
         [input],
     );
 
-    const output: FinalFilterResult<CssBlock[]> = {
+    const output: FilterResult<CssBlock[]> = {
         value: [],
         errors: ["Filtering out media query"],
     };

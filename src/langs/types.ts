@@ -23,14 +23,7 @@ export type FilterRule<value> = {
     replacer?: (value: value) => value;
 };
 
-export type FilterResult<value> = value | string;
-
-export type FilterResults<value> = {
-    values: value[];
-    errors: string[];
-};
-
-export type FinalFilterResult<value> = {
+export type FilterResult<value> = {
     value: value;
     errors: string[];
 };
@@ -41,7 +34,7 @@ export type Language<value, node> = {
     filter: (
         filterRules: FilterRule<node>[],
         tree: value,
-    ) => FinalFilterResult<value>;
+    ) => FilterResult<value>;
     generate: (value: value) => string;
     parse: Parser<value>;
 };
@@ -57,7 +50,7 @@ export type Language<value, node> = {
 export function returnReplacerOrEmptyList<a>(
     filterRule: FilterRule<a>,
     value: a,
-): FinalFilterResult<a[]> {
+): FilterResult<a[]> {
     if (filterRule.replacer) {
         return {
             value: [filterRule.replacer(value)],

@@ -1,4 +1,8 @@
-import type { FilterResults, FilterRule, FinalFilterResult } from "../types.ts";
+import {
+    returnReplacerOrEmptyList,
+    type FilterResult,
+    type FilterRule,
+} from "../types.ts";
 import {
     isAst,
     isExpression,
@@ -17,28 +21,31 @@ import {
 function filterAst(
     ast: Ast,
     filterRules: FilterRule<JsNode>[],
-): FilterResults<Ast> {
+): FilterResult<Ast[]> {
     for (const filterRule of filterRules) {
         if (!filterRule.shouldKeep(ast)) {
-            return { values: [], errors: [filterRule.reason] };
+            return returnReplacerOrEmptyList<Ast>(
+                filterRule as FilterRule<Ast>,
+                ast,
+            );
         }
     }
 
     switch (ast.kind) {
         case "ConstStatement": {
-            return { values: [ast], errors: [] };
+            return { value: [ast], errors: [] };
         }
         case "ForLoop": {
             const body = filterAsts(ast.body, filterRules);
             return {
-                values: [{ ...ast, body: body.values }],
+                value: [{ ...ast, body: body.value }],
                 errors: body.errors,
             };
         }
         case "FunctionDeclaration": {
             const body = filterAsts(ast.body, filterRules);
             return {
-                values: [{ ...ast, body: body.values }],
+                value: [{ ...ast, body: body.value }],
                 errors: body.errors,
             };
         }
@@ -49,25 +56,25 @@ function filterAst(
                 : undefined;
             const ifs = {
                 ...ast,
-                thenBranch: thenBranch.values,
-                elseBranch: elseBranch?.values,
+                thenBranch: thenBranch.value,
+                elseBranch: elseBranch?.value,
             };
             return {
-                values: [ifs],
+                value: [ifs],
                 errors: [...thenBranch.errors, ...(elseBranch?.errors || [])],
             };
         }
         case "LetStatement": {
-            return { values: [ast], errors: [] };
+            return { value: [ast], errors: [] };
         }
         case "ReturnStatement": {
-            return { values: [ast], errors: [] };
+            return { value: [ast], errors: [] };
         }
         case "ContinueStatement": {
-            return { values: [ast], errors: [] };
+            return { value: [ast], errors: [] };
         }
         case "BreakStatement": {
-            return { values: [ast], errors: [] };
+            return { value: [ast], errors: [] };
         }
     }
 }
@@ -78,17 +85,17 @@ function filterAst(
 export function filterAsts(
     ast: Ast[],
     filterRules: FilterRule<JsNode>[],
-): FilterResults<Ast> {
+): FilterResult<Ast[]> {
     const toReturn = [];
     const errors = [];
 
     for (const node of ast) {
         const filtered = filterAst(node, filterRules);
 
-        toReturn.push(...filtered.values);
+        toReturn.push(...filtered.value);
         errors.push(...filtered.errors);
     }
-    return { values: toReturn, errors };
+    return { value: toReturn, errors };
 }
 
 /**
@@ -97,19 +104,22 @@ export function filterAsts(
 export function filterExpression(
     expression: Expression,
     filterRules: FilterRule<JsNode>[],
-): FilterResults<Expression> {
+): FilterResult<Expression[]> {
     for (const rule of filterRules) {
         if (!rule.shouldKeep(expression)) {
-            return { errors: [rule.reason], values: [] };
+            return returnReplacerOrEmptyList<Expression>(
+                rule as FilterRule<Expression>,
+                expression,
+            );
         }
     }
 
     switch (expression.kind) {
         case "NumberExpression": {
-            return { values: [expression], errors: [] };
+            return { value: [expression], errors: [] };
         }
         case "StringExpression": {
-            return { values: [expression], errors: [] };
+            return { value: [expression], errors: [] };
         }
         case "ArrayExpression": {
             const elements: Expression[] = [];
@@ -117,11 +127,11 @@ export function filterExpression(
 
             for (const element of expression.elements) {
                 const filtered = filterExpression(element, filterRules);
-                elements.push(...filtered.values);
+                elements.push(...filtered.value);
                 errors.push(...filtered.errors);
             }
 
-            return { values: [{ ...expression, elements }], errors };
+            return { value: [{ ...expression, elements }], errors };
         }
         case "ObjectExpression": {
             const properties: [string, Expression][] = [];
@@ -129,14 +139,14 @@ export function filterExpression(
 
             Object.entries(expression.properties).forEach(([key, value]) => {
                 const filtered = filterExpression(value, filterRules);
-                if (filtered.values.length > 0) {
-                    properties.push([key, filtered.values[0]]);
+                if (filtered.value.length > 0) {
+                    properties.push([key, filtered.value[0]]);
                 }
                 errors.push(...filtered.errors);
             });
 
             return {
-                values: [
+                value: [
                     {
                         ...expression,
                         properties: Object.fromEntries(properties),
@@ -153,39 +163,39 @@ export function filterExpression(
         case "MoreThanOrEqualExpression": {
             const left = filterExpression(expression.left, filterRules);
             const right = filterExpression(expression.right, filterRules);
-            if (left.values.length === 0 || right.values.length === 0) {
+            if (left.value.length === 0 || right.value.length === 0) {
                 return {
-                    values: [],
+                    value: [],
                     errors: [...left.errors, ...right.errors],
                 };
             }
             const exp = {
                 ...expression,
-                left: left.values[0],
-                right: right.values[0],
+                left: left.value[0],
+                right: right.value[0],
             };
-            return { values: [exp], errors: [...left.errors, ...right.errors] };
+            return { value: [exp], errors: [...left.errors, ...right.errors] };
         }
         case "IncrementExpression":
         case "DecrementExpression": {
-            return { values: [expression], errors: [] };
+            return { value: [expression], errors: [] };
         }
         case "IncreaseExpression":
         case "DecreaseExpression": {
             const amount = filterExpression(expression.amount, filterRules);
-            if (amount.values.length === 0) {
-                return { values: [], errors: [...amount.errors] };
+            if (amount.value.length === 0) {
+                return { value: [], errors: [...amount.errors] };
             }
             return {
-                values: [{ ...expression, amount: amount.values[0] }],
+                value: [{ ...expression, amount: amount.value[0] }],
                 errors: [...amount.errors],
             };
         }
         case "NullExpression": {
-            return { values: [expression], errors: [] };
+            return { value: [expression], errors: [] };
         }
         case "BooleanExpression": {
-            return { values: [expression], errors: [] };
+            return { value: [expression], errors: [] };
         }
         case "StringLiteralExpression": {
             const values = [];
@@ -193,14 +203,14 @@ export function filterExpression(
 
             for (const value of expression.values) {
                 const filtered = filterExpression(value, filterRules);
-                if (filtered.values.length === 0) {
-                    return { values: [], errors: [...filtered.errors] };
+                if (filtered.value.length === 0) {
+                    return { value: [], errors: [...filtered.errors] };
                 }
-                values.push(filtered.values[0]);
+                values.push(filtered.value[0]);
                 errors.push(...filtered.errors);
             }
             return {
-                values: [{ ...expression, values }],
+                value: [{ ...expression, values }],
                 errors,
             };
         }
@@ -209,33 +219,33 @@ export function filterExpression(
             const errors = [];
             for (const arg of expression.arguments) {
                 const filtered = filterExpression(arg, filterRules);
-                if (filtered.values.length === 0) {
-                    return { values: [], errors: [...filtered.errors] };
+                if (filtered.value.length === 0) {
+                    return { value: [], errors: [...filtered.errors] };
                 }
-                args.push(filtered.values[0]);
+                args.push(filtered.value[0]);
                 errors.push(...filtered.errors);
             }
-            return { values: [{ ...expression, arguments: args }], errors };
+            return { value: [{ ...expression, arguments: args }], errors };
         }
         case "NameLookupExpression": {
-            return { values: [expression], errors: [] };
+            return { value: [expression], errors: [] };
         }
         case "ObjectPropertyExpression": {
             const object = filterExpression(expression.object, filterRules);
             const property = filterExpression(expression.property, filterRules);
-            if (object.values.length === 0 || property.values.length === 0) {
+            if (object.value.length === 0 || property.value.length === 0) {
                 return {
-                    values: [],
+                    value: [],
                     errors: [...object.errors, ...property.errors],
                 };
             }
             return {
-                values: [
+                value: [
                     {
                         ...expression,
-                        object: object.values[0] as typeof expression.object,
+                        object: object.value[0] as typeof expression.object,
                         property: property
-                            .values[0] as typeof expression.property,
+                            .value[0] as typeof expression.property,
                     },
                 ],
                 errors: [...object.errors, ...property.errors],
@@ -244,9 +254,9 @@ export function filterExpression(
         case "ObjectMethodCallExpression": {
             const object = filterExpression(expression.object, filterRules);
             const method = filterExpression(expression.method, filterRules);
-            if (object.values.length === 0 || method.values.length === 0) {
+            if (object.value.length === 0 || method.value.length === 0) {
                 return {
-                    values: [],
+                    value: [],
                     errors: [...object.errors, ...method.errors],
                 };
             }
@@ -255,18 +265,18 @@ export function filterExpression(
 
             for (const arg of expression.arguments) {
                 const filtered = filterExpression(arg, filterRules);
-                if (filtered.values.length === 0) {
-                    return { values: [], errors: [...filtered.errors] };
+                if (filtered.value.length === 0) {
+                    return { value: [], errors: [...filtered.errors] };
                 }
-                args.push(filtered.values[0]);
+                args.push(filtered.value[0]);
             }
 
             return {
-                values: [
+                value: [
                     {
                         ...expression,
-                        object: object.values[0] as typeof expression.object,
-                        method: method.values[0] as typeof expression.method,
+                        object: object.value[0] as typeof expression.object,
+                        method: method.value[0] as typeof expression.method,
                         arguments: args,
                     },
                 ],
@@ -276,18 +286,18 @@ export function filterExpression(
         case "ArrayAccessExpression": {
             const array = filterExpression(expression.array, filterRules);
             const index = filterExpression(expression.index, filterRules);
-            if (array.values.length === 0 || index.values.length === 0) {
+            if (array.value.length === 0 || index.value.length === 0) {
                 return {
-                    values: [],
+                    value: [],
                     errors: [...array.errors, ...index.errors],
                 };
             }
             return {
-                values: [
+                value: [
                     {
                         ...expression,
-                        array: array.values[0] as typeof expression.array,
-                        index: index.values[0] as typeof expression.index,
+                        array: array.value[0] as typeof expression.array,
+                        index: index.value[0] as typeof expression.index,
                     },
                 ],
                 errors: [...array.errors, ...index.errors],
@@ -301,18 +311,18 @@ export function filterExpression(
         case "OrExpression": {
             const left = filterExpression(expression.left, filterRules);
             const right = filterExpression(expression.right, filterRules);
-            if (left.values.length === 0 || right.values.length === 0) {
+            if (left.value.length === 0 || right.value.length === 0) {
                 return {
-                    values: [],
+                    value: [],
                     errors: [...left.errors, ...right.errors],
                 };
             }
             return {
-                values: [
+                value: [
                     {
                         ...expression,
-                        left: left.values[0] as typeof expression.left,
-                        right: right.values[0] as typeof expression.right,
+                        left: left.value[0] as typeof expression.left,
+                        right: right.value[0] as typeof expression.right,
                     },
                 ],
                 errors: [...left.errors, ...right.errors],
@@ -324,24 +334,24 @@ export function filterExpression(
 function filterNode(
     node: JsNode,
     filterRules: FilterRule<JsNode>[],
-): FilterResults<JsNode> {
+): FilterResult<JsNode[]> {
     if (isExpression(node)) {
         return filterExpression(node, filterRules);
     } else if (isAst(node)) {
         return filterAst(node, filterRules);
     }
-    return { values: [], errors: [] };
+    return { value: [], errors: [] };
 }
 
 export function filterProgram(
     program: Program,
     filterRules: FilterRule<JsNode>[],
-): FinalFilterResult<Program> {
+): FilterResult<Program> {
     const filteredStatements = program.map((node) =>
         filterNode(node, filterRules),
     );
 
-    const values = filteredStatements.flatMap((result) => result.values);
+    const values = filteredStatements.flatMap((result) => result.value);
     const errors = filteredStatements.flatMap((result) => result.errors);
     const program_: Program = values;
 

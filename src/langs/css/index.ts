@@ -1,4 +1,4 @@
-import type { FilterRule, FinalFilterResult, Language } from "../types.ts";
+import type { FilterResult, FilterRule, Language } from "../types.ts";
 import { filter, filterCssDeclarations } from "./filter.ts";
 import { generate, parseCssBlocks } from "./parse.ts";
 import type { CssBlock, Declaration } from "./types.ts";
@@ -11,7 +11,7 @@ type RuleFilter = {
     filterDeclarations: (
         filterRules: FilterRule<Declaration>[],
         tree: CssBlock[],
-    ) => FinalFilterResult<CssBlock[]>;
+    ) => FilterResult<CssBlock[]>;
 };
 
 type CssLanguage = Language<CssBlock[], CssBlock> & RuleFilter;

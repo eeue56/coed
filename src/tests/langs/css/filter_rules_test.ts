@@ -1,7 +1,7 @@
 import { deepStrictEqual } from "assert";
 import { css } from "../../../langs/css/index.ts";
 import type { CssBlock } from "../../../langs/css/types.ts";
-import type { FinalFilterResult } from "../../../langs/types.ts";
+import type { FilterResult } from "../../../langs/types.ts";
 
 export function testTagFiltering() {
     const input: CssBlock = {
@@ -15,7 +15,7 @@ export function testTagFiltering() {
         ],
     };
 
-    const output: FinalFilterResult<CssBlock[]> = {
+    const output: FilterResult<CssBlock[]> = {
         value: [
             {
                 kind: "Regular",
@@ -30,7 +30,7 @@ export function testTagFiltering() {
         errors: ["Filtering out width properties"],
     };
 
-    const actualBlocks: FinalFilterResult<CssBlock[]> = css.filterDeclarations(
+    const actualBlocks: FilterResult<CssBlock[]> = css.filterDeclarations(
         [
             {
                 shouldKeep: (leaf) => {
@@ -88,7 +88,7 @@ export function testMediaFiltering() {
         ],
     };
 
-    const actualBlocks: FinalFilterResult<CssBlock[]> = css.filterDeclarations(
+    const actualBlocks: FilterResult<CssBlock[]> = css.filterDeclarations(
         [
             {
                 shouldKeep: (leaf) => {
@@ -105,7 +105,7 @@ export function testMediaFiltering() {
         [input],
     );
 
-    const output: FinalFilterResult<CssBlock[]> = {
+    const output: FilterResult<CssBlock[]> = {
         value: [
             {
                 kind: "MediaQuery",

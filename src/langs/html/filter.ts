@@ -6,8 +6,8 @@ import {
     text,
 } from "../../coed.ts";
 import {
+    type FilterResult,
     type FilterRule,
-    type FinalFilterResult,
     returnReplacerOrEmptyList,
 } from "../types.ts";
 
@@ -22,7 +22,7 @@ import {
 function returnReplacerOrEmptyText<a>(
     filterRule: FilterRule<HtmlNode<a>>,
     value: HtmlNode<a>,
-): FinalFilterResult<HtmlNode<a>> {
+): FilterResult<HtmlNode<a>> {
     if (filterRule.replacer) {
         return {
             value: filterRule.replacer(value),
@@ -51,7 +51,7 @@ function isStringAttributeWithClass(
 export function filter<a>(
     filterRules: FilterRule<HtmlNode<a>>[],
     tree: HtmlNode<a>,
-): FinalFilterResult<HtmlNode<a>> {
+): FilterResult<HtmlNode<a>> {
     if (tree.kind === "text" || tree.kind === "html-string") {
         for (const rule of filterRules) {
             if (!rule.shouldKeep(tree)) {
@@ -122,7 +122,7 @@ function splitClassAttribute(
 function filterClassAttributes(
     attributes: StringAttributeWithClass[],
     filterRules: FilterRule<Attribute>[],
-): FinalFilterResult<Attribute[]> {
+): FilterResult<Attribute[]> {
     const filteredAttributes: Attribute[] = [];
     const errors: string[] = [];
 
@@ -141,7 +141,7 @@ function filterClassAttributes(
 function filterAttribute(
     attribute: Attribute,
     filterRules: FilterRule<Attribute>[],
-): FinalFilterResult<Attribute[]> {
+): FilterResult<Attribute[]> {
     if (isStringAttributeWithClass(attribute)) {
         const splitAttributes = splitClassAttribute(attribute);
 
@@ -167,7 +167,7 @@ function filterAttribute(
 export function filterAttributes<a>(
     filterRules: FilterRule<Attribute>[],
     tree: HtmlNode<a>,
-): FinalFilterResult<HtmlNode<a>> {
+): FilterResult<HtmlNode<a>> {
     if (tree.kind === "text" || tree.kind === "html-string") {
         return { value: tree, errors: [] };
     }
@@ -214,7 +214,7 @@ export function filterAttributes<a>(
 export function filterEvents<a>(
     filterRules: FilterRule<Event<a>>[],
     tree: HtmlNode<a>,
-): FinalFilterResult<HtmlNode<a>> {
+): FilterResult<HtmlNode<a>> {
     if (tree.kind === "text" || tree.kind === "html-string") {
         return { value: tree, errors: [] };
     }

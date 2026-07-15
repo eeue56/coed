@@ -30,7 +30,7 @@ const keepAllNodes: FilterRule<JsNode> = {
 };
 
 function filterAsts(ast: Ast[], filterRules: FilterRule<JsNode>[]): Ast[] {
-    return filterAstsWithResults(ast, filterRules).values;
+    return filterAstsWithResults(ast, filterRules).value;
 }
 
 export function testFilterAstsRemovesTopLevelNodes() {

@@ -8,7 +8,7 @@ import {
     type HtmlNode,
 } from "../../../coed.ts";
 import { html } from "../../../langs/html/index.ts";
-import type { FinalFilterResult } from "../../../langs/types.ts";
+import type { FilterResult } from "../../../langs/types.ts";
 import { Just, Nothing } from "../../../types.ts";
 
 export function testFilterNodes() {
@@ -46,7 +46,7 @@ export function testFilterNodes() {
         tree,
     );
 
-    const expected: FinalFilterResult<HtmlNode<unknown>> = {
+    const expected: FilterResult<HtmlNode<unknown>> = {
         value: coed.node(
             "div",
             [],
@@ -115,7 +115,7 @@ export function testFilterNodesWithMultipleFilters() {
         tree,
     );
 
-    const expected: FinalFilterResult<HtmlNode<unknown>> = {
+    const expected: FilterResult<HtmlNode<unknown>> = {
         value: coed.node(
             "div",
             [],
@@ -166,7 +166,7 @@ export function testFilterNodesRemoveScriptTag() {
         tree,
     );
 
-    const expected: FinalFilterResult<HtmlNode<unknown>> = {
+    const expected: FilterResult<HtmlNode<unknown>> = {
         value: coed.node(
             "div",
             [],

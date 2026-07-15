@@ -1,7 +1,7 @@
 import {
     returnReplacerOrEmptyList,
+    type FilterResult,
     type FilterRule,
-    type FinalFilterResult,
 } from "../types.ts";
 import type { CssBlock, Declaration } from "./types.ts";
 
@@ -13,7 +13,7 @@ import type { CssBlock, Declaration } from "./types.ts";
 function filterCssBlock(
     filterRules: FilterRule<CssBlock>[],
     tree: CssBlock,
-): FinalFilterResult<CssBlock[]> {
+): FilterResult<CssBlock[]> {
     for (const rule of filterRules) {
         if (rule.shouldKeep(tree)) {
             continue;
@@ -54,7 +54,7 @@ function filterCssBlock(
 function shouldKeepDeclaration(
     rule: Declaration,
     filterRules: FilterRule<Declaration>[],
-): FinalFilterResult<Declaration[]> {
+): FilterResult<Declaration[]> {
     for (const filterRule of filterRules) {
         if (filterRule.shouldKeep(rule)) {
             continue;
@@ -71,7 +71,7 @@ function shouldKeepDeclaration(
 function filterCssDeclarationsInCssBlock(
     filterRules: FilterRule<Declaration>[],
     tree: CssBlock,
-): FinalFilterResult<CssBlock> {
+): FilterResult<CssBlock> {
     switch (tree.kind) {
         case "Regular": {
             const body: Declaration[] = [];
@@ -110,7 +110,7 @@ function filterCssDeclarationsInCssBlock(
 export function filterCssDeclarations(
     filterRules: FilterRule<Declaration>[],
     tree: CssBlock[],
-): FinalFilterResult<CssBlock[]> {
+): FilterResult<CssBlock[]> {
     const results: CssBlock[] = [];
     const errors: string[] = [];
 
@@ -127,7 +127,7 @@ export function filterCssDeclarations(
 export function filter(
     filterRules: FilterRule<CssBlock>[],
     tree: CssBlock[],
-): FinalFilterResult<CssBlock[]> {
+): FilterResult<CssBlock[]> {
     const results: CssBlock[] = [];
     const errors: string[] = [];
 

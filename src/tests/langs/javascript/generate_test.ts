@@ -1,6 +1,5 @@
 import * as assert from "assert";
-import { generateProgram } from "../../../langs/javascript/generate.ts";
-import { parse } from "../../../langs/javascript/parser/parse.ts";
+import { javascript } from "../../../langs/javascript/index.ts";
 import type { Program } from "../../../langs/javascript/types.ts";
 import type { Result } from "../../../langs/types.ts";
 
@@ -13,15 +12,15 @@ function expectOk<T>(result: Result<T>): T {
 }
 
 function assertMatchingParsedAndGeneratedCode(code: string) {
-    const program = expectOk<Program>(parse(code));
+    const program = expectOk<Program>(javascript.parse(code));
 
-    assert.strictEqual(generateProgram(program), code);
+    assert.strictEqual(javascript.generate(program), code);
 }
 
 function assertGeneratedFromSource(input: string, expected: string) {
-    const program = expectOk<Program>(parse(input));
+    const program = expectOk<Program>(javascript.parse(input));
 
-    assert.strictEqual(generateProgram(program), expected);
+    assert.strictEqual(javascript.generate(program), expected);
 }
 
 export function testGenerateObjectsAndArrays() {
@@ -35,7 +34,7 @@ let queue = [1, 2, 3];
 
 export function testGenerateObjectsAndArraysIsNormalized() {
     const program = expectOk<Program>(
-        parse(
+        javascript.parse(
             `
 const settings = { theme: "light", retries: 3 };
 let queue = [1, 2, 3];
@@ -48,7 +47,7 @@ const settings = { "theme": "light", "retries": 3 };
 let queue = [1, 2, 3];
         `.trim();
 
-    assert.strictEqual(generateProgram(program), expected);
+    assert.strictEqual(javascript.generate(program), expected);
 }
 
 export function testGenerateIfAndForStatements() {
@@ -149,13 +148,13 @@ export function testGenerateNestedCollectionsIsNormalized() {
 const dashboardState = { widgets: [1, 2], filters: { active: true, region: "eu" } };
         `.trim();
 
-    const program = expectOk<Program>(parse(code));
+    const program = expectOk<Program>(javascript.parse(code));
 
     const expected = `
 const dashboardState = { "widgets": [1, 2], "filters": { "active": true, "region": "eu" } };
         `.trim();
 
-    assert.strictEqual(generateProgram(program), expected);
+    assert.strictEqual(javascript.generate(program), expected);
 }
 
 export function testGenerateArrayOfObjects() {
@@ -434,7 +433,7 @@ function refreshProfile(accountId) {
 
 export function testGenerateFunctionWithPropertyLookupAndMethodCallGetsDoubleQuoteNormalized() {
     const program = expectOk<Program>(
-        parse(
+        javascript.parse(
             `
 function refreshProfile(accountId) {
     let profileState = apiClient.fetchProfile(accountId);
@@ -451,12 +450,12 @@ function refreshProfile(accountId) {
 }
         `.trim();
 
-    assert.strictEqual(generateProgram(program), expectedOutcome);
+    assert.strictEqual(javascript.generate(program), expectedOutcome);
 }
 
 export function testGenerateFunctionWithPropertyLookupAndMethodCallGetsSingleQuoteNormalized() {
     const program = expectOk<Program>(
-        parse(
+        javascript.parse(
             `
 function refreshProfile(accountId) {
     let profileState = apiClient.fetchProfile(accountId);
@@ -473,7 +472,7 @@ function refreshProfile(accountId) {
 }
         `.trim();
 
-    assert.strictEqual(generateProgram(program), expectedOutcome);
+    assert.strictEqual(javascript.generate(program), expectedOutcome);
 }
 
 export function testGenerateObjectMethodCallWithArrayAccessArgument() {
@@ -519,7 +518,7 @@ for (let __while_0 = 0; hasPendingSync; __while_0++) {
 }
 
 export function testGenerateWithBlockReturnsErr() {
-    const result = parse(
+    const result = javascript.parse(
         `
 with (dashboardState) {
     const selectedTheme = themeName;

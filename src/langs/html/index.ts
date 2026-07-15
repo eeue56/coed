@@ -4,7 +4,7 @@ import {
     type Event,
     type HtmlNode,
 } from "../../coed.ts";
-import type { FilterRule, FinalFilterResult, Language } from "../types.ts";
+import type { FilterResult, FilterRule, Language } from "../types.ts";
 import { filter, filterAttributes, filterEvents } from "./filter.ts";
 import { parse } from "./parse.ts";
 
@@ -12,12 +12,12 @@ type AttributeAndEventFilters<a> = {
     filterEvents: (
         filterRules: FilterRule<Event<a>>[],
         tree: HtmlNode<a>,
-    ) => FinalFilterResult<HtmlNode<a>>;
+    ) => FilterResult<HtmlNode<a>>;
 
     filterAttributes: (
         filterRules: FilterRule<Attribute>[],
         tree: HtmlNode<a>,
-    ) => FinalFilterResult<HtmlNode<a>>;
+    ) => FilterResult<HtmlNode<a>>;
 };
 
 /**

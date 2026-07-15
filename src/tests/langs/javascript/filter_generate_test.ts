@@ -1,10 +1,9 @@
 import * as assert from "assert";
-import { filterExpression } from "../../../langs/javascript/filter.ts";
-import { generateProgram } from "../../../langs/javascript/generate.ts";
-import { parse } from "../../../langs/javascript/parser/parse.ts";
+import { javascript } from "../../../langs/javascript/index.ts";
 import {
     isAst,
     type Ast,
+    type Expression,
     type JsNode,
     type Program,
 } from "../../../langs/javascript/types.ts";
@@ -22,35 +21,38 @@ function sanitizeProgram(
     program: Ast[],
     filterRule: FilterRule<JsNode>,
 ): Ast[] {
-    return program.flatMap((statement) => {
-        if (isAst(statement)) {
-            const sanitized = sanitizeAst(statement, filterRule);
-            return sanitized ? [sanitized] : [];
+    const results = [];
+
+    for (const statement of program) {
+        const sanitized = sanitizeAst(statement, filterRule);
+        if (sanitized !== null && isAst(sanitized)) {
+            results.push(sanitized);
         }
-        return [];
-    });
+    }
+
+    return results;
 }
 
-function sanitizeAst(ast: Ast, filterRule: FilterRule<JsNode>): Ast | null {
+function sanitizeAst(ast: Ast, filterRule: FilterRule<JsNode>): JsNode | null {
     switch (ast.kind) {
         case "LetStatement": {
-            const value = filterExpression(ast.value, [filterRule]);
+            const program = javascript.filter([filterRule], [ast.value]);
 
-            if (value.values.length === 0) {
+            if (program.value.length === 0) {
                 return null;
             }
-            return { ...ast, value: value.values[0] };
+            return { ...ast, value: program.value[0] as Expression };
         }
         case "ConstStatement": {
-            const value = filterExpression(ast.value, [filterRule]);
-            if (value.values.length === 0) {
+            const value = javascript.filter([filterRule], [ast.value]);
+            if (value.value.length === 0) {
                 return null;
             }
-            return { ...ast, value: value.values[0] };
+            return { ...ast, value: value.value[0] as Expression };
         }
         case "IfStatement": {
-            const condition = filterExpression(ast.condition, [filterRule]);
-            if (condition.values.length === 0) {
+            const condition = javascript.filter([filterRule], [ast.condition]);
+            if (condition.value.length === 0) {
                 return null;
             }
 
@@ -61,29 +63,29 @@ function sanitizeAst(ast: Ast, filterRule: FilterRule<JsNode>): Ast | null {
 
             return {
                 ...ast,
-                condition: condition.values[0],
+                condition: condition.value[0] as Expression,
                 thenBranch,
                 elseBranch,
             };
         }
         case "ForLoop": {
-            const initValue = filterExpression(ast.init.value, [filterRule]);
-            const condition = filterExpression(ast.condition, [filterRule]);
-            const increment = filterExpression(ast.increment, [filterRule]);
+            const initValue = javascript.filter([filterRule], [ast.init.value]);
+            const condition = javascript.filter([filterRule], [ast.condition]);
+            const increment = javascript.filter([filterRule], [ast.increment]);
 
             if (
-                initValue.values.length === 0 ||
-                condition.values.length === 0 ||
-                increment.values.length === 0
+                initValue.value.length === 0 ||
+                condition.value.length === 0 ||
+                increment.value.length === 0
             ) {
                 return null;
             }
 
             return {
                 ...ast,
-                init: { ...ast.init, value: initValue.values[0] },
-                condition: condition.values[0],
-                increment: increment.values[0],
+                init: { ...ast.init, value: initValue.value[0] as Expression },
+                condition: condition.value[0] as Expression,
+                increment: increment.value[0] as Expression,
                 body: sanitizeProgram(ast.body, filterRule),
             };
         }
@@ -98,11 +100,11 @@ function sanitizeAst(ast: Ast, filterRule: FilterRule<JsNode>): Ast | null {
                 return ast;
             }
 
-            const value = filterExpression(ast.value, [filterRule]);
-            if (value.values.length === 0) {
+            const value = javascript.filter([filterRule], [ast.value]);
+            if (value.value.length === 0) {
                 return null;
             }
-            return { ...ast, value: value.values[0] };
+            return { ...ast, value: value.value[0] as Expression };
         }
         case "ContinueStatement": {
             return ast;
@@ -163,13 +165,14 @@ const isHarmfulExpression: FilterRule<JsNode> = {
 };
 
 function assertSanitizedCode(input: string, expected: string): void {
-    const program = expectOk<Program>(parse(input));
+    const result = javascript.parse(input);
+    const program = expectOk<Program>(result);
     const sanitized = sanitizeProgram(
         program.filter(isAst),
         isHarmfulExpression,
     );
 
-    assert.strictEqual(generateProgram(sanitized), expected);
+    assert.strictEqual(javascript.generate(sanitized), expected);
 }
 
 export function testFilterRemovesWindowLocationFromArrayLiteral() {
