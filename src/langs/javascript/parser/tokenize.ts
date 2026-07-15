@@ -518,6 +518,11 @@ function processReadyForNextToken(
     return 0;
 }
 
+/**
+ * turn a string into a list of tokens
+ *
+ * errors are dropped: tokenize does a best-effort attempt. actual errors are handled by the parser
+ */
 export function tokenize(string: string): Token[] {
     const tokens: Token[] = [];
     let tokenizerModel: TokenizerModel = {
