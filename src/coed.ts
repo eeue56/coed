@@ -527,40 +527,37 @@ export function render<Msg>(node: HtmlNode<Msg>, depth = 0): string {
         case "text":
             return whitespace + node.text;
 
+        case "html-string": {
+            return node.content;
+        }
+
         case "void":
+        case "ns-void": {
+            const renderedAttributes = node.attributes
+                .map(renderAttribute)
+                .join(" ");
+            const attributes =
+                (renderedAttributes.length > 0 ? " " : "") + renderedAttributes;
+            return whitespace + `<${node.tag}${attributes}>`;
+        }
+
         case "regular":
-        case "ns-void":
         case "ns-regular": {
             const renderedAttributes = node.attributes
                 .map(renderAttribute)
                 .join(" ");
             const attributes =
                 (renderedAttributes.length > 0 ? " " : "") + renderedAttributes;
-
-            switch (node.kind) {
-                case "void":
-                case "ns-void":
-                    return whitespace + `<${node.tag}${attributes}>`;
-
-                case "regular":
-                case "ns-regular": {
-                    if (node.children.length > 0) {
-                        return (
-                            whitespace +
-                            `<${node.tag}${attributes}>
+            if (node.children.length > 0) {
+                return (
+                    whitespace +
+                    `<${node.tag}${attributes}>
 ${node.children.map((child) => render(child, depth + 1)).join("\n")}
 ${whitespace}</${node.tag}>`
-                        );
-                    }
-
-                    return (
-                        whitespace + `<${node.tag}${attributes}></${node.tag}>`
-                    );
-                }
+                );
             }
-        }
-        case "html-string": {
-            return node.content;
+
+            return whitespace + `<${node.tag}${attributes}></${node.tag}>`;
         }
     }
 }
