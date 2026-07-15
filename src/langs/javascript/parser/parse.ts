@@ -65,7 +65,7 @@ function binaryRule<K extends BinaryExpression["kind"]>(
 ): BinaryOperatorRule {
     return {
         tokenKind,
-        build: (left, right) => ({ kind, left, right }) as BinaryExpression,
+        build: (left, right) => ({ kind, left, right }),
     };
 }
 
@@ -97,18 +97,20 @@ function parseLeftAssociative(
 
     while (true) {
         const token = currentToken(state);
-        const rule = token
-            ? rules.find((candidate) => candidate.tokenKind === token.kind)
-            : undefined;
-        if (!rule) {
-            return okResult(expression);
-        }
+        if (!token) break;
+
+        const rule = rules.find(
+            (candidate) => candidate.tokenKind === token.kind,
+        );
+        if (!rule) break;
 
         consumeToken(state);
         const right = parseOperand(state);
         if (right.kind === "Err") return right;
         expression = rule.build(expression, right.value);
     }
+
+    return okResult(expression);
 }
 
 function parseDelimitedExpressionList(
@@ -968,9 +970,10 @@ function createIfStatement(
     thenBranch: Ast[],
     elseBranch?: Ast[],
 ): IfStatementAst {
-    return elseBranch === undefined
-        ? { kind: "IfStatement", condition, thenBranch }
-        : { kind: "IfStatement", condition, thenBranch, elseBranch };
+    if (typeof elseBranch === "undefined") {
+        return { kind: "IfStatement", condition, thenBranch };
+    }
+    return { kind: "IfStatement", condition, thenBranch, elseBranch };
 }
 
 /**
@@ -1148,35 +1151,36 @@ function parseAllStatements(tokens: Token[], input: string): Result<Ast[]> {
         createParserState(tokens, 0, false, false),
         0,
     );
-    if (parsed.statements === null) {
-        if (parsed.noProgressToken) {
-            return {
-                kind: "Err",
-                error: formatNoProgressError(input, parsed.noProgressToken),
-            };
-        }
 
+    if (parsed.statements !== null) {
+        return {
+            kind: "Ok",
+            value: parsed.statements,
+        };
+    }
+
+    if (parsed.noProgressToken) {
         return {
             kind: "Err",
-            error: formatStatementParseError(
-                input,
-                tokens,
-                parsed.index,
-                buildStatementFailureContext(tokens, parsed.index, {
-                    parseExpressionAt,
-                    parseBlock,
-                    parseLetOrConst,
-                    parseStatementAt: parseStatement,
-                    createParserState,
-                    updateParserState,
-                }),
-            ),
+            error: formatNoProgressError(input, parsed.noProgressToken),
         };
     }
 
     return {
-        kind: "Ok",
-        value: parsed.statements,
+        kind: "Err",
+        error: formatStatementParseError(
+            input,
+            tokens,
+            parsed.index,
+            buildStatementFailureContext(tokens, parsed.index, {
+                parseExpressionAt,
+                parseBlock,
+                parseLetOrConst,
+                parseStatementAt: parseStatement,
+                createParserState,
+                updateParserState,
+            }),
+        ),
     };
 }
 
@@ -1187,17 +1191,14 @@ export function parseExpression(tokens: Token[]): Result<Expression> {
 
     if (parsed.kind === "Err") return parsed;
 
-    if (parsed.value.index !== cleanTokens.length) {
-        return {
-            kind: "Err",
-            error: formatTrailingExpressionError(
-                cleanTokens,
-                parsed.value.index,
-            ),
-        };
+    if (parsed.value.index === cleanTokens.length) {
+        return okResult(parsed.value.expression);
     }
 
-    return okResult(parsed.value.expression);
+    return {
+        kind: "Err",
+        error: formatTrailingExpressionError(cleanTokens, parsed.value.index),
+    };
 }
 
 /** tokenize and parse a JavaScript source string into an AST */

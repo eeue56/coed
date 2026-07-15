@@ -1,5 +1,5 @@
 import type { Result } from "../types.ts";
-import type { Token } from "./parser/types.ts";
+import type { BinaryExpression, Token } from "./parser/types.ts";
 
 export type NumberExpression = { kind: "NumberExpression"; value: number };
 
@@ -274,7 +274,7 @@ export type BinaryOperatorRule = {
         | "DivisionToken"
         | "AndToken"
         | "OrToken";
-    build: (left: Expression, right: Expression) => Expression;
+    build: (left: Expression, right: Expression) => BinaryExpression;
 };
 
 export type TokenKinds = Token["kind"];
