@@ -28,15 +28,21 @@ export type FilterResult<value> = {
     errors: string[];
 };
 
-export type Parser<value> = (input: string) => Result<value>;
-
-export type Language<value, node> = {
-    filter: (
-        filterRules: FilterRule<node>[],
-        tree: value,
-    ) => FilterResult<value>;
-    generate: (value: value) => string;
-    parse: Parser<value>;
+/**
+ * Every language dialect supports three things:
+ *
+ * @prop `parse`: turn a string into a tree
+ * @prop `filter`: remove elements from a tree
+ * @prop `generate`: turn the tree into a string
+ *
+ * language dialects may be extended with additional filters
+ *
+ * todo: add support for diffing
+ */
+export type Language<tree, node> = {
+    parse: (input: string) => Result<tree>;
+    filter: (filterRules: FilterRule<node>[], tree: tree) => FilterResult<tree>;
+    generate: (value: tree) => string;
 };
 
 /**
