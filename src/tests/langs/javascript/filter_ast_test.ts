@@ -89,7 +89,7 @@ export function testFilterAstsFiltersForLoopBodyRecursively() {
         },
     ];
 
-    assert.deepStrictEqual(filterAsts(input, [keepNonLetNodes]), [
+    assert.deepStrictEqual(filterAsts(input, [keepAllNodes]), [
         {
             kind: "ForLoop",
             init: { kind: "LetStatement", name: "i", value: one },
@@ -99,9 +99,15 @@ export function testFilterAstsFiltersForLoopBodyRecursively() {
                 right: { kind: "NumberExpression", value: 10 },
             },
             increment: { kind: "IncrementExpression", variable: "i" },
-            body: [{ kind: "ConstStatement", name: "y", value: two }],
+            body: [
+                { kind: "LetStatement", name: "x", value: one },
+                { kind: "ConstStatement", name: "y", value: two },
+            ],
         },
     ]);
+
+    assert.deepStrictEqual(filterAsts(input, [keepNonLetNodes]), []);
+    assert.deepStrictEqual(filterAsts(input, [removeOnes]), []);
 }
 
 export function testFilterAstsFiltersFunctionAndIfBranchesRecursively() {

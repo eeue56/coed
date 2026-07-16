@@ -43,10 +43,39 @@ function filterAst(
             };
         }
         case "ForLoop": {
+            const init = filterAst(ast.init, filterRules);
+            const condition = filterExpression(ast.condition, filterRules);
+            const increment = filterExpression(ast.increment, filterRules);
             const body = filterAsts(ast.body, filterRules);
+
+            const errors = [
+                ...init.errors,
+                ...condition.errors,
+                ...increment.errors,
+                ...body.errors,
+            ];
+
+            const hasInit = init.value.length > 0;
+
+            if (
+                errors.length > 0 ||
+                !hasInit ||
+                init.value[0].kind !== "LetStatement"
+            ) {
+                return { value: [], errors };
+            }
+
             return {
-                value: [{ ...ast, body: body.value }],
-                errors: body.errors,
+                value: [
+                    {
+                        kind: "ForLoop",
+                        init: init.value[0],
+                        condition: condition.value[0],
+                        increment: increment.value[0],
+                        body: body.value,
+                    },
+                ],
+                errors,
             };
         }
         case "FunctionDeclaration": {
