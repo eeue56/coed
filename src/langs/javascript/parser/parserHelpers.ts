@@ -339,7 +339,7 @@ export function parseParameterList(
     let index = startIndex;
 
     if (!tokenIs(tokens[index], "RightParenToken")) {
-        while (true) {
+        while (index < tokens.length) {
             const parameter = tokens[index];
             if (!tokenIs(parameter, "IdentifierToken")) {
                 return null;

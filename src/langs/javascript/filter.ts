@@ -321,8 +321,8 @@ export function filterExpression(
                 value: [
                     {
                         ...expression,
-                        left: left.value[0] as typeof expression.left,
-                        right: right.value[0] as typeof expression.right,
+                        left: left.value[0],
+                        right: right.value[0],
                     },
                 ],
                 errors: [...left.errors, ...right.errors],

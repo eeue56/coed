@@ -357,7 +357,7 @@ function selectorToString(selector: Selector): string {
             return `.${selector.class}`;
         }
         case "Tag": {
-            return `${selector.tag}`;
+            return selector.tag;
         }
         case "Child": {
             return `${selectorToString(selector.parent)} > ${selectorToString(
@@ -368,7 +368,7 @@ function selectorToString(selector: Selector): string {
             return `#${selector.id}`;
         }
         case "Sibling": {
-            return `${selector.siblings.map(selectorToString).join(" ")}`;
+            return selector.siblings.map(selectorToString).join(" ");
         }
         case "Psuedo": {
             return `${selectorToString(selector.selector)}:${selector.psuedo}`;
@@ -377,7 +377,7 @@ function selectorToString(selector: Selector): string {
             return `${selectorToString(selector.selector)}::${selector.element}`;
         }
         case "Multiple": {
-            return `${selector.selectors.map(selectorToString).join(", ")}`;
+            return selector.selectors.map(selectorToString).join(", ");
         }
         case "All": {
             return "*";
@@ -420,9 +420,8 @@ export function cssBlockToString(block: CssBlock): string {
     switch (block.kind) {
         case "MediaQuery": {
             const query = selectorToString(block.selector);
-            const inner = (block.body as CssBlock[])
+            const inner = block.body
                 .map((x) => indent(cssBlockToString(x)))
-                .map((x) => "" + x)
                 .join("\n");
 
             return `${query} {

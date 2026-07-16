@@ -116,7 +116,7 @@ export function generateExpression(expression: Expression): string {
             return `${expression.functionName}(${expression.arguments.map(generateExpression).join(", ")})`;
         }
         case "NameLookupExpression": {
-            return `${expression.name}`;
+            return expression.name;
         }
         case "ObjectPropertyExpression": {
             const parent = generateExpression(expression.object);
@@ -128,6 +128,7 @@ export function generateExpression(expression: Expression): string {
                     return `${parent}[${generateExpression(expression.property)}]`;
                 }
             }
+            break;
         }
         case "ObjectMethodCallExpression": {
             const parent = generateExpression(expression.object);
@@ -143,6 +144,7 @@ export function generateExpression(expression: Expression): string {
                     return `${parent}[${generateExpression(expression.method)}](${args})`;
                 }
             }
+            break;
         }
         case "ArrayAccessExpression": {
             return `${generateExpression(expression.array)}[${generateExpression(expression.index)}]`;

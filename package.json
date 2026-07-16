@@ -49,6 +49,7 @@
         "format": "npx prettier --write .",
         "test": "npx @eeue56/bach",
         "test-js": "npm test -- --file src/tests/langs/javascript/*",
+        "lint": "npx eslint .",
         "docs": "npx @eeue56/geiriadur"
     },
     "repository": {
@@ -73,7 +74,12 @@
         "@types/jsdom": "^28.0.3",
         "@types/node": "^24.0.3",
         "jsdom": "^29.1.1",
-        "prettier": "^3.8.4",
         "typescript": "^6.0.3"
+    },
+    "optionalDependencies": {
+        "eslint": "^10.6.0",
+        "typescript-eslint": "^8.63.0",
+        "@eslint/js": "^10.0.1",
+        "prettier": "^3.8.4"
     }
 }

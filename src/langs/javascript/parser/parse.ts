@@ -59,9 +59,9 @@ import type {
     Token,
 } from "./types.ts";
 
-function binaryRule<K extends BinaryExpression["kind"]>(
+function binaryRule(
     tokenKind: BinaryOperatorRule["tokenKind"],
-    kind: K,
+    kind: BinaryExpression["kind"],
 ): BinaryOperatorRule {
     return {
         tokenKind,
@@ -95,7 +95,7 @@ function parseLeftAssociative(
     if (parsedLeft.kind === "Err") return parsedLeft;
     let expression = parsedLeft.value;
 
-    while (true) {
+    while (state.index < state.tokens.length) {
         const token = currentToken(state);
         if (!token) break;
 
@@ -124,7 +124,7 @@ function parseDelimitedExpressionList(
         return okResult(values);
     }
 
-    while (true) {
+    while (state.index < state.tokens.length) {
         const parsed = parseLogicalOr(state);
         if (parsed.kind === "Err") return parsed;
         values.push(parsed.value);
@@ -141,6 +141,8 @@ function parseDelimitedExpressionList(
         consumeToken(state);
         return okResult(values);
     }
+
+    return okResult(values);
 }
 
 function consumeRequiredTokenOrExpressionError(
@@ -420,23 +422,26 @@ function parsePostfix(state: ParserState): Result<Expression> {
 
     let currentExpression = parsedExpression.value;
 
+    /* eslint-disable-next-line */
     while (true) {
         const token = currentToken(state);
         const parsePostfixToken = token
             ? postfixParsers[token.kind]
             : undefined;
         if (!parsePostfixToken) {
-            return okResult(currentExpression);
+            break;
         }
 
         const next = parsePostfixToken(state, currentExpression);
         if (next.kind === "Err") return next;
         if (next.value === null) {
-            return okResult(currentExpression);
+            break;
         }
 
         currentExpression = next.value;
     }
+
+    return okResult(currentExpression);
 }
 
 function parseLeafExpression(token: Token): Expression | null {

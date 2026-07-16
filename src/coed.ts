@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-misused-promises */
 import { Just, type Maybe, Nothing } from "./types.ts";
 
 export type Tag =
@@ -450,7 +451,9 @@ function combineAttributes(attributes: Attribute[]): Attribute[] {
     attributes.forEach((attribute: Attribute) => {
         switch (attribute.kind) {
             case "string":
-                if (!knownStringAttributes[attribute.key]) {
+                if (
+                    typeof knownStringAttributes[attribute.key] === "undefined"
+                ) {
                     knownStringAttributes[attribute.key] = [];
                 }
 
@@ -567,8 +570,13 @@ ${whitespace}</${node.tag}>`
  */
 export function flatRender<Msg>(node: HtmlNode<Msg>): string {
     switch (node.kind) {
-        case "text":
+        case "text": {
             return node.text;
+        }
+
+        case "html-string": {
+            return node.content;
+        }
 
         case "void":
         case "regular":
@@ -594,9 +602,6 @@ export function flatRender<Msg>(node: HtmlNode<Msg>): string {
                     return `<${node.tag}${attributes}></${node.tag}>`;
                 }
             }
-        }
-        case "html-string": {
-            return node.content;
         }
     }
 }
@@ -751,6 +756,7 @@ export function triggerEvent<Msg>(
     payload: any,
     node: HtmlNode<Msg>,
 ): Maybe<Msg> {
+    /* eslint-disable-next-line */
     payload = {
         stopPropagation: () => undefined,
         preventDefault: () => undefined,
@@ -768,7 +774,7 @@ export function triggerEvent<Msg>(
                 (event) => event.name === eventName,
             );
             if (events.length > 0) {
-                return Just(events[0].tagger(payload));
+                return Just(events[0].tagger(payload as globalThis.Event));
             } else {
                 return Nothing();
             }
@@ -785,7 +791,7 @@ Converts a `HtmlNode` of type `A` to a `HtmlNode` of type `B`, including childre
 export function map<A, B>(tagger: (a: A) => B, tree: HtmlNode<A>): HtmlNode<B> {
     switch (tree.kind) {
         case "text": {
-            return tree as HtmlNode<B>;
+            return tree;
         }
         case "void":
         case "ns-void": {
@@ -851,6 +857,7 @@ function setAttributeOnElement(
         case "string":
         case "number": {
             if (isProperty(element.tagName, attribute.key)) {
+                /* eslint-disable-next-line */
                 (element as any)[attribute.key] = attribute.value;
                 return true;
             } else {
@@ -862,9 +869,10 @@ function setAttributeOnElement(
             element.removeAttribute("style");
             const styles = attribute.value.split(";");
 
-            for (var i = 0; i < styles.length; i++) {
+            for (let i = 0; i < styles.length; i++) {
                 const styleName: string = styles[i].split(":")[0];
                 const styleValue = styles[i].split(":")[1];
+                /* eslint-disable-next-line */
                 element.style[styleName as any] = styleValue;
             }
             return true;
@@ -872,6 +880,7 @@ function setAttributeOnElement(
         case "boolean": {
             if (attribute.value) {
                 if (isProperty(element.tagName, attribute.key)) {
+                    /* eslint-disable-next-line */
                     (element as any)[attribute.key] = attribute.value;
                     return true;
                 }
@@ -896,13 +905,12 @@ function patchFacts<Msg>(
     switch (nextTree.kind) {
         case "void":
         case "regular":
-
         case "ns-void":
         case "ns-regular": {
             // remove previous attributes that no longer exist on the next dom version
 
             if (previousTree.kind === nextTree.kind) {
-                const nextAttributes = [];
+                const nextAttributes: string[] = [];
                 for (const attr of nextTree.attributes) {
                     if (attr.kind != "none") {
                         nextAttributes.push(attr.key);
@@ -912,15 +920,7 @@ function patchFacts<Msg>(
                 for (const attribute of previousTree.attributes) {
                     if (
                         attribute.kind !== "none" &&
-                        nextAttributes.indexOf(
-                            (
-                                attribute as
-                                    | StringAttribute
-                                    | NumberAttribute
-                                    | BooleanAttribute
-                                    | StyleAttribute
-                            ).key,
-                        ) === -1
+                        nextAttributes.indexOf(attribute.key) === -1
                     ) {
                         elements.removeAttribute(attribute.key);
                     }
@@ -965,13 +965,7 @@ function patchEvents<Msg>(
                 );
             });
 
-            (
-                nextTree as
-                    | RegularNode<Msg>
-                    | VoidNode<Msg>
-                    | NamespacedRegularNode<Msg>
-                    | NamespacedVoidNode<Msg>
-            ).events.forEach((event: Event<Msg>) => {
+            nextTree.events.forEach((event: Event<Msg>) => {
                 const listenerFunction = (data: globalThis.Event) => {
                     listener(event.tagger(data));
                 };
@@ -998,29 +992,26 @@ function patch<Msg>(
     nextTree: HtmlNode<Msg>,
     elements: HTMLElement | Text,
 ): HtmlNode<Msg> {
-    if (currentTree.kind != nextTree.kind) {
+    if (currentTree.kind !== nextTree.kind) {
         elements.replaceWith(buildTree(listener, nextTree));
         return nextTree;
     }
 
     switch (currentTree.kind) {
         case "text": {
-            nextTree = nextTree as TextNode;
-            elements = elements as Text;
-
-            if (currentTree.text == nextTree.text) {
+            if (currentTree.text == (nextTree as TextNode).text) {
                 return currentTree;
             } else {
-                elements.replaceWith(document.createTextNode(nextTree.text));
+                elements.replaceWith(
+                    document.createTextNode((nextTree as TextNode).text),
+                );
                 return nextTree;
             }
         }
         case "void":
         case "ns-void": {
-            currentTree = currentTree as VoidNode<Msg>;
-            nextTree = nextTree as VoidNode<Msg>;
-
-            if (currentTree.tag != nextTree.tag) {
+            type VoidNodes = VoidNode<Msg> | NamespacedVoidNode<Msg>;
+            if (currentTree.tag != (nextTree as VoidNodes).tag) {
                 elements.replaceWith(buildTree(listener, nextTree));
                 return nextTree;
             } else {
@@ -1037,78 +1028,80 @@ function patch<Msg>(
         }
         case "regular":
         case "ns-regular": {
-            currentTree = currentTree as RegularNode<Msg>;
-            nextTree = nextTree as RegularNode<Msg>;
+            type RegularNodes = RegularNode<Msg> | NamespacedRegularNode<Msg>;
 
-            const currentTreeId = (
-                currentTree.attributes.filter(
-                    (x) => x.kind === "string" && x.key === "id",
-                )[0] as StringAttribute
-            )?.value;
-            const nextTreeId = (
-                nextTree.attributes.filter(
-                    (x) => x.kind === "string" && x.key === "id",
-                )[0] as StringAttribute
-            )?.value;
+            const currentTreeAttribute = currentTree.attributes.find(
+                (x) => x.kind === "string" && x.key === "id",
+            ) as StringAttribute | undefined;
+            const currentTreeId = currentTreeAttribute?.value ?? "";
+
+            const nextTreeAttribute = (
+                nextTree as RegularNodes
+            ).attributes.find((x) => x.kind === "string" && x.key === "id") as
+                | StringAttribute
+                | undefined;
+            const nextTreeId = nextTreeAttribute?.value ?? "";
 
             if (
-                currentTree.tag !== nextTree.tag ||
+                currentTree.tag !== (nextTree as RegularNodes).tag ||
                 currentTreeId !== nextTreeId
             ) {
                 elements.replaceWith(buildTree(listener, nextTree));
                 return nextTree;
-            } else {
-                patchFacts(currentTree, nextTree, elements as HTMLElement);
+            }
 
-                patchEvents(
-                    listener,
-                    currentTree,
-                    nextTree,
-                    elements as HTMLElement,
-                );
-                const htmlElements = elements as HTMLElement;
+            patchFacts(currentTree, nextTree, elements as HTMLElement);
 
-                for (var i = 0; i < nextTree.children.length; i++) {
-                    const currentChild = currentTree.children[i];
-                    const nextChild = nextTree.children[i];
-                    const node = htmlElements.childNodes[i];
+            patchEvents(
+                listener,
+                currentTree,
+                nextTree,
+                elements as HTMLElement,
+            );
+            const htmlElements = elements as HTMLElement;
 
-                    if (typeof node === "undefined") {
-                        htmlElements.appendChild(
-                            buildTree(listener, nextChild),
-                        );
-                        continue;
-                    }
+            for (
+                let i = 0;
+                i < (nextTree as RegularNodes).children.length;
+                i++
+            ) {
+                const currentChild = currentTree.children[i];
+                const nextChild = (nextTree as RegularNodes).children[i];
+                const node = htmlElements.childNodes[i];
 
-                    switch (node.nodeType) {
-                        case Node.ELEMENT_NODE:
-                            const element = node as HTMLElement;
-                            patch(listener, currentChild, nextChild, element);
-                            break;
-
-                        case Node.TEXT_NODE:
-                            const text = node as unknown as Text;
-                            patch(listener, currentChild, nextChild, text);
-                            break;
-                    }
+                if (typeof node === "undefined") {
+                    htmlElements.appendChild(buildTree(listener, nextChild));
+                    continue;
                 }
 
-                for (
-                    var i = htmlElements.childNodes.length - 1;
-                    i > nextTree.children.length - 1;
-                    i--
-                ) {
-                    const node = htmlElements.childNodes[i];
-                    htmlElements.removeChild(node);
+                switch (node.nodeType) {
+                    case Node.ELEMENT_NODE: {
+                        const element = node as HTMLElement;
+                        patch(listener, currentChild, nextChild, element);
+                        break;
+                    }
+
+                    case Node.TEXT_NODE: {
+                        const text = node as unknown as Text;
+                        patch(listener, currentChild, nextChild, text);
+                        break;
+                    }
                 }
             }
+
+            for (
+                let i = htmlElements.childNodes.length - 1;
+                i > (nextTree as RegularNodes).children.length - 1;
+                i--
+            ) {
+                const node = htmlElements.childNodes[i];
+                htmlElements.removeChild(node);
+            }
+
             return nextTree;
         }
         case "html-string": {
-            currentTree = currentTree as HtmlStringNode;
-            nextTree = nextTree as HtmlStringNode;
-
-            if (currentTree.content === nextTree.content) {
+            if (currentTree.content === (nextTree as HtmlStringNode).content) {
                 return currentTree;
             }
             elements.replaceWith(buildTree(listener, nextTree));
@@ -1156,7 +1149,7 @@ export function program<Model, Msg>(
     let previousView = program.view(program.initialModel);
     let currentTree: HTMLElement | Text | null = null;
 
-    const listener = async (msg: Msg) => {
+    const listener = async (msg: Msg): Promise<void> => {
         if (currentTree === null) {
             currentTree = buildTree(listener, previousView);
             if (program.root !== "hydration") {
@@ -1172,6 +1165,7 @@ export function program<Model, Msg>(
         patch(listener, previousView, nextView, currentTree);
         previousView = nextView;
         if (program.postRender) {
+            /* eslint-disable-next-line */
             program.postRender(model);
         }
     };

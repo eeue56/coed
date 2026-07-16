@@ -169,7 +169,7 @@ function getOneOffTransition(
 
     const oneOffState = singleCharOneOffStates[char];
 
-    if (oneOffState === undefined) {
+    if (typeof oneOffState === "undefined") {
         return null;
     }
 
@@ -254,7 +254,7 @@ function switchIdentifierToken(
 ): void {
     const keywordKind = keywordKinds[buffer as keyof typeof keywordKinds];
 
-    if (keywordKind === undefined) {
+    if (typeof keywordKind === "undefined") {
         tokens.push({
             kind: "IdentifierToken",
             name: buffer,
@@ -525,7 +525,7 @@ function processReadyForNextToken(
  */
 export function tokenize(string: string): Token[] {
     const tokens: Token[] = [];
-    let tokenizerModel: TokenizerModel = {
+    const tokenizerModel: TokenizerModel = {
         state: "ReadyForNextToken",
         currentTokenStartIndex: 0,
         buffer: "",

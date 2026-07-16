@@ -42,9 +42,7 @@ const limitWindowLocationApis: FilterRule<JsNode> = {
             return true;
         }
 
-        const isWindowObject =
-            node.object.kind === "NameLookupExpression" &&
-            node.object.name === "window";
+        const isWindowObject = node.object.name === "window";
         const isLocationProperty =
             node.property.kind === "NameLookupExpression" &&
             node.property.name === "location";
@@ -60,9 +58,7 @@ const removeDocumentCookies: FilterRule<JsNode> = {
             return true;
         }
 
-        const isDocumentObject =
-            node.object.kind === "NameLookupExpression" &&
-            node.object.name === "document";
+        const isDocumentObject = node.object.name === "document";
         const isCookiesProperty =
             node.property.kind === "NameLookupExpression" &&
             node.property.name === "cookies";
@@ -88,7 +84,6 @@ const removeSensitiveStorageApis: FilterRule<JsNode> = {
 
         if (node.kind === "ObjectPropertyExpression") {
             const isCookieAccess =
-                node.object.kind === "NameLookupExpression" &&
                 node.object.name === "document" &&
                 node.property.kind === "NameLookupExpression" &&
                 node.property.name === "cookie";
@@ -664,8 +659,6 @@ export function testFilterExpressionPolicyBlocksNavigationAndPopupApis() {
     });
 }
 
-type ExpressionPredicate = (node: Expression) => boolean;
-
 const removeWindowLocationProperty: FilterRule<JsNode> = {
     shouldKeep: (node: JsNode): boolean => {
         if (node.kind !== "ObjectPropertyExpression") {
@@ -673,7 +666,6 @@ const removeWindowLocationProperty: FilterRule<JsNode> = {
         }
 
         return !(
-            node.object.kind === "NameLookupExpression" &&
             node.object.name === "window" &&
             node.property.kind === "NameLookupExpression" &&
             node.property.name === "location"
@@ -688,9 +680,7 @@ const removeDocumentCookieProperties: FilterRule<JsNode> = {
             return true;
         }
 
-        const isDocumentObject =
-            node.object.kind === "NameLookupExpression" &&
-            node.object.name === "document";
+        const isDocumentObject = node.object.name === "document";
         const isCookieProperty =
             node.property.kind === "NameLookupExpression" &&
             (node.property.name === "cookie" ||
@@ -2069,7 +2059,7 @@ const removeNullAndFalseLiterals: FilterRule<JsNode> = {
             return false;
         }
 
-        return !(node.kind === "BooleanExpression" && node.value === false);
+        return !(node.kind === "BooleanExpression" && !node.value);
     },
     reason: "Remove null and false literals",
 };

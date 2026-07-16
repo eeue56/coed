@@ -87,9 +87,9 @@ function explainExpressionFailure(
     index: number,
     parsedInnerParen: ParsedExpressionResult | null,
 ): DetailedParseError {
-    const token = tokens[index];
+    const token: Token | undefined = tokens[index];
 
-    if (!token) {
+    if (typeof token === "undefined") {
         return {
             problem:
                 "I expected an expression here, but I reached the end of input.",
@@ -157,22 +157,23 @@ function explainExpressionFailure(
                 problem: `I expected ')' to close this expression, but found ${tokenOrEndSummary(closing)}.`,
                 hint: "Add ')' to close the opening '('.",
                 suggestion: "I think you meant: `(1 + 2)`",
-                focusToken: closing || token,
+                focusToken: typeof closing === "undefined" ? token : closing,
             };
         }
     }
 
     if (token.kind === "IdentifierToken") {
         const next = tokens[index + 1];
+        const nextNext = tokens[index + 2];
         if (
             tokenIs(next, "DotToken") &&
-            !tokenIs(tokens[index + 2], "IdentifierToken")
+            !tokenIs(nextNext, "IdentifierToken")
         ) {
             return {
-                problem: `After '.', I expected a property name, but found ${tokenOrEndSummary(tokens[index + 2])}.`,
+                problem: `After '.', I expected a property name, but found ${tokenOrEndSummary(nextNext)}.`,
                 hint: "Use dot-access like `object.property`.",
                 suggestion: "I think you meant: `object.property`",
-                focusToken: tokens[index + 2] || next,
+                focusToken: typeof nextNext === "undefined" ? next : nextNext,
             };
         }
 
@@ -186,7 +187,8 @@ function explainExpressionFailure(
                     problem: `Inside '[...]', I expected a number or string index, but found ${tokenOrEndSummary(indexToken)}.`,
                     hint: 'Use `arr[0]` or `obj["key"]` in this subset.',
                     suggestion: "I think you meant: `arr[0]`",
-                    focusToken: indexToken || next,
+                    focusToken:
+                        typeof indexToken === "undefined" ? next : indexToken,
                 };
             }
 
@@ -196,7 +198,8 @@ function explainExpressionFailure(
                     problem: `I expected ']' to close this index access, but found ${tokenOrEndSummary(close)}.`,
                     hint: "Add ']' after the index expression.",
                     suggestion: "I think you meant: `arr[0]`",
-                    focusToken: close || indexToken,
+                    focusToken:
+                        typeof close === "undefined" ? indexToken : close,
                 };
             }
         }
@@ -223,7 +226,7 @@ function explainLetOrConstFailure(
             problem: `After '${keyword}', I expected a variable name, but found ${tokenOrEndSummary(name)}.`,
             hint: `Try writing: ${keyword} total = 0;`,
             suggestion: null,
-            focusToken: name || tokens[index],
+            focusToken: typeof name === "undefined" ? tokens[index] : name,
         };
     }
 
@@ -233,7 +236,7 @@ function explainLetOrConstFailure(
             problem: `After '${name.name}', I expected '=' but found ${tokenOrEndSummary(assign)}.`,
             hint: `Try writing: ${keyword} ${name.name} = <expression>;`,
             suggestion: null,
-            focusToken: assign || name,
+            focusToken: typeof assign === "undefined" ? name : assign,
         };
     }
 
@@ -271,7 +274,8 @@ function explainIfFailure(
             problem: `After 'if', I expected '(' to start the condition, but found ${tokenOrEndSummary(leftParen)}.`,
             hint: "Try writing: if (condition) { ... }",
             suggestion: null,
-            focusToken: leftParen || tokens[index],
+            focusToken:
+                typeof leftParen === "undefined" ? tokens[index] : leftParen,
         };
     }
 
@@ -300,7 +304,10 @@ function explainIfFailure(
         return {
             problem: `I expected ')' to close the if condition, but found ${tokenOrEndSummary(rightParen)}.`,
             hint: "Add ')' before the opening '{'.",
-            focusToken: rightParen || tokens[condition.value.index - 1],
+            focusToken:
+                typeof rightParen === "undefined"
+                    ? tokens[condition.value.index - 1]
+                    : rightParen,
             suggestion: null,
         };
     }
@@ -311,7 +318,8 @@ function explainIfFailure(
         return {
             problem: `After 'if (...)', I expected '{' to start the then-branch, but found ${tokenOrEndSummary(thenBrace)}.`,
             hint: "Try writing: if (condition) { ... }",
-            focusToken: thenBrace || rightParen,
+            focusToken:
+                typeof thenBrace === "undefined" ? rightParen : thenBrace,
             suggestion: null,
         };
     }
@@ -321,16 +329,21 @@ function explainIfFailure(
             problem:
                 "I could not inspect the then-branch for this if statement.",
             hint: "Try writing: if (condition) { ... }",
-            focusToken: thenBrace || rightParen,
+            focusToken:
+                typeof thenBrace === "undefined" ? rightParen : thenBrace,
             suggestion: null,
         };
     }
 
     if (thenBranch.body === null) {
+        const thenBranchToken = tokens[thenBranch.index];
         return {
-            problem: `There is an invalid statement inside the if block near ${tokenOrEndSummary(tokens[thenBranch.index])}.`,
+            problem: `There is an invalid statement inside the if block near ${tokenOrEndSummary(thenBranchToken)}.`,
             hint: "Fix the statement inside `{ ... }`, then try again.",
-            focusToken: tokens[thenBranch.index] || thenBrace,
+            focusToken:
+                typeof thenBranchToken === "undefined"
+                    ? thenBrace
+                    : thenBranchToken,
             suggestion: null,
         };
     }
@@ -338,7 +351,7 @@ function explainIfFailure(
     const elseToken = tokens[thenBranch.index];
     if (tokenIs(elseToken, "ElseToken")) {
         const afterElse = tokens[thenBranch.index + 1];
-        if (!afterElse) {
+        if (typeof afterElse === "undefined") {
             return {
                 problem: "I found 'else' but there is nothing after it.",
                 hint: "Write either `else if (condition) { ... }` or `else { ... }`.",
@@ -371,10 +384,14 @@ function explainIfFailure(
             }
 
             if (elseBranch.body === null) {
+                const elseBranchToken = tokens[elseBranch.index];
                 return {
-                    problem: `There is an invalid statement inside the else block near ${tokenOrEndSummary(tokens[elseBranch.index])}.`,
+                    problem: `There is an invalid statement inside the else block near ${tokenOrEndSummary(elseBranchToken)}.`,
                     hint: "Fix the statement inside the else `{ ... }` block.",
-                    focusToken: tokens[elseBranch.index] || afterElse,
+                    focusToken:
+                        typeof elseBranchToken === "undefined"
+                            ? afterElse
+                            : elseBranchToken,
                     suggestion: null,
                 };
             }
@@ -400,7 +417,8 @@ function explainForFailure(
             problem: `After 'for', I expected '(' to start the loop header, but found ${tokenOrEndSummary(leftParen)}.`,
             hint: "Try writing: for (let i = 0; i < n; i++) { ... }",
             suggestion: null,
-            focusToken: leftParen || tokens[index],
+            focusToken:
+                typeof leftParen === "undefined" ? tokens[index] : leftParen,
         };
     }
 
@@ -409,7 +427,7 @@ function explainForFailure(
         return {
             problem: `Inside 'for (...)', I expected 'let' to start the initializer, but found ${tokenOrEndSummary(initLet)}.`,
             hint: "This parser expects: for (let i = 0; condition; increment) { ... }",
-            focusToken: initLet || leftParen,
+            focusToken: typeof initLet === "undefined" ? leftParen : initLet,
             suggestion:
                 "I think you meant: `for (let i = 0; i < n; i++) { ... }`",
         };
@@ -449,7 +467,10 @@ function explainForFailure(
         return {
             problem: `After the initializer, I expected ';' but found ${tokenOrEndSummary(firstSemicolon)}.`,
             hint: "A for-loop header needs semicolons between initializer, condition, and increment.",
-            focusToken: firstSemicolon || tokens[init.index - 1],
+            focusToken:
+                typeof firstSemicolon === "undefined"
+                    ? tokens[init.index - 1]
+                    : firstSemicolon,
             suggestion:
                 "I think you meant: `for (let i = 0; i < n; i++) { ... }`",
         };
@@ -460,7 +481,10 @@ function explainForFailure(
         return {
             problem: "I could not inspect the for-loop condition.",
             hint: "Use this shape: for (let i = 0; condition; increment) { ... }",
-            focusToken: firstSemicolon || initLet,
+            focusToken:
+                typeof firstSemicolon === "undefined"
+                    ? initLet
+                    : firstSemicolon,
             suggestion:
                 "I think you meant: `for (let i = 0; i < n; i++) { ... }`",
         };
@@ -489,7 +513,10 @@ function explainForFailure(
         return {
             problem: `After the loop condition, I expected ';' but found ${tokenOrEndSummary(secondSemicolon)}.`,
             hint: "A for-loop header needs two semicolons.",
-            focusToken: secondSemicolon || tokens[condition.value.index - 1],
+            focusToken:
+                typeof secondSemicolon === "undefined"
+                    ? tokens[condition.value.index - 1]
+                    : secondSemicolon,
             suggestion:
                 "I think you meant: `for (let i = 0; i < n; i++) { ... }`",
         };
@@ -501,7 +528,10 @@ function explainForFailure(
             problem:
                 "I could not inspect the increment expression for this loop.",
             hint: "Use this shape: for (let i = 0; condition; increment) { ... }",
-            focusToken: secondSemicolon || firstSemicolon,
+            focusToken:
+                typeof secondSemicolon === "undefined"
+                    ? firstSemicolon
+                    : secondSemicolon,
             suggestion:
                 "I think you meant: `for (let i = 0; i < n; i++) { ... }`",
         };
@@ -530,7 +560,10 @@ function explainForFailure(
         return {
             problem: `I expected ')' to close the for-loop header, but found ${tokenOrEndSummary(rightParen)}.`,
             hint: "Close the loop header before starting the body block.",
-            focusToken: rightParen || tokens[increment.value.index - 1],
+            focusToken:
+                typeof rightParen === "undefined"
+                    ? tokens[increment.value.index - 1]
+                    : rightParen,
             suggestion: null,
         };
     }
@@ -541,7 +574,8 @@ function explainForFailure(
         return {
             problem: `After the for-loop header, I expected '{' to start the loop body, but found ${tokenOrEndSummary(leftBrace)}.`,
             hint: "Try writing: for (...) { ... }",
-            focusToken: leftBrace || rightParen,
+            focusToken:
+                typeof leftBrace === "undefined" ? rightParen : leftBrace,
             suggestion: "I think you meant: `for (...) { ... }`",
         };
     }
@@ -550,7 +584,8 @@ function explainForFailure(
         return {
             problem: "I could not inspect the for-loop body.",
             hint: "Try writing: for (...) { ... }",
-            focusToken: leftBrace || rightParen,
+            focusToken:
+                typeof leftBrace === "undefined" ? rightParen : leftBrace,
             suggestion: "I think you meant: `for (...) { ... }`",
         };
     }
@@ -578,7 +613,7 @@ function explainFunctionFailure(
             problem: `After 'function', I expected a function name, but found ${tokenOrEndSummary(name)}.`,
             hint: "Try writing: function sum(a, b) { ... }",
             suggestion: null,
-            focusToken: name || tokens[index],
+            focusToken: typeof name === "undefined" ? tokens[index] : name,
         };
     }
 
@@ -588,7 +623,7 @@ function explainFunctionFailure(
             problem: `After function name '${name.name}', I expected '(' but found ${tokenOrEndSummary(leftParen)}.`,
             hint: "Function parameters must be in parentheses.",
             suggestion: null,
-            focusToken: leftParen || name,
+            focusToken: typeof leftParen === "undefined" ? name : leftParen,
         };
     }
 
@@ -601,7 +636,10 @@ function explainFunctionFailure(
                     problem: `In the parameter list, I expected a parameter name, but found ${tokenOrEndSummary(parameter)}.`,
                     hint: "Use parameter names like: function sum(a, b) { ... }",
                     suggestion: null,
-                    focusToken: parameter || leftParen,
+                    focusToken:
+                        typeof parameter === "undefined"
+                            ? leftParen
+                            : parameter,
                 };
             }
 
@@ -620,7 +658,8 @@ function explainFunctionFailure(
                 problem: `After parameter '${parameter.name}', I expected ',' or ')' but found ${tokenOrEndSummary(separator)}.`,
                 hint: "Separate parameters with commas, and close with ')'.",
                 suggestion: null,
-                focusToken: separator || parameter,
+                focusToken:
+                    typeof separator === "undefined" ? parameter : separator,
             };
         }
     }
@@ -631,7 +670,8 @@ function explainFunctionFailure(
             problem: `I expected ')' to close the function parameter list, but found ${tokenOrEndSummary(rightParen)}.`,
             hint: "Close the parameter list before starting the function body.",
             suggestion: null,
-            focusToken: rightParen || leftParen,
+            focusToken:
+                typeof rightParen === "undefined" ? leftParen : rightParen,
         };
     }
 
@@ -642,7 +682,8 @@ function explainFunctionFailure(
             problem: `After ')', I expected '{' to start the function body, but found ${tokenOrEndSummary(leftBrace)}.`,
             hint: "Try writing: function name(args) { ... }",
             suggestion: null,
-            focusToken: leftBrace || rightParen,
+            focusToken:
+                typeof leftBrace === "undefined" ? rightParen : leftBrace,
         };
     }
 
@@ -651,7 +692,8 @@ function explainFunctionFailure(
             problem: "I could not inspect the function body.",
             hint: "Try writing: function name(args) { ... }",
             suggestion: null,
-            focusToken: leftBrace || rightParen,
+            focusToken:
+                typeof leftBrace === "undefined" ? rightParen : leftBrace,
         };
     }
 
@@ -660,7 +702,10 @@ function explainFunctionFailure(
             problem: `There is an invalid statement inside the function body near ${tokenOrEndSummary(tokens[body.index])}.`,
             hint: "Fix the statement inside the function `{ ... }` block.",
             suggestion: null,
-            focusToken: tokens[body.index] || leftBrace,
+            focusToken:
+                typeof tokens[body.index] === "undefined"
+                    ? leftBrace
+                    : tokens[body.index],
         };
     }
 
@@ -931,7 +976,7 @@ export function buildStatementFailureContext(
 ): StatementFailureContext {
     const token = tokens[index];
 
-    if (!token) {
+    if (typeof token === "undefined") {
         return {};
     }
 
@@ -962,7 +1007,7 @@ function explainStatementFailure(
 ): DetailedParseError {
     const token = tokens[index];
 
-    if (!token) {
+    if (typeof token === "undefined") {
         return {
             problem:
                 "I reached the end of input while I was still parsing a statement.",
@@ -1011,8 +1056,7 @@ function explainStatementFailure(
             explainIfFailure(
                 tokens,
                 index,
-                context.ifCondition ||
-                    ({ kind: "Err", error: "" } as ParsedExpressionResult),
+                context.ifCondition || { kind: "Err", error: "" },
                 context.ifThenBranch || null,
                 context.ifElseBranch || null,
             ) || {

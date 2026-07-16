@@ -35,11 +35,19 @@ export function parseFragment(string: string): HtmlNode<never>[] {
  */
 export function parse(string: string): Result<HtmlNode<never>> {
     const parser = new jsdom.JSDOM(string, { contentType: "text/html" });
+    const documentElement = parser.window.document.documentElement;
+    const walked = walk(documentElement);
+    const value = walked[0];
+
+    if (typeof value === "undefined") {
+        return {
+            kind: "Err",
+            error: `Unable to walk the string. Is it a html string?`,
+        };
+    }
 
     return {
-        value: walk(
-            parser.window.document.documentElement,
-        )[0] as HtmlNode<never>,
+        value,
         kind: "Ok",
     };
 }
@@ -246,11 +254,9 @@ function attributeKind(name: string): AttributeKind {
     }
 }
 
-function walk(childNode: ChildNode): HtmlNode<never>[] {
+function walk(childNode: ChildNode): [HtmlNode<never>] | [] {
     if (childNode.nodeType === childNode.TEXT_NODE) {
-        return [
-            text(childNode.textContent || ""),
-        ] as unknown as HtmlNode<never>[];
+        return [text(childNode.textContent || "")];
     }
 
     if (childNode.nodeType !== childNode.ELEMENT_NODE) {
@@ -272,14 +278,15 @@ function walk(childNode: ChildNode): HtmlNode<never>[] {
         attribute.value = attribute.value.trim();
 
         switch (kind) {
-            case "string":
+            case "string": {
                 attributes.push({
                     kind: "string",
                     key: attribute.name,
                     value: attribute.value,
                 });
                 break;
-            case "style":
+            }
+            case "style": {
                 const [styleKey, styleValue] = attribute.value
                     .split(":")
                     .map((s) => s.trim());
@@ -287,9 +294,11 @@ function walk(childNode: ChildNode): HtmlNode<never>[] {
                     style_(styleKey, styleValue.replaceAll(";", "")),
                 );
                 break;
-            case "boolean":
+            }
+            case "boolean": {
                 attributes.push(booleanAttribute(attribute.name, true));
                 break;
+            }
         }
     }
 
@@ -298,9 +307,7 @@ function walk(childNode: ChildNode): HtmlNode<never>[] {
 
     switch (kind) {
         case "text":
-            return [
-                text(element.textContent || ""),
-            ] as unknown as HtmlNode<never>[];
+            return [text(element.textContent || "")];
         case "regular":
             return [node(tagName as Tag, [], attributes, children)];
         case "void":
@@ -311,12 +318,18 @@ function walk(childNode: ChildNode): HtmlNode<never>[] {
                     kind: "html-string",
                     content: element.outerHTML,
                 },
-            ] as unknown as HtmlNode<never>[];
+            ];
         case "ns-regular":
+            if (namespace === null) {
+                return [node(tagName as Tag, [], attributes, children)];
+            }
             return [
-                nodeNS(tagName as Tag, namespace!, [], attributes, children),
+                nodeNS(tagName as Tag, namespace, [], attributes, children),
             ];
         case "ns-void":
-            return [voidNodeNS(tagName as Tag, namespace!, [], attributes)];
+            if (namespace === null) {
+                return [voidNode(tagName as Tag, [], attributes)];
+            }
+            return [voidNodeNS(tagName as Tag, namespace, [], attributes)];
     }
 }
