@@ -148,3 +148,73 @@ export function testMediaFiltering() {
 
     deepStrictEqual(actualBlocks, output);
 }
+
+export function testTagFilteringNested() {
+    const input: CssBlock = {
+        kind: "Regular",
+        selector: { kind: "Tag", tag: "h1" },
+        body: [
+            { kind: "Property", name: "border-color", value: "red" },
+            {
+                kind: "Nested",
+                declarations: [
+                    { kind: "Property", name: "width", value: "20px" },
+                ],
+                selector: { kind: "Class", class: "nested" },
+            },
+            { kind: "Property", name: "padding", value: "1rem" },
+            { kind: "Property", name: "height", value: "20vh" },
+            {
+                kind: "Nested",
+                declarations: [
+                    { kind: "Property", name: "height", value: "30vh" },
+                ],
+                selector: { kind: "Class", class: "nested" },
+            },
+        ],
+    };
+
+    const output: FilterResult<CssBlock[]> = {
+        value: [
+            {
+                kind: "Regular",
+                selector: { kind: "Tag", tag: "h1" },
+                body: [
+                    { kind: "Property", name: "border-color", value: "red" },
+                    {
+                        kind: "Nested",
+                        declarations: [],
+                        selector: { kind: "Class", class: "nested" },
+                    },
+                    { kind: "Property", name: "padding", value: "1rem" },
+                    { kind: "Property", name: "height", value: "20vh" },
+                    {
+                        kind: "Nested",
+                        declarations: [
+                            { kind: "Property", name: "height", value: "30vh" },
+                        ],
+                        selector: { kind: "Class", class: "nested" },
+                    },
+                ],
+            },
+        ],
+        errors: ["Filtering out width properties"],
+    };
+
+    const actualBlocks: FilterResult<CssBlock[]> = css.filterDeclarations(
+        [
+            {
+                shouldKeep: (leaf) => {
+                    if (leaf.kind === "Property" && leaf.name === "width") {
+                        return false;
+                    }
+                    return true;
+                },
+                reason: "Filtering out width properties",
+            },
+        ],
+        [input],
+    );
+
+    deepStrictEqual(actualBlocks, output);
+}

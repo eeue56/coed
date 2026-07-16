@@ -62,7 +62,31 @@ function shouldKeepDeclaration(
 
         return returnReplacerOrEmptyList(filterRule, rule);
     }
-    return { value: [rule], errors: [] };
+
+    switch (rule.kind) {
+        case "Nested": {
+            const errors: string[] = [];
+            const values: Declaration[] = [];
+
+            for (const declaration of rule.declarations) {
+                const result = shouldKeepDeclaration(declaration, filterRules);
+
+                errors.push(...result.errors);
+                values.push(...result.value);
+            }
+
+            const returnValue: Declaration = {
+                kind: "Nested",
+                selector: rule.selector,
+                declarations: values,
+            };
+
+            return { value: [returnValue], errors };
+        }
+        case "Property": {
+            return { value: [rule], errors: [] };
+        }
+    }
 }
 
 /**
