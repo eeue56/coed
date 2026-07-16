@@ -29,6 +29,16 @@ const keepAllNodes: FilterRule<JsNode> = {
     reason: "Keep all nodes",
 };
 
+const removeOnes: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode) => {
+        if (node.kind === "NumberExpression" && node.value === 1) {
+            return false;
+        }
+        return true;
+    },
+    reason: "NumberExpression with value 1 is not allowed",
+};
+
 function filterAsts(ast: Ast[], filterRules: FilterRule<JsNode>[]): Ast[] {
     return filterAstsWithResults(ast, filterRules).value;
 }
@@ -42,6 +52,23 @@ export function testFilterAstsRemovesTopLevelNodes() {
     assert.deepStrictEqual(filterAsts(input, [keepNonLetNodes]), [
         { kind: "ConstStatement", name: "b", value: two },
     ]);
+}
+
+export function testFilterAstsRemovesSubNodes() {
+    const input: Ast[] = [
+        {
+            kind: "LetStatement",
+            name: "a",
+            value: { kind: "AdditionExpression", left: one, right: two },
+        },
+        {
+            kind: "ConstStatement",
+            name: "b",
+            value: { kind: "AdditionExpression", left: one, right: two },
+        },
+    ];
+
+    assert.deepStrictEqual(filterAsts(input, [removeOnes]), []);
 }
 
 export function testFilterAstsFiltersForLoopBodyRecursively() {

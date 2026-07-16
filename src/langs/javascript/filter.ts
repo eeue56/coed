@@ -33,7 +33,14 @@ function filterAst(
 
     switch (ast.kind) {
         case "ConstStatement": {
-            return { value: [ast], errors: [] };
+            const expression = filterExpression(ast.value, filterRules);
+            if (expression.value.length === 0) {
+                return { value: [], errors: expression.errors };
+            }
+            return {
+                value: [{ ...ast, value: expression.value[0] }],
+                errors: expression.errors,
+            };
         }
         case "ForLoop": {
             const body = filterAsts(ast.body, filterRules);
@@ -65,7 +72,14 @@ function filterAst(
             };
         }
         case "LetStatement": {
-            return { value: [ast], errors: [] };
+            const expression = filterExpression(ast.value, filterRules);
+            if (expression.value.length === 0) {
+                return { value: [], errors: expression.errors };
+            }
+            return {
+                value: [{ ...ast, value: expression.value[0] }],
+                errors: expression.errors,
+            };
         }
         case "ReturnStatement": {
             return { value: [ast], errors: [] };
