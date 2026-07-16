@@ -263,3 +263,54 @@ export function testFilterAstsKeepsAllAstTypesWhenPredicateAlwaysTrue() {
 
     assert.deepStrictEqual(filterAsts(input, [keepAllNodes]), expected);
 }
+
+export function testFilterReturn() {
+    const input: Ast[] = [
+        {
+            kind: "FunctionDeclaration",
+            name: "f",
+            parameters: ["x"],
+            body: [
+                { kind: "ConstStatement", name: "e", value: one },
+                {
+                    kind: "ReturnStatement",
+                    value: { kind: "NameLookupExpression", name: "e" },
+                },
+            ],
+        },
+    ];
+
+    const removeNameLookups: FilterRule<JsNode> = {
+        shouldKeep: (node: JsNode) => {
+            if (node.kind === "NameLookupExpression") {
+                return false;
+            }
+            return true;
+        },
+        reason: "No name lookups",
+    };
+
+    assert.deepStrictEqual(filterAsts(input, [keepAllNodes]), input);
+    assert.deepStrictEqual(filterAsts(input, [removeOnes]), [
+        {
+            kind: "FunctionDeclaration",
+            name: "f",
+            parameters: ["x"],
+            body: [
+                {
+                    kind: "ReturnStatement",
+                    value: { kind: "NameLookupExpression", name: "e" },
+                },
+            ],
+        },
+    ]);
+
+    assert.deepStrictEqual(filterAsts(input, [removeNameLookups]), [
+        {
+            kind: "FunctionDeclaration",
+            name: "f",
+            parameters: ["x"],
+            body: [{ kind: "ConstStatement", name: "e", value: one }],
+        },
+    ]);
+}

@@ -111,7 +111,19 @@ function filterAst(
             };
         }
         case "ReturnStatement": {
-            return { value: [ast], errors: [] };
+            if (ast.value === null) {
+                return { value: [], errors: [] };
+            }
+
+            const expression = filterExpression(ast.value, filterRules);
+            if (expression.value.length === 0) {
+                return { value: [], errors: expression.errors };
+            }
+
+            return {
+                value: [{ ...ast, value: expression.value[0] }],
+                errors: expression.errors,
+            };
         }
         case "ContinueStatement": {
             return { value: [ast], errors: [] };
