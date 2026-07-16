@@ -3,6 +3,7 @@ import {
     type FilterResult,
     type FilterRule,
 } from "../types.ts";
+import type { IfStatementAst } from "./parser/types.ts";
 import {
     isAst,
     isExpression,
@@ -86,18 +87,31 @@ function filterAst(
             };
         }
         case "IfStatement": {
+            const condition = filterExpression(ast.condition, filterRules);
             const thenBranch = filterAsts(ast.thenBranch, filterRules);
             const elseBranch = ast.elseBranch
                 ? filterAsts(ast.elseBranch, filterRules)
                 : undefined;
-            const ifs = {
+
+            const errors = [
+                ...condition.errors,
+                ...thenBranch.errors,
+                ...(elseBranch?.errors || []),
+            ];
+
+            if (condition.value.length !== 1) {
+                return { value: [], errors };
+            }
+
+            const ifs: IfStatementAst = {
                 ...ast,
+                condition: condition.value[0],
                 thenBranch: thenBranch.value,
                 elseBranch: elseBranch?.value,
             };
             return {
                 value: [ifs],
-                errors: [...thenBranch.errors, ...(elseBranch?.errors || [])],
+                errors,
             };
         }
         case "LetStatement": {

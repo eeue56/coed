@@ -39,6 +39,16 @@ const removeOnes: FilterRule<JsNode> = {
     reason: "NumberExpression with value 1 is not allowed",
 };
 
+const removeNameLookups: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode) => {
+        if (node.kind === "NameLookupExpression") {
+            return false;
+        }
+        return true;
+    },
+    reason: "No name lookups",
+};
+
 function filterAsts(ast: Ast[], filterRules: FilterRule<JsNode>[]): Ast[] {
     return filterAstsWithResults(ast, filterRules).value;
 }
@@ -150,6 +160,35 @@ export function testFilterAstsFiltersFunctionAndIfBranchesRecursively() {
                     ],
                 },
             ],
+        },
+    ]);
+
+    assert.deepStrictEqual(filterAsts(input, [removeOnes]), [
+        {
+            kind: "FunctionDeclaration",
+            name: "main",
+            parameters: [],
+            body: [
+                {
+                    kind: "IfStatement",
+                    condition: { kind: "NameLookupExpression", name: "ok" },
+                    thenBranch: [
+                        { kind: "ConstStatement", name: "b", value: two },
+                    ],
+                    elseBranch: [
+                        { kind: "LetStatement", name: "d", value: two },
+                    ],
+                },
+            ],
+        },
+    ]);
+
+    assert.deepStrictEqual(filterAsts(input, [removeNameLookups]), [
+        {
+            kind: "FunctionDeclaration",
+            name: "main",
+            parameters: [],
+            body: [],
         },
     ]);
 }
@@ -279,16 +318,6 @@ export function testFilterReturn() {
             ],
         },
     ];
-
-    const removeNameLookups: FilterRule<JsNode> = {
-        shouldKeep: (node: JsNode) => {
-            if (node.kind === "NameLookupExpression") {
-                return false;
-            }
-            return true;
-        },
-        reason: "No name lookups",
-    };
 
     assert.deepStrictEqual(filterAsts(input, [keepAllNodes]), input);
     assert.deepStrictEqual(filterAsts(input, [removeOnes]), [
