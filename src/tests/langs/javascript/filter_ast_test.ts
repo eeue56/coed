@@ -303,7 +303,7 @@ export function testFilterAstsKeepsAllAstTypesWhenPredicateAlwaysTrue() {
     assert.deepStrictEqual(filterAsts(input, [keepAllNodes]), expected);
 }
 
-export function testFilterReturn() {
+export function testFilterReturnWithValue() {
     const input: Ast[] = [
         {
             kind: "FunctionDeclaration",
@@ -340,6 +340,38 @@ export function testFilterReturn() {
             name: "f",
             parameters: ["x"],
             body: [{ kind: "ConstStatement", name: "e", value: one }],
+        },
+    ]);
+}
+
+export function testFilterBareReturn() {
+    const input: Ast[] = [
+        {
+            kind: "FunctionDeclaration",
+            name: "f",
+            parameters: ["x"],
+            body: [
+                { kind: "ConstStatement", name: "e", value: one },
+                {
+                    kind: "ReturnStatement",
+                    value: null,
+                },
+            ],
+        },
+    ];
+
+    assert.deepStrictEqual(filterAsts(input, [keepAllNodes]), input);
+    assert.deepStrictEqual(filterAsts(input, [removeOnes]), [
+        {
+            kind: "FunctionDeclaration",
+            name: "f",
+            parameters: ["x"],
+            body: [
+                {
+                    kind: "ReturnStatement",
+                    value: null,
+                },
+            ],
         },
     ]);
 }

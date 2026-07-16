@@ -126,7 +126,7 @@ function filterAst(
         }
         case "ReturnStatement": {
             if (ast.value === null) {
-                return { value: [], errors: [] };
+                return { value: [ast], errors: [] };
             }
 
             const expression = filterExpression(ast.value, filterRules);
