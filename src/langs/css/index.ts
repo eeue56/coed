@@ -1,4 +1,5 @@
 import type { FilterResult, FilterRule, Language } from "../types.ts";
+import { diff } from "./diff.ts";
 import { filter, filterCssDeclarations } from "./filter.ts";
 import { generate, parseCssBlocks } from "./parse.ts";
 import type { CssBlock, Declaration } from "./types.ts";
@@ -29,4 +30,5 @@ export const css: CssLanguage = {
     filter,
     generate,
     filterDeclarations: filterCssDeclarations,
+    _diff: diff,
 };

@@ -28,6 +28,11 @@ export type FilterResult<value> = {
     errors: string[];
 };
 
+export type Diff<tree> = {
+    added: tree[];
+    removed: tree[];
+};
+
 /**
  * Every language dialect supports three things:
  *
@@ -43,6 +48,7 @@ export type Language<tree, node> = {
     parse: (input: string) => Result<tree>;
     filter: (filterRules: FilterRule<node>[], tree: tree) => FilterResult<tree>;
     generate: (value: tree) => string;
+    _diff: (left: tree, right: tree) => Diff<node>;
 };
 
 /**

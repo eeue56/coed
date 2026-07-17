@@ -15,4 +15,11 @@ export const javascript: Language<Program, JsNode> = {
     filter: (filterRules, program) => filterProgram(program, filterRules),
     parse,
     generate: generateProgram,
+    _diff: () => {
+        throw new Error("Not implemented yet!");
+        return {
+            added: [],
+            removed: [],
+        };
+    },
 };

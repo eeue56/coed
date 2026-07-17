@@ -43,4 +43,11 @@ export const html: HtmlLanguage<unknown> = {
     generate: flatRender,
     filterEvents,
     filterAttributes,
+    _diff: () => {
+        throw new Error("Not implemented yet!");
+        return {
+            added: [],
+            removed: [],
+        };
+    },
 };
