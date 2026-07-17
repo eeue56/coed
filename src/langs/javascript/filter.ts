@@ -57,9 +57,12 @@ function filterAst(
             ];
 
             const hasInit = init.value.length > 0;
+            const hasCondition = condition.value.length > 0;
+            const hasIncrement = condition.value.length > 0;
 
             if (
-                errors.length > 0 ||
+                !hasCondition ||
+                !hasIncrement ||
                 !hasInit ||
                 init.value[0].kind !== "LetStatement"
             ) {

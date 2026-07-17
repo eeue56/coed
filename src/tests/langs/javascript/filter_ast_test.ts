@@ -9,6 +9,7 @@ import type { FilterRule } from "../../../langs/types.ts";
 
 const one: Expression = { kind: "NumberExpression", value: 1 };
 const two: Expression = { kind: "NumberExpression", value: 2 };
+const threes: Expression = { kind: "NumberExpression", value: 333 };
 
 const keepNonLetNodes: FilterRule<JsNode> = {
     shouldKeep: (node: JsNode): boolean => {
@@ -39,6 +40,35 @@ const removeOnes: FilterRule<JsNode> = {
     reason: "NumberExpression with value 1 is not allowed",
 };
 
+const replaceOnesWithThrees: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode) => {
+        if (node.kind === "NumberExpression" && node.value === 1) {
+            return false;
+        }
+        return true;
+    },
+    replacer: () => {
+        return { kind: "NumberExpression", value: 333 };
+    },
+    reason: "NumberExpression with value 1 is not allowed",
+};
+
+const replaceReturnWithReturnZero: FilterRule<JsNode> = {
+    shouldKeep: (node: JsNode) => {
+        if (node.kind === "ReturnStatement" && node.value === null) {
+            return false;
+        }
+        return true;
+    },
+    replacer: () => {
+        return {
+            kind: "ReturnStatement",
+            value: { kind: "NumberExpression", value: 0 },
+        };
+    },
+    reason: "No bare returns",
+};
+
 const removeNameLookups: FilterRule<JsNode> = {
     shouldKeep: (node: JsNode) => {
         if (node.kind === "NameLookupExpression") {
@@ -62,6 +92,11 @@ export function testFilterAstsRemovesTopLevelNodes() {
     assert.deepStrictEqual(filterAsts(input, [keepNonLetNodes]), [
         { kind: "ConstStatement", name: "b", value: two },
     ]);
+
+    assert.deepStrictEqual(filterAsts(input, [replaceOnesWithThrees]), [
+        { kind: "LetStatement", name: "a", value: threes },
+        { kind: "ConstStatement", name: "b", value: two },
+    ]);
 }
 
 export function testFilterAstsRemovesSubNodes() {
@@ -79,6 +114,18 @@ export function testFilterAstsRemovesSubNodes() {
     ];
 
     assert.deepStrictEqual(filterAsts(input, [removeOnes]), []);
+    assert.deepStrictEqual(filterAsts(input, [replaceOnesWithThrees]), [
+        {
+            kind: "LetStatement",
+            name: "a",
+            value: { kind: "AdditionExpression", left: threes, right: two },
+        },
+        {
+            kind: "ConstStatement",
+            name: "b",
+            value: { kind: "AdditionExpression", left: threes, right: two },
+        },
+    ]);
 }
 
 export function testFilterAstsFiltersForLoopBodyRecursively() {
@@ -118,6 +165,23 @@ export function testFilterAstsFiltersForLoopBodyRecursively() {
 
     assert.deepStrictEqual(filterAsts(input, [keepNonLetNodes]), []);
     assert.deepStrictEqual(filterAsts(input, [removeOnes]), []);
+
+    assert.deepStrictEqual(filterAsts(input, [replaceOnesWithThrees]), [
+        {
+            kind: "ForLoop",
+            init: { kind: "LetStatement", name: "i", value: threes },
+            condition: {
+                kind: "LessThanExpression",
+                left: { kind: "NameLookupExpression", name: "i" },
+                right: { kind: "NumberExpression", value: 10 },
+            },
+            increment: { kind: "IncrementExpression", variable: "i" },
+            body: [
+                { kind: "LetStatement", name: "x", value: threes },
+                { kind: "ConstStatement", name: "y", value: two },
+            ],
+        },
+    ]);
 }
 
 export function testFilterAstsFiltersFunctionAndIfBranchesRecursively() {
@@ -191,6 +255,28 @@ export function testFilterAstsFiltersFunctionAndIfBranchesRecursively() {
             body: [],
         },
     ]);
+
+    assert.deepStrictEqual(filterAsts(input, [replaceOnesWithThrees]), [
+        {
+            kind: "FunctionDeclaration",
+            name: "main",
+            parameters: [],
+            body: [
+                {
+                    kind: "IfStatement",
+                    condition: { kind: "NameLookupExpression", name: "ok" },
+                    thenBranch: [
+                        { kind: "LetStatement", name: "a", value: threes },
+                        { kind: "ConstStatement", name: "b", value: two },
+                    ],
+                    elseBranch: [
+                        { kind: "ConstStatement", name: "c", value: threes },
+                        { kind: "LetStatement", name: "d", value: two },
+                    ],
+                },
+            ],
+        },
+    ]);
 }
 
 export function testFilterAstsHandlesIfStatementWithoutElseBranch() {
@@ -210,6 +296,27 @@ export function testFilterAstsHandlesIfStatementWithoutElseBranch() {
             kind: "IfStatement",
             condition: { kind: "BooleanExpression", value: true },
             thenBranch: [{ kind: "ConstStatement", name: "b", value: two }],
+            elseBranch: undefined,
+        },
+    ]);
+
+    assert.deepStrictEqual(filterAsts(input, [removeOnes]), [
+        {
+            kind: "IfStatement",
+            condition: { kind: "BooleanExpression", value: true },
+            thenBranch: [{ kind: "ConstStatement", name: "b", value: two }],
+            elseBranch: undefined,
+        },
+    ]);
+
+    assert.deepStrictEqual(filterAsts(input, [replaceOnesWithThrees]), [
+        {
+            kind: "IfStatement",
+            condition: { kind: "BooleanExpression", value: true },
+            thenBranch: [
+                { kind: "LetStatement", name: "a", value: threes },
+                { kind: "ConstStatement", name: "b", value: two },
+            ],
             elseBranch: undefined,
         },
     ]);
@@ -241,6 +348,27 @@ export function testFilterAstsCanRemoveContainerNodes() {
 
     assert.deepStrictEqual(actual, [
         { kind: "ConstStatement", name: "z", value: one },
+    ]);
+
+    assert.deepStrictEqual(filterAsts(input, [replaceOnesWithThrees]), [
+        {
+            kind: "FunctionDeclaration",
+            name: "outer",
+            parameters: [],
+            body: [{ kind: "ConstStatement", name: "x", value: threes }],
+        },
+        {
+            kind: "ForLoop",
+            init: { kind: "LetStatement", name: "i", value: threes },
+            condition: {
+                kind: "LessThanExpression",
+                left: { kind: "NameLookupExpression", name: "i" },
+                right: { kind: "NumberExpression", value: 2 },
+            },
+            increment: { kind: "IncrementExpression", variable: "i" },
+            body: [{ kind: "ConstStatement", name: "y", value: two }],
+        },
+        { kind: "ConstStatement", name: "z", value: threes },
     ]);
 }
 
@@ -342,6 +470,21 @@ export function testFilterReturnWithValue() {
             body: [{ kind: "ConstStatement", name: "e", value: one }],
         },
     ]);
+
+    assert.deepStrictEqual(filterAsts(input, [replaceOnesWithThrees]), [
+        {
+            kind: "FunctionDeclaration",
+            name: "f",
+            parameters: ["x"],
+            body: [
+                { kind: "ConstStatement", name: "e", value: threes },
+                {
+                    kind: "ReturnStatement",
+                    value: { kind: "NameLookupExpression", name: "e" },
+                },
+            ],
+        },
+    ]);
 }
 
 export function testFilterBareReturn() {
@@ -374,4 +517,41 @@ export function testFilterBareReturn() {
             ],
         },
     ]);
+
+    assert.deepStrictEqual(
+        filterAsts(input, [replaceOnesWithThrees, replaceReturnWithReturnZero]),
+        [
+            {
+                kind: "FunctionDeclaration",
+                name: "f",
+                parameters: ["x"],
+                body: [
+                    { kind: "ConstStatement", name: "e", value: threes },
+                    {
+                        kind: "ReturnStatement",
+                        value: { kind: "NumberExpression", value: 0 },
+                    },
+                ],
+            },
+        ],
+    );
+
+    /** make sure replaces work in both orders when they don't conflict */
+    assert.deepStrictEqual(
+        filterAsts(input, [replaceReturnWithReturnZero, replaceOnesWithThrees]),
+        [
+            {
+                kind: "FunctionDeclaration",
+                name: "f",
+                parameters: ["x"],
+                body: [
+                    { kind: "ConstStatement", name: "e", value: threes },
+                    {
+                        kind: "ReturnStatement",
+                        value: { kind: "NumberExpression", value: 0 },
+                    },
+                ],
+            },
+        ],
+    );
 }
