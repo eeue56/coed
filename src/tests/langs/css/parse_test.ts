@@ -395,14 +395,17 @@ h1 {
     padding: 1rem;
     height: 20vh;
 }
+
 .title {
     border-color: red;
     width: 20px;
     padding: 2rem;
 }
+
 #hello {
     border-color: blue;
 }
+
 @media (min-width: 1100px) {
     .hello, h1:hover, #world > div {
         border-color: red;

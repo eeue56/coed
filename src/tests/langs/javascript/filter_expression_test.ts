@@ -1,5 +1,8 @@
 import * as assert from "assert";
-import { filterExpression as filterExpressionWithResults } from "../../../langs/javascript/filter.ts";
+import {
+    filterExpression as filterExpressionWithResults,
+    getRootObjectName,
+} from "../../../langs/javascript/filter.ts";
 import { parseExpression } from "../../../langs/javascript/parser/parse.ts";
 import { tokenize } from "../../../langs/javascript/parser/tokenize.ts";
 import type {
@@ -42,7 +45,7 @@ const limitWindowLocationApis: FilterRule<JsNode> = {
             return true;
         }
 
-        const isWindowObject = node.object.name === "window";
+        const isWindowObject = getRootObjectName(node.object) === "window";
         const isLocationProperty =
             node.property.kind === "NameLookupExpression" &&
             node.property.name === "location";
@@ -58,7 +61,7 @@ const removeDocumentCookies: FilterRule<JsNode> = {
             return true;
         }
 
-        const isDocumentObject = node.object.name === "document";
+        const isDocumentObject = getRootObjectName(node.object) === "document";
         const isCookiesProperty =
             node.property.kind === "NameLookupExpression" &&
             node.property.name === "cookies";
@@ -72,8 +75,8 @@ const removeSensitiveStorageApis: FilterRule<JsNode> = {
     shouldKeep: (node: JsNode): boolean => {
         if (node.kind === "ObjectMethodCallExpression") {
             const isStorageRead =
-                (node.object.name === "localStorage" ||
-                    node.object.name === "sessionStorage") &&
+                (getRootObjectName(node.object) === "localStorage" ||
+                    getRootObjectName(node.object) === "sessionStorage") &&
                 node.method.kind === "NameLookupExpression" &&
                 (node.method.name === "getItem" ||
                     node.method.name === "setItem");
@@ -84,7 +87,7 @@ const removeSensitiveStorageApis: FilterRule<JsNode> = {
 
         if (node.kind === "ObjectPropertyExpression") {
             const isCookieAccess =
-                node.object.name === "document" &&
+                getRootObjectName(node.object) === "document" &&
                 node.property.kind === "NameLookupExpression" &&
                 node.property.name === "cookie";
             if (isCookieAccess) {
@@ -519,7 +522,7 @@ export function testFilterExpressionPolicyAllowsOnlyNetworkCalls() {
 
             if (node.kind === "ObjectMethodCallExpression") {
                 return (
-                    node.object.name === "navigator" &&
+                    getRootObjectName(node.object) === "navigator" &&
                     node.method.kind === "NameLookupExpression" &&
                     node.method.name === "sendBeacon"
                 );
@@ -623,16 +626,16 @@ export function testFilterExpressionPolicyBlocksNavigationAndPopupApis() {
             }
 
             const isBlockedWindowMethod =
-                node.object.name === "window" &&
+                getRootObjectName(node.object) === "window" &&
                 node.method.kind === "NameLookupExpression" &&
                 node.method.name === "open";
             const isBlockedLocationMethod =
-                node.object.name === "location" &&
+                getRootObjectName(node.object) === "location" &&
                 node.method.kind === "NameLookupExpression" &&
                 (node.method.name === "assign" ||
                     node.method.name === "replace");
             const isBlockedHistoryMethod =
-                node.object.name === "history" &&
+                getRootObjectName(node.object) === "history" &&
                 node.method.kind === "NameLookupExpression" &&
                 node.method.name === "pushState";
 
@@ -666,7 +669,7 @@ const removeWindowLocationProperty: FilterRule<JsNode> = {
         }
 
         return !(
-            node.object.name === "window" &&
+            getRootObjectName(node.object) === "window" &&
             node.property.kind === "NameLookupExpression" &&
             node.property.name === "location"
         );
@@ -680,7 +683,7 @@ const removeDocumentCookieProperties: FilterRule<JsNode> = {
             return true;
         }
 
-        const isDocumentObject = node.object.name === "document";
+        const isDocumentObject = getRootObjectName(node.object) === "document";
         const isCookieProperty =
             node.property.kind === "NameLookupExpression" &&
             (node.property.name === "cookie" ||
@@ -698,8 +701,8 @@ const removeStorageMethods: FilterRule<JsNode> = {
         }
 
         if (
-            node.object.name !== "localStorage" &&
-            node.object.name !== "sessionStorage"
+            getRootObjectName(node.object) !== "localStorage" &&
+            getRootObjectName(node.object) !== "sessionStorage"
         ) {
             return true;
         }
@@ -737,12 +740,13 @@ const removeNavigationAndPopupMethods: FilterRule<JsNode> = {
         }
 
         const isWindowOpen =
-            node.object.name === "window" && node.method.name === "open";
+            getRootObjectName(node.object) === "window" &&
+            node.method.name === "open";
         const isLocationNavigation =
-            node.object.name === "location" &&
+            getRootObjectName(node.object) === "location" &&
             ["assign", "replace", "reload"].includes(node.method.name);
         const isHistoryNavigation =
-            node.object.name === "history" &&
+            getRootObjectName(node.object) === "history" &&
             ["pushState", "replaceState", "back", "forward", "go"].includes(
                 node.method.name,
             );
@@ -760,7 +764,7 @@ const keepOnlyNetworkCalls: FilterRule<JsNode> = {
 
         if (node.kind === "ObjectMethodCallExpression") {
             return (
-                node.object.name === "navigator" &&
+                getRootObjectName(node.object) === "navigator" &&
                 node.method.kind === "NameLookupExpression" &&
                 node.method.name === "sendBeacon"
             );
@@ -1624,11 +1628,16 @@ const removeAnalyticsTrackCalls: FilterRule<JsNode> = {
             return true;
         }
 
-        return !(
-            node.object.name === "analytics" &&
-            node.method.kind === "NameLookupExpression" &&
-            node.method.name === "track"
-        );
+        if (
+            node.object.kind !== "NameLookupExpression" ||
+            node.object.name !== "analytics" ||
+            node.method.kind !== "NameLookupExpression" ||
+            node.method.name !== "track"
+        ) {
+            return true;
+        }
+
+        return false;
     },
     reason: "Remove analytics track calls",
 };

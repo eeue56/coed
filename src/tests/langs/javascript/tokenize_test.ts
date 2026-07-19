@@ -37,6 +37,20 @@ export function testBacktickString() {
     ]);
 }
 
+export function testNestedTemplateString() {
+    const input = "`${items.map((item) => `value:${item}`).join(\",\")}`";
+    const tokens = tokenize(input);
+
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "StringToken",
+            value: input,
+            startIndex: 0,
+            endIndex: input.length,
+        },
+    ]);
+}
+
 export function testIntegerNumber() {
     const tokens = tokenize("123");
     assert.deepStrictEqual(tokens, [

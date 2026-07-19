@@ -148,6 +148,22 @@ function filterAst(
         case "BreakStatement": {
             return { value: [ast], errors: [] };
         }
+        case "LineTerminatedExpression": {
+            const values = [];
+            const errors = [];
+
+            for (const expression of ast.expressions) {
+                const result = filterExpression(expression, filterRules);
+                values.push(...result.value);
+                errors.push(...result.errors);
+            }
+            return {
+                value: [
+                    { kind: "LineTerminatedExpression", expressions: values },
+                ],
+                errors,
+            };
+        }
     }
 }
 
@@ -263,6 +279,46 @@ export function filterExpression(
                 errors: [...amount.errors],
             };
         }
+        case "AssignmentExpression": {
+            const target = filterExpression(expression.target, filterRules);
+            const value = filterExpression(expression.value, filterRules);
+            if (target.value.length === 0 || value.value.length === 0) {
+                return {
+                    value: [],
+                    errors: [...target.errors, ...value.errors],
+                };
+            }
+
+            return {
+                value: [
+                    {
+                        ...expression,
+                        target: target.value[0] as typeof expression.target,
+                        value: value.value[0],
+                    },
+                ],
+                errors: [...target.errors, ...value.errors],
+            };
+        }
+        case "ArrowFunctionExpression": {
+            if (Array.isArray(expression.body)) {
+                const body = filterAsts(expression.body, filterRules);
+                return {
+                    value: [{ ...expression, body: body.value }],
+                    errors: body.errors,
+                };
+            }
+
+            const body = filterExpression(expression.body, filterRules);
+            if (body.value.length === 0) {
+                return { value: [], errors: [...body.errors] };
+            }
+
+            return {
+                value: [{ ...expression, body: body.value[0] }],
+                errors: body.errors,
+            };
+        }
         case "NullExpression": {
             return { value: [expression], errors: [] };
         }
@@ -305,12 +361,14 @@ export function filterExpression(
         case "ObjectPropertyExpression": {
             const object = filterExpression(expression.object, filterRules);
             const property = filterExpression(expression.property, filterRules);
+
             if (object.value.length === 0 || property.value.length === 0) {
                 return {
                     value: [],
                     errors: [...object.errors, ...property.errors],
                 };
             }
+
             return {
                 value: [
                     {
@@ -428,4 +486,21 @@ export function filterProgram(
     const program_: Program = values;
 
     return { value: program_, errors };
+}
+export function getRootObjectName(expression: Expression): string | null {
+    switch (expression.kind) {
+        case "NameLookupExpression": {
+            return expression.name;
+        }
+        case "ObjectPropertyExpression":
+        case "ObjectMethodCallExpression": {
+            return getRootObjectName(expression.object);
+        }
+        case "ArrayAccessExpression": {
+            return getRootObjectName(expression.array);
+        }
+        default: {
+            return null;
+        }
+    }
 }

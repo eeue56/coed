@@ -27,6 +27,7 @@ export function testGenerateObjectsAndArrays() {
     assertMatchingParsedAndGeneratedCode(
         `
 const settings = { "theme": "light", "retries": 3 };
+
 let queue = [1, 2, 3];
         `.trim(),
     );
@@ -44,6 +45,7 @@ let queue = [1, 2, 3];
 
     const expected = `
 const settings = { "theme": "light", "retries": 3 };
+
 let queue = [1, 2, 3];
         `.trim();
 
@@ -58,6 +60,7 @@ if (ready) {
 } else {
     const fallback = [0];
 }
+
 for (let i = 0; i < 3; i++) {
     let row = [i, 2];
 }
@@ -87,6 +90,7 @@ export function testGeneratePrimitiveFlagsAndCounters() {
     assertMatchingParsedAndGeneratedCode(
         `
 const featureEnabled = true;
+
 let retryCount = 3;
         `.trim(),
     );
@@ -105,13 +109,17 @@ let finalName = value as string;
         `.trim(),
         `
 let retryCount = 3;
+
 const isReady = true;
+
 function formatName(name) {
     return name;
 }
+
 function scale(value) {
     let result = value;
 }
+
 let finalName = value;
         `.trim(),
     );
@@ -121,6 +129,7 @@ export function testGenerateNullAndFallbackValues() {
     assertMatchingParsedAndGeneratedCode(
         `
 const lastSyncedAt = null;
+
 let isArchived = false;
         `.trim(),
     );
@@ -130,6 +139,7 @@ export function testGenerateEmptyCollections() {
     assertMatchingParsedAndGeneratedCode(
         `
 const emptyPreferences = {};
+
 let pendingJobs = [];
         `.trim(),
     );
@@ -281,6 +291,7 @@ export function testGenerateStringLiteralExpression() {
     assertMatchingParsedAndGeneratedCode(
         `
 const name = "noah";
+
 let greeting = \`hello \${name}\`;
         `.trim(),
     );
@@ -400,7 +411,9 @@ export function testGenerateMultiStatementWorkflow() {
     assertMatchingParsedAndGeneratedCode(
         `
 const regionCode = "eu";
+
 let dashboardTitle = formatTitle(regionCode, "sales");
+
 if (dashboardTitle !== "archived") {
     let currentView = dashboardTitle;
 }
@@ -414,7 +427,9 @@ export function testGenerateChainedProgramWithSharedNames() {
 function createReminder(userId, deliveryChannel) {
     let reminderPayload = notifyUser(userId, deliveryChannel);
 }
+
 const reminderChannel = "email";
+
 let reminderEnabled = reminderChannel === "email";
         `.trim(),
     );

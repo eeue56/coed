@@ -93,6 +93,17 @@ export function generateExpression(expression: Expression): string {
         case "DecreaseExpression": {
             return `${expression.variable} -= ${generateExpression(expression.amount)}`;
         }
+        case "AssignmentExpression": {
+            return `${generateExpression(expression.target)} = ${generateExpression(expression.value)}`;
+        }
+        case "ArrowFunctionExpression": {
+            const parameters = expression.parameters.join(", ");
+            if (Array.isArray(expression.body)) {
+                return `(${parameters}) => ${generateBlock(expression.body, 0)}`;
+            }
+
+            return `(${parameters}) => ${generateExpression(expression.body)}`;
+        }
         case "NullExpression": {
             return `null`;
         }
@@ -222,6 +233,12 @@ export function generateAST(ast: Ast, level: number): string {
         case "BreakStatement": {
             return indent(level, `break;`);
         }
+        case "LineTerminatedExpression": {
+            return indent(
+                level,
+                `${ast.expressions.map(generateExpression).join(" \n")};`,
+            );
+        }
     }
 }
 
@@ -233,5 +250,5 @@ export function generateProgram(program: Program): string {
             }
             return generateAST(node, 0);
         })
-        .join("\n");
+        .join("\n\n");
 }

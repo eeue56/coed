@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
 import * as assert from "assert";
+import { javascript } from "../../../langs/javascript/index.ts";
 import {
     parse,
     parseExpression,
@@ -51,16 +52,72 @@ export function testParseBooleanAndNullExpressions() {
     });
 }
 
-export function testParseArithmeticWithPrecedence() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("1 + 2 * 3"))), {
-        kind: "AdditionExpression",
-        left: { kind: "NumberExpression", value: 1 },
-        right: {
-            kind: "MultiplicationExpression",
-            left: { kind: "NumberExpression", value: 2 },
-            right: { kind: "NumberExpression", value: 3 },
+export function testParseBasicAddition() {
+    assert.deepStrictEqual(expectOk(javascript.parse("1 + 2")), [
+        {
+            kind: "AdditionExpression",
+            left: { kind: "NumberExpression", value: 1 },
+            right: { kind: "NumberExpression", value: 2 },
         },
-    });
+    ]);
+}
+
+export function testParseBasicSubtraction() {
+    assert.deepStrictEqual(expectOk(javascript.parse("1 - 2")), [
+        {
+            kind: "SubtractionExpression",
+            left: { kind: "NumberExpression", value: 1 },
+            right: { kind: "NumberExpression", value: 2 },
+        },
+    ]);
+}
+
+export function testParseArithmeticWithPrecedence() {
+    assert.deepStrictEqual(expectOk(javascript.parse("1 + 2 * 3")), [
+        {
+            kind: "AdditionExpression",
+            left: { kind: "NumberExpression", value: 1 },
+            right: {
+                kind: "MultiplicationExpression",
+                left: { kind: "NumberExpression", value: 2 },
+                right: { kind: "NumberExpression", value: 3 },
+            },
+        },
+    ]);
+}
+
+export function testParseProgramWithStatementAndExpression() {
+    assert.deepStrictEqual(
+        expectOk(javascript.parse("const x = []; console.log(x);")),
+        [
+            {
+                kind: "ConstStatement",
+                name: "x",
+                value: { kind: "ArrayExpression", elements: [] },
+            },
+            {
+                kind: "ObjectMethodCallExpression",
+                object: { kind: "NameLookupExpression", name: "console" },
+                method: { kind: "NameLookupExpression", name: "log" },
+                arguments: [{ kind: "NameLookupExpression", name: "x" }],
+            },
+        ],
+    );
+}
+
+export function testParseProgramWithMultipleExpressions() {
+    assert.deepStrictEqual(expectOk(javascript.parse("alpha(); beta();")), [
+        {
+            kind: "FunctionCallExpression",
+            functionName: "alpha",
+            arguments: [],
+        },
+        {
+            kind: "FunctionCallExpression",
+            functionName: "beta",
+            arguments: [],
+        },
+    ]);
 }
 
 export function testParseComparisonExpressions() {
@@ -122,6 +179,13 @@ export function testParseArrayAndObjectExpressions() {
     );
 }
 
+export function testParseArrayExpressionWithTrailingComma() {
+    assert.deepStrictEqual(expectOk(parseExpression(tokenize("[1,]"))), {
+        kind: "ArrayExpression",
+        elements: [{ kind: "NumberExpression", value: 1 }],
+    });
+}
+
 export function testParseFunctionAndMemberExpressions() {
     assert.deepStrictEqual(expectOk(parseExpression(tokenize("sum(1, 2)"))), {
         kind: "FunctionCallExpression",
@@ -162,6 +226,22 @@ export function testParseFunctionAndMemberExpressions() {
             values: [{ kind: "StringExpression", value: "key" }],
         },
     });
+
+    assert.deepStrictEqual(
+        expectOk(parseExpression(tokenize("quiz.innerHTML = questions"))),
+        {
+            kind: "AssignmentExpression",
+            target: {
+                kind: "ObjectPropertyExpression",
+                object: { kind: "NameLookupExpression", name: "quiz" },
+                property: {
+                    kind: "NameLookupExpression",
+                    name: "innerHTML",
+                },
+            },
+            value: { kind: "NameLookupExpression", name: "questions" },
+        },
+    );
 }
 
 export function testParseIncrementAndDecrementExpressions() {
@@ -174,6 +254,28 @@ export function testParseIncrementAndDecrementExpressions() {
         kind: "DecrementExpression",
         variable: "count",
     });
+}
+
+export function testParseArrowFunctionExpressions() {
+    assert.deepStrictEqual(expectOk(parseExpression(tokenize("(x) => x"))), {
+        kind: "ArrowFunctionExpression",
+        parameters: ["x"],
+        body: { kind: "NameLookupExpression", name: "x" },
+    });
+
+    assert.deepStrictEqual(
+        expectOk(parseExpression(tokenize("(x) => { return x; }"))),
+        {
+            kind: "ArrowFunctionExpression",
+            parameters: ["x"],
+            body: [
+                {
+                    kind: "ReturnStatement",
+                    value: { kind: "NameLookupExpression", name: "x" },
+                },
+            ],
+        },
+    );
 }
 
 export function testParseExpressionReturnsErrForTrailingTokens() {
@@ -550,6 +652,34 @@ export function testParseArrowFunctionExpressionAsFunctionDeclaration() {
                             },
                         },
                     ],
+                },
+            ],
+        },
+    );
+}
+
+export function testParseConstArrayDeclaration() {
+    assert.deepStrictEqual(
+        parse(
+            `const xs = [
+    1,
+];`,
+        ),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "ConstStatement",
+                    name: "xs",
+                    value: {
+                        kind: "ArrayExpression",
+                        elements: [
+                            {
+                                kind: "NumberExpression",
+                                value: 1,
+                            },
+                        ],
+                    },
                 },
             ],
         },

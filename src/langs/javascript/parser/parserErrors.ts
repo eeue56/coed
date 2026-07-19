@@ -151,7 +151,7 @@ function explainExpressionFailure(
             };
         }
 
-        const closing = tokens[parsedInnerParen.value.index];
+        const closing = tokens[parsedInnerParen.index];
         if (!tokenIs(closing, "RightParenToken")) {
             return {
                 problem: `I expected ')' to close this expression, but found ${tokenOrEndSummary(closing)}.`,
@@ -299,20 +299,20 @@ function explainIfFailure(
         };
     }
 
-    const rightParen = tokens[condition.value.index];
+    const rightParen = tokens[condition.index];
     if (!tokenIs(rightParen, "RightParenToken")) {
         return {
             problem: `I expected ')' to close the if condition, but found ${tokenOrEndSummary(rightParen)}.`,
             hint: "Add ')' before the opening '{'.",
             focusToken:
                 typeof rightParen === "undefined"
-                    ? tokens[condition.value.index - 1]
+                    ? tokens[condition.index - 1]
                     : rightParen,
             suggestion: null,
         };
     }
 
-    const thenStart = condition.value.index + 1;
+    const thenStart = condition.index + 1;
     const thenBrace = tokens[thenStart];
     if (!tokenIs(thenBrace, "LeftBraceToken")) {
         return {
@@ -452,7 +452,7 @@ function explainForFailure(
         };
     }
 
-    if (init.statement === null) {
+    if (init.kind === "Err") {
         return {
             problem: "I could not parse the `for` initializer.",
             hint: "Use this shape: for (let i = 0; condition; increment) { ... }",
@@ -508,21 +508,21 @@ function explainForFailure(
         };
     }
 
-    const secondSemicolon = tokens[condition.value.index];
+    const secondSemicolon = tokens[condition.index];
     if (!tokenIs(secondSemicolon, "SemicolonToken")) {
         return {
             problem: `After the loop condition, I expected ';' but found ${tokenOrEndSummary(secondSemicolon)}.`,
             hint: "A for-loop header needs two semicolons.",
             focusToken:
                 typeof secondSemicolon === "undefined"
-                    ? tokens[condition.value.index - 1]
+                    ? tokens[condition.index - 1]
                     : secondSemicolon,
             suggestion:
                 "I think you meant: `for (let i = 0; i < n; i++) { ... }`",
         };
     }
 
-    const incrementStart = condition.value.index + 1;
+    const incrementStart = condition.index + 1;
     if (increment === null) {
         return {
             problem:
@@ -555,20 +555,20 @@ function explainForFailure(
         };
     }
 
-    const rightParen = tokens[increment.value.index];
+    const rightParen = tokens[increment.index];
     if (!tokenIs(rightParen, "RightParenToken")) {
         return {
             problem: `I expected ')' to close the for-loop header, but found ${tokenOrEndSummary(rightParen)}.`,
             hint: "Close the loop header before starting the body block.",
             focusToken:
                 typeof rightParen === "undefined"
-                    ? tokens[increment.value.index - 1]
+                    ? tokens[increment.index - 1]
                     : rightParen,
             suggestion: null,
         };
     }
 
-    const bodyStart = increment.value.index + 1;
+    const bodyStart = increment.index + 1;
     const leftBrace = tokens[bodyStart];
     if (!tokenIs(leftBrace, "LeftBraceToken")) {
         return {
@@ -781,12 +781,10 @@ function buildIfFailureContext(
 
     const rightParen =
         ifCondition && ifCondition.kind === "Ok"
-            ? tokens[ifCondition.value.index]
+            ? tokens[ifCondition.index]
             : null;
     const thenStart =
-        ifCondition && ifCondition.kind === "Ok"
-            ? ifCondition.value.index + 1
-            : -1;
+        ifCondition && ifCondition.kind === "Ok" ? ifCondition.index + 1 : -1;
     const ifThenBranch =
         ifCondition &&
         ifCondition.kind === "Ok" &&
@@ -834,7 +832,7 @@ function buildForFailureContext(
         : null;
 
     const firstSemicolon =
-        forInit !== null && forInit.statement !== null
+        forInit !== null && forInit.kind !== "Err"
             ? tokens[forInit.index]
             : null;
     const conditionStart = forInit !== null ? forInit.index + 1 : -1;
@@ -845,11 +843,11 @@ function buildForFailureContext(
 
     const secondSemicolon =
         forCondition !== null && forCondition.kind === "Ok"
-            ? tokens[forCondition.value.index]
+            ? tokens[forCondition.index]
             : null;
     const incrementStart =
         forCondition !== null && forCondition.kind === "Ok"
-            ? forCondition.value.index + 1
+            ? forCondition.index + 1
             : -1;
     const forIncrement =
         forCondition !== null &&
@@ -860,11 +858,11 @@ function buildForFailureContext(
 
     const rightParen =
         forIncrement !== null && forIncrement.kind === "Ok"
-            ? tokens[forIncrement.value.index]
+            ? tokens[forIncrement.index]
             : null;
     const bodyStart =
         forIncrement !== null && forIncrement.kind === "Ok"
-            ? forIncrement.value.index + 1
+            ? forIncrement.index + 1
             : -1;
     const forBody =
         forIncrement !== null &&
@@ -1056,7 +1054,7 @@ function explainStatementFailure(
             explainIfFailure(
                 tokens,
                 index,
-                context.ifCondition || { kind: "Err", error: "" },
+                context.ifCondition ?? { kind: "Err", error: "", index: 0 },
                 context.ifThenBranch || null,
                 context.ifElseBranch || null,
             ) || {

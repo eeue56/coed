@@ -2,8 +2,8 @@ import type { Result } from "../../types.ts";
 import type {
     Ast,
     Expression,
+    IndexedResult,
     ParserState,
-    StatementParseResult,
     TokenKinds,
 } from "../types.ts";
 import type { Token } from "./types.ts";
@@ -88,14 +88,16 @@ export function okResult<value>(value: value): Result<value> {
 export function statementResult(
     statement: Ast,
     index: number,
-): StatementParseResult {
-    return { statement, index };
+): IndexedResult<Ast> {
+    return { kind: "Ok", value: statement, index };
 }
 
-export function createFailedStatement(
-    state: ParserState,
-): StatementParseResult {
-    return { statement: null, index: state.index };
+export function createFailedStatement(state: ParserState): IndexedResult<Ast> {
+    return {
+        kind: "Err",
+        error: "Failed to parse statement",
+        index: state.index,
+    };
 }
 
 export function consumeOptionalSemicolon(
@@ -104,22 +106,13 @@ export function consumeOptionalSemicolon(
 ): number {
     return tokenIs(tokens[index], "SemicolonToken") ? index + 1 : index;
 }
-function requireNameLookup(
-    expression: Expression,
-): Result<Expression | null> | NameLookupExpression {
-    return isNameLookup(expression) ?? okResult(null);
-}
 
-export function parseNameLookupPostfix(
+export function requireNameLookup(
     expression: Expression,
-    build: (lookup: NameLookupExpression) => Result<Expression | null>,
-): Result<Expression | null> {
-    const lookup = requireNameLookup(expression);
-    if ("kind" in lookup && lookup.kind !== "NameLookupExpression") {
-        return lookup;
-    }
+): null | NameLookupExpression {
+    const name = isNameLookup(expression);
 
-    return build(lookup);
+    return name ?? null;
 }
 
 export function tryParseIdentifierAt(
@@ -238,15 +231,10 @@ export function createWhileLoopParts(
 
 export function parseExpressionThenConsumeToken(
     tokens: Token[],
-    startIndex: number,
     delimiter: TokenKinds,
-    parseExpressionAt: (
-        tokens: Token[],
-        index: number,
-    ) => { expression: Expression; index: number } | null,
+    parsed: IndexedResult<Expression>,
 ): { expression: Expression; nextIndex: number } | null {
-    const parsed = parseExpressionAt(tokens, startIndex);
-    if (parsed === null) {
+    if (parsed.kind === "Err") {
         return null;
     }
 
@@ -256,34 +244,8 @@ export function parseExpressionThenConsumeToken(
     }
 
     return {
-        expression: parsed.expression,
+        expression: parsed.value,
         nextIndex,
-    };
-}
-
-export function parseOptionalTerminatedExpression(
-    tokens: Token[],
-    startIndex: number,
-    parseExpressionAt: (
-        tokens: Token[],
-        index: number,
-    ) => { expression: Expression; index: number } | null,
-): OptionalTerminatedExpression | null {
-    if (isStatementTerminator(tokens[startIndex])) {
-        return {
-            value: null,
-            nextIndex: consumeOptionalSemicolon(tokens, startIndex),
-        };
-    }
-
-    const parsedExpression = parseExpressionAt(tokens, startIndex);
-    if (parsedExpression === null) {
-        return null;
-    }
-
-    return {
-        value: parsedExpression.expression,
-        nextIndex: consumeOptionalSemicolon(tokens, parsedExpression.index),
     };
 }
 

@@ -1,10 +1,9 @@
 import type { Result } from "../../types.ts";
 import type {
     Ast,
-    BinaryOperatorRule,
     Expression,
-    ExpressionParseResult,
-    ParseExpressionFunction,
+    IndexedResult,
+    OperatorRule,
     ParserState,
     Program,
     StatementParseResult,
@@ -13,7 +12,6 @@ import type {
 
 import {
     buildStatementFailureContext,
-    createExpressionParseError,
     formatNoProgressError,
     formatStatementParseError,
     formatTrailingExpressionError,
@@ -32,9 +30,8 @@ import {
     okResult,
     parseArrowParameters,
     parseExpressionThenConsumeToken,
-    parseNameLookupPostfix,
-    parseOptionalTerminatedExpression,
     parseTypedParametersUntil,
+    requireNameLookup,
     skipSemicolonTokens,
     statementResult,
     stripStringQuotes,
@@ -43,123 +40,144 @@ import {
     tryParseIdentifierAt,
     updateParserState,
     withoutWhitespace,
+    type OptionalTerminatedExpression,
 } from "./parserHelpers.ts";
 import { tokenize } from "./tokenize.ts";
-import type {
-    BinaryExpression,
-    ClosingTokenKind,
-    IfStatementAst,
-    LoopControlKind,
-    ParsedConditionBlock,
-    ParsedForHeader,
-    ParsedFunctionBody,
-    ParsedOptionalElse,
-    StatementListParseResult,
-    StatementParser,
-    Token,
+import {
+    isAssignmentTarget,
+    isChainableExpression,
+    operatorRule,
+    type ClosingTokenKind,
+    type IfStatementAst,
+    type LoopControlKind,
+    type ParsedConditionBlock,
+    type ParsedForHeader,
+    type ParsedFunctionBody,
+    type ParsedOptionalElse,
+    type StatementListParseResult,
+    type StatementParser,
+    type Token,
 } from "./types.ts";
-
-function binaryRule(
-    tokenKind: BinaryOperatorRule["tokenKind"],
-    kind: BinaryExpression["kind"],
-): BinaryOperatorRule {
-    return {
-        tokenKind,
-        build: (left, right) => ({ kind, left, right }),
-    };
-}
 
 /** parse a single expression starting at the given token index */
 export function parseExpressionAt(
     tokens: Token[],
     index: number,
-): Result<ExpressionParseResult> {
+): IndexedResult<Expression> {
     const state = createParserState(tokens, index, false, false);
-    const expression = parseLogicalOr(state);
+
+    const expression = parseAssignmentExpression(state);
     if (expression.kind === "Err") {
-        return expression;
+        return parseLeaf(state);
     }
 
-    return okResult({
-        expression: expression.value,
+    return {
+        kind: "Ok",
+        value: expression.value,
         index: state.index,
-    });
+    };
 }
 
-function parseLeftAssociative(
+function parseAssignmentExpression(
     state: ParserState,
-    parseOperand: ParseExpressionFunction,
-    rules: BinaryOperatorRule[],
-): Result<Expression> {
-    const parsedLeft = parseOperand(state);
-    if (parsedLeft.kind === "Err") return parsedLeft;
-    let expression = parsedLeft.value;
+): IndexedResult<Expression> {
+    const left = parseOperatorByPrecedence(state);
+    if (left.kind === "Err") return left;
 
-    while (state.index < state.tokens.length) {
-        const token = currentToken(state);
-        if (!token) break;
-
-        const rule = rules.find(
-            (candidate) => candidate.tokenKind === token.kind,
-        );
-        if (!rule) break;
-
-        consumeToken(state);
-        const right = parseOperand(state);
-        if (right.kind === "Err") return right;
-        expression = rule.build(expression, right.value);
+    state.index = left.index;
+    if (!tokenIs(currentToken(state), "AssignToken")) {
+        return left;
     }
 
-    return okResult(expression);
+    if (!isAssignmentTarget(left.value)) {
+        return {
+            kind: "Err",
+            error: "Expected an assignment target",
+            index: state.index,
+        };
+    }
+
+    consumeToken(state);
+    const right = parseAssignmentExpression(state);
+    if (right.kind === "Err") return right;
+
+    state.index = right.index;
+    return {
+        kind: "Ok",
+        value: {
+            kind: "AssignmentExpression",
+            target: left.value,
+            value: right.value,
+        },
+        index: state.index,
+    };
 }
 
 function parseDelimitedExpressionList(
     state: ParserState,
     closingTokenKind: ClosingTokenKind,
-): Result<Expression[]> {
+): IndexedResult<Expression[]> {
     const values: Expression[] = [];
 
     if (tokenIs(currentToken(state), closingTokenKind)) {
         consumeToken(state);
-        return okResult(values);
+        return { kind: "Ok", value: values, index: state.index };
     }
 
     while (state.index < state.tokens.length) {
-        const parsed = parseLogicalOr(state);
+        const parsed = parseAssignmentExpression(state);
         if (parsed.kind === "Err") return parsed;
         values.push(parsed.value);
 
         if (tokenIs(currentToken(state), "CommaToken")) {
             consumeToken(state);
+
+            if (tokenIs(currentToken(state), closingTokenKind)) {
+                consumeToken(state);
+                return { kind: "Ok", value: values, index: state.index };
+            }
+
             continue;
         }
 
         if (!tokenIs(currentToken(state), closingTokenKind)) {
-            return createExpressionParseError(state.tokens, state.index);
+            return {
+                kind: "Err",
+                error: "Expected an expression",
+                index: state.index,
+            };
         }
 
         consumeToken(state);
-        return okResult(values);
+        return { kind: "Ok", value: values, index: state.index };
     }
 
-    return okResult(values);
+    return { kind: "Ok", value: values, index: state.index };
 }
 
 function consumeRequiredTokenOrExpressionError(
     state: ParserState,
     kind: TokenKinds,
-): Result<null> {
+): IndexedResult<null> {
     if (!tokenIs(currentToken(state), kind)) {
-        return createExpressionParseError(state.tokens, state.index);
+        return {
+            kind: "Err",
+            error: `Expected token of kind ${kind}`,
+            index: state.index,
+        };
     }
 
     consumeToken(state);
-    return okResult(null);
+    return {
+        kind: "Ok",
+        value: null,
+        index: state.index,
+    };
 }
 
 function parseCallArgumentsAfterLeftParen(
     state: ParserState,
-): Result<Expression[]> {
+): IndexedResult<Expression[]> {
     consumeToken(state);
     return parseDelimitedExpressionList(state, "RightParenToken");
 }
@@ -167,57 +185,145 @@ function parseCallArgumentsAfterLeftParen(
 function parseFunctionCallPostfix(
     state: ParserState,
     expression: Expression,
-): Result<Expression | null> {
-    return parseNameLookupPostfix(expression, (asName) => {
-        const args = parseCallArgumentsAfterLeftParen(state);
-        if (args.kind === "Err") return args;
+): IndexedResult<Expression> {
+    const lookup = requireNameLookup(expression);
+    if (lookup == null) {
+        return {
+            kind: "Err",
+            error: "Expected a name lookup expression",
+            index: state.index,
+        };
+    }
 
-        return okResult({
+    const args = parseCallArgumentsAfterLeftParen(state);
+    if (args.kind === "Err") return args;
+
+    return {
+        kind: "Ok",
+        value: {
             kind: "FunctionCallExpression",
-            functionName: asName.name,
+            functionName: lookup.name,
             arguments: args.value,
-        });
+        },
+        index: state.index,
+    };
+}
+
+function parseArrowFunctionExpression(
+    state: ParserState,
+): IndexedResult<Expression> {
+    const parameters = parseArrowParameters(state.tokens, state.index);
+    if (parameters === null) {
+        return {
+            kind: "Err",
+            error: "Expected an arrow function expression",
+            index: state.index,
+        };
+    }
+
+    const bodyStartIndex = parameters.arrowIndex + 1;
+    const functionState = updateParserState(state, bodyStartIndex, {
+        insideFunction: true,
+        insideForLoop: false,
     });
+
+    if (tokenIs(state.tokens[bodyStartIndex], "LeftBraceToken")) {
+        const body = parseBlock(state.tokens, bodyStartIndex, functionState);
+        if (body.body === null) {
+            return {
+                kind: "Err",
+                error: "Expected a block body for arrow function",
+                index: bodyStartIndex,
+            };
+        }
+
+        state.index = body.index;
+        return {
+            kind: "Ok",
+            value: {
+                kind: "ArrowFunctionExpression",
+                parameters: parameters.parameters,
+                body: body.body,
+            },
+            index: state.index,
+        };
+    }
+
+    const body = parseAssignmentExpression(functionState);
+    if (body.kind === "Err") {
+        return body;
+    }
+
+    state.index = body.index;
+    return {
+        kind: "Ok",
+        value: {
+            kind: "ArrowFunctionExpression",
+            parameters: parameters.parameters,
+            body: body.value,
+        },
+        index: state.index,
+    };
 }
 
 function parseDotPostfix(
     state: ParserState,
     expression: Expression,
-): Result<Expression | null> {
-    return parseNameLookupPostfix(expression, (asName) => {
-        consumeToken(state);
-        const propertyToken = currentToken(state);
-        if (!tokenIs(propertyToken, "IdentifierToken")) {
-            return createExpressionParseError(state.tokens, state.index);
-        }
-        consumeToken(state);
+): IndexedResult<Expression> {
+    if (!isChainableExpression(expression)) {
+        return {
+            kind: "Err",
+            error: "Expected a name lookup expression",
+            index: state.index,
+        };
+    }
 
-        if (!tokenIs(currentToken(state), "LeftParenToken")) {
-            return okResult({
+    consumeToken(state);
+    const propertyToken = currentToken(state);
+    if (!tokenIs(propertyToken, "IdentifierToken")) {
+        return {
+            kind: "Err",
+            error: "Expected an identifier token",
+            index: state.index,
+        };
+    }
+    consumeToken(state);
+
+    if (!tokenIs(currentToken(state), "LeftParenToken")) {
+        return {
+            kind: "Ok",
+            value: {
                 kind: "ObjectPropertyExpression",
-                object: asName,
+                object: expression,
                 property: {
                     kind: "NameLookupExpression",
                     name: propertyToken.name,
                 },
-            });
-        }
+            },
+            index: state.index,
+        };
+    }
 
-        const args = parseCallArgumentsAfterLeftParen(state);
-        if (args.kind === "Err") return args;
+    const args = parseCallArgumentsAfterLeftParen(state);
+    if (args.kind === "Err") return args;
 
-        return okResult({
+    return {
+        kind: "Ok",
+        value: {
             kind: "ObjectMethodCallExpression",
-            object: asName,
+            object: expression,
             method: { kind: "NameLookupExpression", name: propertyToken.name },
             arguments: args.value,
-        });
-    });
+        },
+        index: state.index,
+    };
 }
 
-function parseParenthesizedLogicalOr(state: ParserState): Result<Expression> {
+function parseParenthesizedLogicalOr(
+    state: ParserState,
+): IndexedResult<Expression> {
     consumeToken(state);
-    const expression = parseLogicalOr(state);
+    const expression = parseAssignmentExpression(state);
     if (expression.kind === "Err") return expression;
 
     const rightParen = consumeRequiredTokenOrExpressionError(
@@ -231,12 +337,18 @@ function parseParenthesizedLogicalOr(state: ParserState): Result<Expression> {
     return expression;
 }
 
-function parseArrayLiteralExpression(state: ParserState): Result<Expression> {
+function parseArrayLiteralExpression(
+    state: ParserState,
+): IndexedResult<Expression> {
     consumeToken(state);
     const elements = parseDelimitedExpressionList(state, "RightBracketToken");
     if (elements.kind === "Err") return elements;
 
-    return okResult({ kind: "ArrayExpression", elements: elements.value });
+    return {
+        kind: "Ok",
+        value: { kind: "ArrayExpression", elements: elements.value },
+        index: state.index,
+    };
 }
 
 function createStringLiteralExpression(
@@ -251,60 +363,88 @@ function createStringLiteralExpression(
 function parseBracketPostfix(
     state: ParserState,
     expression: Expression,
-): Result<Expression | null> {
-    return parseNameLookupPostfix(expression, (asName) => {
-        consumeToken(state);
-        const indexToken = currentToken(state);
+): IndexedResult<Expression> {
+    if (!isChainableExpression(expression)) {
+        return {
+            kind: "Err",
+            error: "Expected a name lookup expression",
+            index: state.index,
+        };
+    }
 
-        if (
-            !tokenIs(indexToken, "NumberToken") &&
-            !tokenIs(indexToken, "StringToken")
-        ) {
-            return createExpressionParseError(state.tokens, state.index);
-        }
+    consumeToken(state);
+    const indexToken = currentToken(state);
 
-        consumeToken(state);
-        const rightBracket = consumeRequiredTokenOrExpressionError(
-            state,
-            "RightBracketToken",
-        );
-        if (rightBracket.kind === "Err") {
-            return rightBracket;
-        }
+    if (
+        !tokenIs(indexToken, "NumberToken") &&
+        !tokenIs(indexToken, "StringToken")
+    ) {
+        return {
+            kind: "Err",
+            error: "Expected a number or string",
+            index: state.index,
+        };
+    }
 
-        if (indexToken.kind === "NumberToken") {
-            return okResult({
+    consumeToken(state);
+    const rightBracket = consumeRequiredTokenOrExpressionError(
+        state,
+        "RightBracketToken",
+    );
+    if (rightBracket.kind === "Err") {
+        return rightBracket;
+    }
+
+    if (indexToken.kind === "NumberToken") {
+        return {
+            kind: "Ok",
+            value: {
                 kind: "ArrayAccessExpression",
-                array: asName,
+                array: expression,
                 index: { kind: "NumberExpression", value: indexToken.value },
-            });
-        }
+            },
+            index: state.index,
+        };
+    }
 
-        return okResult({
+    return {
+        kind: "Ok",
+        value: {
             kind: "ObjectPropertyExpression",
-            object: asName,
+            object: expression,
             property: createStringLiteralExpression(
                 stripStringQuotes(indexToken.value),
             ),
-        });
-    });
+        },
+        index: state.index,
+    };
 }
 
 function parseUpdatePostfix(
     state: ParserState,
     expression: Expression,
     tokenKind: "IncrementToken" | "DecrementToken",
-): Result<Expression | null> {
-    return parseNameLookupPostfix(expression, (asName) => {
-        consumeToken(state);
-        return okResult({
+): IndexedResult<Expression> {
+    const lookup = requireNameLookup(expression);
+    if (lookup == null) {
+        return {
+            kind: "Err",
+            error: "Expected a name lookup expression",
+            index: state.index,
+        };
+    }
+    consumeToken(state);
+    return {
+        kind: "Ok",
+        value: {
             kind:
                 tokenKind === "IncrementToken"
                     ? "IncrementExpression"
                     : "DecrementExpression",
-            variable: asName.name,
-        });
-    });
+            variable: lookup.name,
+        },
+        index: state.index,
+    };
 }
 
 const asTypeAssertionStopTokens: TokenKinds[] = [
@@ -335,7 +475,7 @@ const asTypeAssertionStopTokens: TokenKinds[] = [
 function parseAsTypeAssertion(
     state: ParserState,
     expression: Expression,
-): Result<Expression | null> {
+): IndexedResult<Expression> {
     consumeToken(state);
 
     const afterType = consumeTypeSyntax(
@@ -344,22 +484,27 @@ function parseAsTypeAssertion(
         asTypeAssertionStopTokens,
     );
     if (afterType === null) {
-        return createExpressionParseError(state.tokens, state.index);
+        return {
+            kind: "Err",
+            error: "Expected a type assertion",
+            index: state.index,
+        };
     }
 
     state.index = afterType;
-    return okResult(expression);
+    return {
+        kind: "Ok",
+        value: expression,
+        index: state.index,
+    };
 }
 
-const postfixParsers: Partial<
-    Record<
-        TokenKinds,
-        (
-            state: ParserState,
-            expression: Expression,
-        ) => Result<Expression | null>
-    >
-> = {
+type PostfixParser = (
+    state: ParserState,
+    expression: Expression,
+) => IndexedResult<Expression | null>;
+
+const postfixParsers: Partial<Record<TokenKinds, PostfixParser>> = {
     LeftParenToken: parseFunctionCallPostfix,
     DotToken: parseDotPostfix,
     LeftBracketToken: parseBracketPostfix,
@@ -370,53 +515,76 @@ const postfixParsers: Partial<
     AsToken: parseAsTypeAssertion,
 };
 
-const logicalOrRules: BinaryOperatorRule[] = [
-    binaryRule("OrToken", "OrExpression"),
+const logicalOrRules: OperatorRule[] = [
+    operatorRule("OrToken", "OrExpression"),
 ];
-const binaryPrecedenceRules: BinaryOperatorRule[][] = [
+const operatorPrecedenceRules: OperatorRule[][] = [
     logicalOrRules,
-    [binaryRule("AndToken", "AndExpression")],
+    [operatorRule("AndToken", "AndExpression")],
     [
-        binaryRule("EqualityToken", "EqualityExpression"),
-        binaryRule("InequalityToken", "InequalityExpression"),
+        operatorRule("EqualityToken", "EqualityExpression"),
+        operatorRule("InequalityToken", "InequalityExpression"),
     ],
     [
-        binaryRule("LessThanToken", "LessThanExpression"),
-        binaryRule("MoreThanToken", "MoreThanExpression"),
-        binaryRule("LessThanOrEqualToken", "LessThanOrEqualExpression"),
-        binaryRule("MoreThanOrEqualToken", "MoreThanOrEqualExpression"),
+        operatorRule("LessThanToken", "LessThanExpression"),
+        operatorRule("MoreThanToken", "MoreThanExpression"),
+        operatorRule("LessThanOrEqualToken", "LessThanOrEqualExpression"),
+        operatorRule("MoreThanOrEqualToken", "MoreThanOrEqualExpression"),
     ],
     [
-        binaryRule("AdditionToken", "AdditionExpression"),
-        binaryRule("SubtractionToken", "SubtractionExpression"),
+        operatorRule("AdditionToken", "AdditionExpression"),
+        operatorRule("SubtractionToken", "SubtractionExpression"),
     ],
     [
-        binaryRule("MultiplicationToken", "MultiplicationExpression"),
-        binaryRule("DivisionToken", "DivisionExpression"),
+        operatorRule("MultiplicationToken", "MultiplicationExpression"),
+        operatorRule("DivisionToken", "DivisionExpression"),
     ],
 ];
 
-function parseBinaryByPrecedence(
+function parseOperatorByPrecedence(
+    state: ParserState,
+): IndexedResult<Expression> {
+    return parseOperatorLevel(state, 0);
+}
+
+function parseOperatorLevel(
     state: ParserState,
     level: number,
-): Result<Expression> {
-    if (level >= binaryPrecedenceRules.length) {
+): IndexedResult<Expression> {
+    if (level >= operatorPrecedenceRules.length) {
         return parsePostfix(state);
     }
 
-    return parseLeftAssociative(
-        state,
-        (nextState) => parseBinaryByPrecedence(nextState, level + 1),
-        binaryPrecedenceRules[level],
-    );
+    const parsedLeft = parseOperatorLevel(state, level + 1);
+    if (parsedLeft.kind === "Err") return parsedLeft;
+
+    let expression = parsedLeft.value;
+    state.index = parsedLeft.index;
+    const rules = operatorPrecedenceRules[level];
+
+    while (state.index < state.tokens.length) {
+        const token = currentToken(state);
+        if (!token) break;
+
+        const rule = rules.find(
+            (candidate) => candidate.tokenKind === token.kind,
+        );
+        if (!rule) break;
+
+        consumeToken(state);
+
+        const right = parseOperatorLevel(state, level + 1);
+        if (right.kind === "Err") return right;
+
+        expression = rule.build(expression, right.value);
+        state.index = right.index;
+    }
+
+    return { kind: "Ok", value: expression, index: state.index };
 }
 
-function parseLogicalOr(state: ParserState): Result<Expression> {
-    return parseBinaryByPrecedence(state, 0);
-}
-
-/** parse postfix operations: function calls, dot access, bracket access, ++/-- */
-function parsePostfix(state: ParserState): Result<Expression> {
+/** parse postfix operations: function calls, dot access, bracket access, */
+function parsePostfix(state: ParserState): IndexedResult<Expression> {
     const parsedExpression = parseLeaf(state);
     if (parsedExpression.kind === "Err") return parsedExpression;
 
@@ -441,7 +609,11 @@ function parsePostfix(state: ParserState): Result<Expression> {
         currentExpression = next.value;
     }
 
-    return okResult(currentExpression);
+    return {
+        kind: "Ok",
+        value: currentExpression,
+        index: state.index,
+    };
 }
 
 function parseLeafExpression(token: Token): Expression | null {
@@ -469,10 +641,18 @@ function parseLeafExpression(token: Token): Expression | null {
 }
 
 /** parse a primary (leaf) expression: literal, identifier, or parenthesised expression */
-function parseLeaf(state: ParserState): Result<Expression> {
+function parseLeaf(state: ParserState): IndexedResult<Expression> {
     const token = currentToken(state);
     if (!token) {
-        return createExpressionParseError(state.tokens, state.index);
+        return {
+            kind: "Err",
+            error: "Expected an expression",
+            index: state.index,
+        };
+    }
+
+    if (parseArrowParameters(state.tokens, state.index) !== null) {
+        return parseArrowFunctionExpression(state);
     }
 
     if (token.kind === "NegationToken" || token.kind === "TypeofToken") {
@@ -494,44 +674,72 @@ function parseLeaf(state: ParserState): Result<Expression> {
 
     const expression = parseLeafExpression(token);
     if (!expression) {
-        return createExpressionParseError(state.tokens, state.index);
+        return {
+            kind: "Err",
+            error: "Expected an expression",
+            index: state.index,
+        };
     }
 
     consumeToken(state);
-    return okResult(expression);
+    return {
+        kind: "Ok",
+        value: expression,
+        index: state.index,
+    };
 }
 
-function tryParseExpressionAt(
-    tokens: Token[],
-    index: number,
-): ExpressionParseResult | null {
-    const parsed = parseExpressionAt(tokens, index);
-    return parsed.kind === "Err" ? null : parsed.value;
-}
+type AstParseResult = { body: Ast[]; index: number };
 
 function tryParseBlockAt(
     state: ParserState,
     index: number,
     nextState?: Partial<ParserState>,
-): { body: Ast[]; index: number } | null {
+): Result<AstParseResult> {
     const parsed = parseBlock(
         state.tokens,
         index,
         updateParserState(state, index, nextState),
     );
+
     return parsed.body === null
-        ? null
-        : {
-              body: parsed.body,
-              index: parsed.index,
-          };
+        ? { kind: "Err", error: "Expected a block" }
+        : { kind: "Ok", value: { body: parsed.body, index: parsed.index } };
+}
+
+function parseOptionalTerminatedExpression(
+    tokens: Token[],
+    startIndex: number,
+): Result<OptionalTerminatedExpression> {
+    if (isStatementTerminator(tokens[startIndex])) {
+        return {
+            kind: "Ok",
+            value: {
+                value: null,
+                nextIndex: consumeOptionalSemicolon(tokens, startIndex),
+            },
+        };
+    }
+
+    const parsedExpression = parseExpressionAt(tokens, startIndex);
+    if (parsedExpression.kind === "Err") {
+        return { kind: "Err", error: "Expected an expression" };
+    }
+
+    return {
+        kind: "Ok",
+        value: {
+            value: parsedExpression.value,
+            nextIndex: consumeOptionalSemicolon(tokens, parsedExpression.index),
+        },
+    };
 }
 
 function parseFunctionBody(
     state: ParserState,
     startIndex: number,
     allowExpressionBody: boolean,
-): ParsedFunctionBody | null {
+): Result<ParsedFunctionBody> {
     if (tokenIs(state.tokens[startIndex], "LeftBraceToken")) {
         return tryParseBlockAt(state, startIndex, {
             insideFunction: true,
@@ -540,91 +748,115 @@ function parseFunctionBody(
     }
 
     if (!allowExpressionBody) {
-        return null;
+        return { kind: "Err", error: "Expected a block for function body" };
     }
 
-    const expression = tryParseExpressionAt(state.tokens, startIndex);
-    if (expression === null) {
-        return null;
+    const expression = parseExpressionAt(state.tokens, startIndex);
+    if (expression.kind === "Err") {
+        return {
+            kind: "Err",
+            error: "Expected an expression for function body",
+        };
     }
 
     return {
-        body: [
-            {
-                kind: "LetStatement",
-                name: "result",
-                value: expression.expression,
-            },
-        ],
-        index: expression.index,
+        kind: "Ok",
+        value: {
+            body: [
+                {
+                    kind: "LetStatement",
+                    name: "result",
+                    value: expression.value,
+                },
+            ],
+            index: expression.index,
+        },
     };
 }
 
 function parseForHeader(
     state: ParserState,
     startIndex: number,
-): ParsedForHeader | null {
+): Result<ParsedForHeader> {
     let index = tryConsumeToken(state.tokens, startIndex, "LeftParenToken");
     if (index === null) {
-        return null;
+        return { kind: "Err", error: "Expected '('" };
     }
 
     const init = parseLetOrConst(updateParserState(state, index), false, false);
-    if (init.statement === null || init.statement.kind !== "LetStatement") {
-        return null;
+    if (init.kind === "Err" || init.value.kind !== "LetStatement") {
+        return { kind: "Err", error: "Expected init statement in for loop" };
     }
 
     index = tryConsumeToken(state.tokens, init.index, "SemicolonToken");
     if (index === null) {
-        return null;
+        return {
+            kind: "Err",
+            error: "Expected ';' after init statement in for loop",
+        };
     }
 
     const condition = parseExpressionThenConsumeToken(
         state.tokens,
-        index,
         "SemicolonToken",
-        tryParseExpressionAt,
+        parseExpressionAt(state.tokens, index),
     );
-    if (condition === null) return null;
+    if (condition === null)
+        return { kind: "Err", error: "Expected condition in for loop" };
 
     const increment = parseExpressionThenConsumeToken(
         state.tokens,
-        condition.nextIndex,
         "RightParenToken",
-        tryParseExpressionAt,
+        parseExpressionAt(state.tokens, condition.nextIndex),
     );
-    if (increment === null) return null;
+    if (increment === null)
+        return { kind: "Err", error: "Expected increment in for loop" };
 
     return {
-        init: init.statement,
-        condition: condition.expression,
-        increment: increment.expression,
-        afterRightParenIndex: increment.nextIndex,
+        kind: "Ok",
+        value: {
+            init: init.value,
+            condition: condition.expression,
+            increment: increment.expression,
+            afterRightParenIndex: increment.nextIndex,
+        },
     };
 }
 
 function parseObjectPropertyKeyOrExpressionError(
     state: ParserState,
-): Result<string> {
+): IndexedResult<string> {
     const keyToken = currentToken(state);
     if (
         !keyToken ||
         (keyToken.kind !== "IdentifierToken" && keyToken.kind !== "StringToken")
     ) {
-        return createExpressionParseError(state.tokens, state.index);
+        return {
+            kind: "Err",
+            error: "Expected a string or identifier as object property key",
+            index: state.index,
+        };
     }
 
     consumeToken(state);
-    return okResult(
-        keyToken.kind === "IdentifierToken"
-            ? keyToken.name
-            : stripStringQuotes(keyToken.value),
-    );
+
+    let key: string;
+    if (keyToken.kind === "IdentifierToken") {
+        key = keyToken.name;
+    } else {
+        key = stripStringQuotes(keyToken.value);
+    }
+
+    return {
+        kind: "Ok",
+        value: key,
+        index: state.index,
+    };
 }
 
 function parseObjectPropertyEntry(
     state: ParserState,
-): Result<{ key: string; value: Expression }> {
+): IndexedResult<{ key: string; value: Expression }> {
     const key = parseObjectPropertyKeyOrExpressionError(state);
     if (key.kind === "Err") {
         return key;
@@ -635,15 +867,19 @@ function parseObjectPropertyEntry(
         return colon;
     }
 
-    const value = parseLogicalOr(state);
+    const value = parseAssignmentExpression(state);
     if (value.kind === "Err") {
         return value;
     }
 
-    return okResult({ key: key.value, value: value.value });
+    return {
+        kind: "Ok",
+        value: { key: key.value, value: value.value },
+        index: state.index,
+    };
 }
 
-function parseObjectExpression(state: ParserState): Result<Expression> {
+function parseObjectExpression(state: ParserState): IndexedResult<Expression> {
     consumeToken(state);
     const properties: { [key: string]: Expression } = {};
 
@@ -670,10 +906,14 @@ function parseObjectExpression(state: ParserState): Result<Expression> {
         return rightBrace;
     }
 
-    return okResult({
-        kind: "ObjectExpression",
-        properties,
-    });
+    return {
+        kind: "Ok",
+        value: {
+            kind: "ObjectExpression",
+            properties,
+        },
+        index: state.index,
+    };
 }
 
 function parseFunctionDeclarationFromParts(
@@ -685,7 +925,7 @@ function parseFunctionDeclarationFromParts(
     consumeSemicolon: boolean,
 ): StatementParseResult {
     const body = parseFunctionBody(state, bodyStartIndex, allowExpressionBody);
-    if (body === null) {
+    if (body.kind === "Err") {
         return createFailedStatement(state);
     }
 
@@ -694,11 +934,11 @@ function parseFunctionDeclarationFromParts(
             kind: "FunctionDeclaration",
             name,
             parameters,
-            body: body.body,
+            body: body.value.body,
         },
         consumeSemicolon
-            ? consumeOptionalSemicolon(state.tokens, body.index)
-            : body.index,
+            ? consumeOptionalSemicolon(state.tokens, body.value.index)
+            : body.value.index,
     );
 }
 
@@ -739,7 +979,7 @@ function parseDeclarationStatement(
     isConst: boolean,
 ): StatementParseResult {
     const arrowDeclaration = parseArrowFunctionDeclaration(state);
-    return arrowDeclaration.statement !== null
+    return arrowDeclaration.kind === "Ok"
         ? arrowDeclaration
         : parseLetOrConst(state, isConst, true);
 }
@@ -759,15 +999,88 @@ const statementParsers: Partial<Record<TokenKinds, StatementParser>> = {
     BreakToken: (state) => parseLoopControlStatement(state, "BreakStatement"),
 };
 
+function sliceTokensUpToSemicolon(
+    tokens: Token[],
+    startIndex: number,
+): Token[] {
+    const result: Token[] = [];
+    let index = startIndex;
+    let parenDepth = 0;
+    let bracketDepth = 0;
+    let braceDepth = 0;
+
+    while (index < tokens.length) {
+        const token = tokens[index];
+
+        if (
+            parenDepth === 0 &&
+            bracketDepth === 0 &&
+            braceDepth === 0 &&
+            (token.kind === "SemicolonToken" ||
+                token.kind === "RightBraceToken")
+        ) {
+            break;
+        }
+
+        result.push(token);
+
+        switch (token.kind) {
+            case "LeftParenToken":
+                parenDepth += 1;
+                break;
+            case "RightParenToken":
+                parenDepth -= 1;
+                break;
+            case "LeftBracketToken":
+                bracketDepth += 1;
+                break;
+            case "RightBracketToken":
+                bracketDepth -= 1;
+                break;
+            case "LeftBraceToken":
+                braceDepth += 1;
+                break;
+            case "RightBraceToken":
+                braceDepth -= 1;
+                break;
+        }
+
+        index++;
+    }
+
+    return result;
+}
+
 function parseStatement(state: ParserState): StatementParseResult {
     const token = currentToken(state);
     if (!token) {
         return createFailedStatement(state);
     }
 
-    return (
-        statementParsers[token.kind]?.(state) ?? createFailedStatement(state)
-    );
+    const parser = statementParsers[token.kind];
+
+    if (typeof parser === "undefined") {
+        const inputTokens = sliceTokensUpToSemicolon(state.tokens, state.index);
+        const expression = parseExpression(inputTokens);
+        if (expression.kind === "Ok") {
+            return {
+                kind: "Ok",
+                value: {
+                    kind: "LineTerminatedExpression",
+                    expressions: [expression.value],
+                },
+                index: state.index + inputTokens.length,
+            };
+        } else {
+            return {
+                kind: "Err",
+                error: "Failed to parse bare-expression",
+                index: state.index,
+            };
+        }
+    }
+
+    return parser(state);
 }
 
 function parseStatementList(
@@ -790,7 +1103,7 @@ function parseStatementList(
         }
 
         const parsed = parseStatement(updateParserState(parentState, index));
-        if (parsed.statement === null) {
+        if (parsed.kind === "Err") {
             return { statements: null, index };
         }
 
@@ -802,7 +1115,7 @@ function parseStatementList(
             };
         }
 
-        statements.push(parsed.statement);
+        statements.push(parsed.value);
         index = parsed.index;
     }
 
@@ -868,8 +1181,9 @@ export function parseLetOrConst(
     }
     index += 1;
 
-    const parsed = tryParseExpressionAt(state.tokens, index);
-    if (parsed === null) {
+    const parsed = parseExpressionAt(state.tokens, index);
+
+    if (parsed.kind === "Err") {
         return createFailedStatement(state);
     }
 
@@ -882,7 +1196,7 @@ export function parseLetOrConst(
         {
             kind: isConst ? "ConstStatement" : "LetStatement",
             name: parsedName.name,
-            value: parsed.expression,
+            value: parsed.value,
         },
         index,
     );
@@ -891,82 +1205,130 @@ export function parseLetOrConst(
 function parseParenthesizedExpressionFrom(
     tokens: Token[],
     startIndex: number,
-): ExpressionParseResult | null {
+): IndexedResult<Expression> {
     if (!tokenIs(tokens[startIndex], "LeftParenToken")) {
-        return null;
+        return {
+            kind: "Err",
+            error: "Expected '(' at start of parenthesized expression",
+            index: startIndex,
+        };
     }
 
-    const expression = tryParseExpressionAt(tokens, startIndex + 1);
-    if (expression === null) {
-        return null;
+    const expression = parseExpressionAt(tokens, startIndex + 1);
+    if (expression.kind === "Err") {
+        return {
+            kind: "Err",
+            error: "Expected expression in parentheses",
+            index: startIndex + 1,
+        };
     }
 
     if (!tokenIs(tokens[expression.index], "RightParenToken")) {
-        return null;
+        return {
+            kind: "Err",
+            error: "Expected ')' at end of parenthesized expression",
+            index: expression.index,
+        };
     }
 
     return {
-        expression: expression.expression,
+        kind: "Ok",
+        value: expression.value,
         index: expression.index + 1,
+    };
+}
+
+function parseBlockOrSingleStatement(
+    state: ParserState,
+    startIndex: number,
+): Result<{ body: Ast[]; nextIndex: number }> {
+    const block = tryParseBlockAt(state, startIndex);
+    if (block.kind === "Ok") {
+        return {
+            kind: "Ok",
+            value: {
+                body: block.value.body,
+                nextIndex: block.value.index,
+            },
+        };
+    }
+
+    const statement = parseStatement(updateParserState(state, startIndex));
+    if (statement.kind === "Err") {
+        return { kind: "Err", error: "Expected statement body" };
+    }
+
+    return {
+        kind: "Ok",
+        value: {
+            body: [statement.value],
+            nextIndex: statement.index,
+        },
     };
 }
 
 function parseConditionAndBlock(
     state: ParserState,
     conditionStartIndex: number,
-): ParsedConditionBlock | null {
+): Result<ParsedConditionBlock> {
     const condition = parseParenthesizedExpressionFrom(
         state.tokens,
         conditionStartIndex,
     );
-    if (condition === null) {
-        return null;
+    if (condition.kind === "Err") {
+        return { kind: "Err", error: "Expected condition in parentheses" };
     }
 
-    const body = tryParseBlockAt(state, condition.index);
-    if (body === null) {
-        return null;
+    const body = parseBlockOrSingleStatement(state, condition.index);
+    if (body.kind === "Err") {
+        return { kind: "Err", error: "Expected body after condition" };
     }
 
     return {
-        condition: condition.expression,
-        body: body.body,
-        nextIndex: body.index,
+        kind: "Ok",
+        value: {
+            condition: condition.value,
+            body: body.value.body,
+            nextIndex: body.value.nextIndex,
+        },
     };
 }
 
 function parseOptionalElseBranch(
     state: ParserState,
     index: number,
-): ParsedOptionalElse | null {
+): Result<ParsedOptionalElse> {
     if (!tokenIs(state.tokens[index], "ElseToken")) {
-        return { nextIndex: index };
+        return { kind: "Ok", value: { nextIndex: index } };
     }
 
     const elseIndex = index + 1;
     if (tokenIs(state.tokens[elseIndex], "IfToken")) {
         const elseIf = parseStatement(updateParserState(state, elseIndex));
-        if (
-            elseIf.statement === null ||
-            elseIf.statement.kind !== "IfStatement"
-        ) {
-            return null;
+        if (elseIf.kind === "Err" || elseIf.value.kind !== "IfStatement") {
+            return { kind: "Err", error: "Expected IfStatement after ElseIf" };
         }
 
         return {
-            elseBranch: [elseIf.statement],
-            nextIndex: elseIf.index,
+            kind: "Ok",
+            value: {
+                elseBranch: [elseIf.value],
+                nextIndex: elseIf.index,
+            },
         };
     }
 
-    const elseBranch = tryParseBlockAt(state, elseIndex);
-    if (elseBranch === null) {
-        return null;
+    const elseBranch = parseBlockOrSingleStatement(state, elseIndex);
+    if (elseBranch.kind === "Err") {
+        return { kind: "Err", error: "Expected body after Else" };
     }
 
     return {
-        elseBranch: elseBranch.body,
-        nextIndex: elseBranch.index,
+        kind: "Ok",
+        value: {
+            elseBranch: elseBranch.value.body,
+            nextIndex: elseBranch.value.nextIndex,
+        },
     };
 }
 
@@ -992,7 +1354,7 @@ function parseWhile(state: ParserState): StatementParseResult {
         state.index + 1,
     );
 
-    if (condition === null) {
+    if (condition.kind === "Err") {
         return createFailedStatement(state);
     }
 
@@ -1000,70 +1362,67 @@ function parseWhile(state: ParserState): StatementParseResult {
         insideForLoop: true,
     });
 
-    if (body === null) {
+    if (body.kind === "Err") {
         return createFailedStatement(state);
     }
 
     const loopVariable = `__while_${state.index}`;
-    const whileLoopParts = createWhileLoopParts(
-        loopVariable,
-        condition.expression,
-    );
+    const whileLoopParts = createWhileLoopParts(loopVariable, condition.value);
 
     return statementResult(
         createForLoopStatement(
             whileLoopParts.init,
             whileLoopParts.condition,
             whileLoopParts.increment,
-            body.body,
+            body.value.body,
         ),
-        body.index,
+        body.value.index,
     );
 }
 
 function parseIf(state: ParserState): StatementParseResult {
     const parsedIf = parseConditionAndBlock(state, state.index + 1);
-    if (parsedIf === null) {
+    if (parsedIf.kind === "Err") {
         return createFailedStatement(state);
     }
 
-    const parsedElse = parseOptionalElseBranch(state, parsedIf.nextIndex);
-    if (parsedElse === null) {
+    const parsedElse = parseOptionalElseBranch(state, parsedIf.value.nextIndex);
+    if (parsedElse.kind === "Err") {
         return createFailedStatement(state);
     }
 
     return statementResult(
         createIfStatement(
-            parsedIf.condition,
-            parsedIf.body,
-            parsedElse.elseBranch,
+            parsedIf.value.condition,
+            parsedIf.value.body,
+            parsedElse.value.elseBranch,
         ),
-        parsedElse.nextIndex,
+        parsedElse.value.nextIndex,
     );
 }
 
 /** parse a for loop with initializer, condition, and increment */
 function parseFor(state: ParserState): StatementParseResult {
     const header = parseForHeader(state, state.index + 1);
-    if (header === null) {
+    if (header.kind === "Err") {
         return createFailedStatement(state);
     }
 
-    const body = tryParseBlockAt(state, header.afterRightParenIndex, {
+    const body = tryParseBlockAt(state, header.value.afterRightParenIndex, {
         insideForLoop: true,
     });
-    if (body === null) {
+    if (body.kind === "Err") {
         return createFailedStatement(state);
     }
 
     return statementResult(
         createForLoopStatement(
-            header.init,
-            header.condition,
-            header.increment,
-            body.body,
+            header.value.init,
+            header.value.condition,
+            header.value.increment,
+            body.value.body,
         ),
-        body.index,
+        body.value.index,
     );
 }
 
@@ -1110,18 +1469,17 @@ function parseReturn(state: ParserState): StatementParseResult {
     const parsedReturnValue = parseOptionalTerminatedExpression(
         state.tokens,
         state.index + 1,
-        tryParseExpressionAt,
     );
-    if (parsedReturnValue === null) {
+    if (parsedReturnValue.kind === "Err") {
         return createFailedStatement(state);
     }
 
     return statementResult(
         {
             kind: "ReturnStatement",
-            value: parsedReturnValue.value,
+            value: parsedReturnValue.value.value,
         },
-        parsedReturnValue.nextIndex,
+        parsedReturnValue.value.nextIndex,
     );
 }
 
@@ -1189,6 +1547,21 @@ function parseAllStatements(tokens: Token[], input: string): Result<Ast[]> {
     };
 }
 
+function normalizeProgram(statements: Ast[]): Program {
+    const program: Program = [];
+
+    for (const statement of statements) {
+        if (statement.kind === "LineTerminatedExpression") {
+            program.push(...statement.expressions);
+            continue;
+        }
+
+        program.push(statement);
+    }
+
+    return program;
+}
+
 /** parse a single expression from a token list, stripping whitespace first */
 export function parseExpression(tokens: Token[]): Result<Expression> {
     const cleanTokens = withoutWhitespace(tokens);
@@ -1196,18 +1569,32 @@ export function parseExpression(tokens: Token[]): Result<Expression> {
 
     if (parsed.kind === "Err") return parsed;
 
-    if (parsed.value.index === cleanTokens.length) {
-        return okResult(parsed.value.expression);
+    if (parsed.index === cleanTokens.length) {
+        return okResult(parsed.value);
     }
 
     return {
         kind: "Err",
-        error: formatTrailingExpressionError(cleanTokens, parsed.value.index),
+        error: formatTrailingExpressionError(cleanTokens, parsed.index),
+    };
+}
+
+function parseProgram(input: string): Result<Program> {
+    const tokens = withoutWhitespace(tokenize(input));
+    const result = parseAllStatements(tokens, input);
+    if (result.kind === "Err") {
+        return result;
+    }
+
+    const program = normalizeProgram(result.value);
+
+    return {
+        kind: "Ok",
+        value: program,
     };
 }
 
 /** tokenize and parse a JavaScript source string into an AST */
 export function parse(input: string): Result<Program> {
-    const tokens = withoutWhitespace(tokenize(input));
-    return parseAllStatements(tokens, input);
+    return parseProgram(input);
 }

@@ -1,12 +1,12 @@
 import type {
     Ast,
     Expression,
-    ExpressionParseResult,
+    IndexedResult,
+    OperatorRule,
     ParserState,
     StatementParseResult,
 } from "../types.ts";
-
-import type { Result } from "../../types.ts";
+import type { OperatorExpression } from "./types.ts";
 
 type BaseToken = { startIndex: number; endIndex: number };
 type NumberToken = BaseToken & { kind: "NumberToken"; value: number };
@@ -112,7 +112,7 @@ export type Token =
 
 export type StatementParser = (state: ParserState) => StatementParseResult;
 
-export type BinaryExpression = Extract<
+export type OperatorExpression = Extract<
     Expression,
     { left: Expression; right: Expression }
 >;
@@ -150,9 +150,55 @@ export type StatementListParseResult = {
     noProgressToken?: Token;
 };
 
-export type ParsedExpressionResult = Result<ExpressionParseResult>;
+export type ParsedExpressionResult = IndexedResult<Expression>;
 export type ParsedBlockResult = {
     body: Ast[] | null;
     index: number;
 };
 export type ParsedStatementResult = StatementParseResult;
+type ChainableExpression = Extract<
+    Expression,
+    {
+        kind:
+            | "NameLookupExpression"
+            | "ObjectPropertyExpression"
+            | "ObjectMethodCallExpression"
+            | "ArrayAccessExpression";
+    }
+>;
+export function isChainableExpression(
+    expression: Expression,
+): expression is ChainableExpression {
+    return (
+        expression.kind === "NameLookupExpression" ||
+        expression.kind === "ObjectPropertyExpression" ||
+        expression.kind === "ObjectMethodCallExpression" ||
+        expression.kind === "ArrayAccessExpression"
+    );
+}
+export function isAssignmentTarget(
+    expression: Expression,
+): expression is Extract<
+    Expression,
+    {
+        kind:
+            | "NameLookupExpression"
+            | "ObjectPropertyExpression"
+            | "ArrayAccessExpression";
+    }
+> {
+    return (
+        expression.kind === "NameLookupExpression" ||
+        expression.kind === "ObjectPropertyExpression" ||
+        expression.kind === "ArrayAccessExpression"
+    );
+}
+export function operatorRule(
+    tokenKind: OperatorRule["tokenKind"],
+    kind: OperatorExpression["kind"],
+): OperatorRule {
+    return {
+        tokenKind,
+        build: (left, right) => ({ kind, left, right }),
+    };
+}

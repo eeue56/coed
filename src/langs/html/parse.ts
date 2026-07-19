@@ -35,6 +35,8 @@ export function parseFragment(string: string): HtmlNode<never>[] {
  */
 export function parse(string: string): Result<HtmlNode<never>> {
     const parser = new jsdom.JSDOM(string, { contentType: "text/html" });
+    parser.window.document.normalize();
+
     const documentElement = parser.window.document.documentElement;
     const walked = walk(documentElement);
     const value = walked[0];

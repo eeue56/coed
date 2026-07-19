@@ -18,7 +18,48 @@ function isIdentifierPart(char: string): boolean {
 }
 
 function isStringQuote(char: string): boolean {
-    return char === '"' || char === "'" || char === "`";
+    return char === '"' || char === "'";
+}
+
+function findTemplateLiteralEnd(input: string, startIndex: number): number {
+    let index = startIndex + 1;
+    let interpolationBraceDepth = 0;
+
+    while (index < input.length) {
+        const char = input[index];
+
+        if (char === "\\") {
+            index += 2;
+            continue;
+        }
+
+        if (char === "`") {
+            if (interpolationBraceDepth === 0) {
+                return index + 1;
+            }
+
+            index = findTemplateLiteralEnd(input, index);
+            continue;
+        }
+
+        if (char === "$" && input[index + 1] === "{") {
+            interpolationBraceDepth += 1;
+            index += 2;
+            continue;
+        }
+
+        if (interpolationBraceDepth > 0) {
+            if (char === "{") {
+                interpolationBraceDepth += 1;
+            } else if (char === "}") {
+                interpolationBraceDepth -= 1;
+            }
+        }
+
+        index += 1;
+    }
+
+    return input.length;
 }
 
 function isNumberPart(char: string, buffer: string): boolean {
@@ -458,6 +499,17 @@ function processReadyForNextToken(
     currentIndex: number,
     char: string,
 ): number {
+    if (char === "`") {
+        const endIndex = findTemplateLiteralEnd(input, currentIndex);
+        tokens.push({
+            kind: "StringToken",
+            value: input.slice(currentIndex, endIndex),
+            startIndex: currentIndex,
+            endIndex,
+        });
+        return endIndex - currentIndex - 1;
+    }
+
     if (isStringQuote(char)) {
         switchStateAndBufferChar(
             "ReadingString",

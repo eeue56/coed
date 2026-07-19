@@ -1,5 +1,5 @@
 import type { Result } from "../types.ts";
-import type { BinaryExpression, Token } from "./parser/types.ts";
+import type { OperatorExpression, Token } from "./parser/types.ts";
 
 export type NumberExpression = { kind: "NumberExpression"; value: number };
 
@@ -70,6 +70,23 @@ type DecreaseExpression = {
     amount: Expression;
 };
 
+type AssignmentTarget =
+    | NameLookupExpression
+    | ObjectPropertyExpression
+    | ArrayAccessExpression;
+
+type AssignmentExpression = {
+    kind: "AssignmentExpression";
+    target: AssignmentTarget;
+    value: Expression;
+};
+
+type ArrowFunctionExpression = {
+    kind: "ArrowFunctionExpression";
+    parameters: string[];
+    body: Ast[] | Expression;
+};
+
 type FunctionCallExpression = {
     kind: "FunctionCallExpression";
     functionName: string;
@@ -81,22 +98,28 @@ export type NameLookupExpression = {
     name: string;
 };
 
+type ChainableExpression =
+    | NameLookupExpression
+    | ObjectPropertyExpression
+    | ObjectMethodCallExpression
+    | ArrayAccessExpression;
+
 type ObjectPropertyExpression = {
     kind: "ObjectPropertyExpression";
-    object: NameLookupExpression;
+    object: ChainableExpression;
     property: NameLookupExpression | StringLiteralExpression;
 };
 
 type ObjectMethodCallExpression = {
     kind: "ObjectMethodCallExpression";
-    object: NameLookupExpression;
+    object: ChainableExpression;
     method: NameLookupExpression | StringLiteralExpression;
     arguments: Expression[];
 };
 
 type ArrayAccessExpression = {
     kind: "ArrayAccessExpression";
-    array: NameLookupExpression;
+    array: ChainableExpression;
     index: NumberExpression;
 };
 
@@ -154,6 +177,8 @@ export type Expression =
     | DecrementExpression
     | IncreaseExpression
     | DecreaseExpression
+    | AssignmentExpression
+    | ArrowFunctionExpression
     | NullExpression
     | BooleanExpression
     | StringLiteralExpression
@@ -216,6 +241,18 @@ type BreakStatement = {
     kind: "BreakStatement";
 };
 
+/**
+ * e.g
+ *
+ * ```
+ * main();
+ * ```
+ */
+type LineTerminatedExpression = {
+    kind: "LineTerminatedExpression";
+    expressions: Expression[];
+};
+
 export type Ast =
     | LetStatement
     | IfStatement
@@ -224,17 +261,17 @@ export type Ast =
     | ConstStatement
     | ReturnStatement
     | ContinueStatement
-    | BreakStatement;
+    | BreakStatement
+    | LineTerminatedExpression;
 
 export type ExpressionParseResult = {
     expression: Expression;
     index: number;
 };
 
-export type StatementParseResult = {
-    statement: Ast | null;
-    index: number;
-};
+export type IndexedResult<a> = Result<a> & { index: number };
+
+export type StatementParseResult = IndexedResult<Ast>;
 
 export type ParserState = {
     tokens: Token[];
@@ -258,9 +295,9 @@ export type DetailedParseError = {
 
 export type ParseExpressionFunction = (
     state: ParserState,
-) => Result<Expression>;
+) => IndexedResult<Expression>;
 
-export type BinaryOperatorRule = {
+export type OperatorRule = {
     tokenKind:
         | "EqualityToken"
         | "InequalityToken"
@@ -274,7 +311,7 @@ export type BinaryOperatorRule = {
         | "DivisionToken"
         | "AndToken"
         | "OrToken";
-    build: (left: Expression, right: Expression) => BinaryExpression;
+    build: (left: Expression, right: Expression) => OperatorExpression;
 };
 
 export type TokenKinds = Token["kind"];

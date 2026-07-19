@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import { getRootObjectName } from "../../../langs/javascript/filter.ts";
 import { javascript } from "../../../langs/javascript/index.ts";
 import {
     isAst,
@@ -112,6 +113,9 @@ function sanitizeAst(ast: Ast, filterRule: FilterRule<JsNode>): JsNode | null {
         case "BreakStatement": {
             return ast;
         }
+        case "LineTerminatedExpression": {
+            return ast;
+        }
     }
 }
 
@@ -122,7 +126,7 @@ const isHarmfulExpression: FilterRule<JsNode> = {
         }
 
         if (node.kind === "ObjectPropertyExpression") {
-            const objectName = node.object.name;
+            const objectName = getRootObjectName(node.object);
             const propertyName =
                 node.property.kind === "NameLookupExpression"
                     ? node.property.name
@@ -138,7 +142,7 @@ const isHarmfulExpression: FilterRule<JsNode> = {
         }
 
         if (node.kind === "ObjectMethodCallExpression") {
-            const objectName = node.object.name;
+            const objectName = getRootObjectName(node.object);
             const methodName =
                 node.method.kind === "NameLookupExpression"
                     ? node.method.name
