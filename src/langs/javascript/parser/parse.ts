@@ -27,7 +27,6 @@ import {
     createWhileLoopParts,
     currentToken,
     isStatementTerminator,
-    okResult,
     parseArrowParameters,
     parseExpressionThenConsumeToken,
     parseTypedParametersUntil,
@@ -229,7 +228,7 @@ function parseArrowFunctionExpression(
 
     if (tokenIs(state.tokens[bodyStartIndex], "LeftBraceToken")) {
         const body = parseBlock(state.tokens, bodyStartIndex, functionState);
-        if (body.body === null) {
+        if (body.kind === "Err") {
             return {
                 kind: "Err",
                 error: "Expected a block body for arrow function",
@@ -243,7 +242,7 @@ function parseArrowFunctionExpression(
             value: {
                 kind: "ArrowFunctionExpression",
                 parameters: parameters.parameters,
-                body: body.body,
+                body: body.value,
             },
             index: state.index,
         };
@@ -702,9 +701,9 @@ function tryParseBlockAt(
         updateParserState(state, index, nextState),
     );
 
-    return parsed.body === null
+    return parsed.kind === "Err"
         ? { kind: "Err", error: "Expected a block" }
-        : { kind: "Ok", value: { body: parsed.body, index: parsed.index } };
+        : { kind: "Ok", value: { body: parsed.value, index: parsed.index } };
 }
 
 function parseOptionalTerminatedExpression(
@@ -1136,12 +1135,13 @@ export function parseBlock(
         false,
         false,
     ),
-): {
-    body: Ast[] | null;
-    index: number;
-} {
+): IndexedResult<Ast[]> {
     if (!tokenIs(tokens[startIndex], "LeftBraceToken")) {
-        return { body: null, index: startIndex };
+        return {
+            kind: "Err",
+            error: "Expected '{'",
+            index: startIndex,
+        };
     }
 
     const parsed = parseStatementList(
@@ -1149,8 +1149,18 @@ export function parseBlock(
         startIndex + 1,
         "RightBraceToken",
     );
+
+    if (parsed.statements === null) {
+        return {
+            kind: "Err",
+            error: "Failed to parse block",
+            index: parsed.index,
+        };
+    }
+
     return {
-        body: parsed.statements,
+        kind: "Ok",
+        value: parsed.statements,
         index: parsed.index,
     };
 }
@@ -1570,7 +1580,10 @@ export function parseExpression(tokens: Token[]): Result<Expression> {
     if (parsed.kind === "Err") return parsed;
 
     if (parsed.index === cleanTokens.length) {
-        return okResult(parsed.value);
+        return {
+            kind: "Ok",
+            value: parsed.value,
+        };
     }
 
     return {

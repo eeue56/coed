@@ -265,7 +265,7 @@ function explainIfFailure(
     tokens: Token[],
     index: number,
     condition: ParsedExpressionResult,
-    thenBranch: ParsedBlockResult | null,
+    thenBranch: ParsedBlockResult,
     elseBranch: ParsedBlockResult | null,
 ): DetailedParseError | null {
     const leftParen = tokens[index + 1];
@@ -324,18 +324,7 @@ function explainIfFailure(
         };
     }
 
-    if (thenBranch === null) {
-        return {
-            problem:
-                "I could not inspect the then-branch for this if statement.",
-            hint: "Try writing: if (condition) { ... }",
-            focusToken:
-                typeof thenBrace === "undefined" ? rightParen : thenBrace,
-            suggestion: null,
-        };
-    }
-
-    if (thenBranch.body === null) {
+    if (thenBranch.kind === "Err") {
         const thenBranchToken = tokens[thenBranch.index];
         return {
             problem: `There is an invalid statement inside the if block near ${tokenOrEndSummary(thenBranchToken)}.`,
@@ -373,17 +362,7 @@ function explainIfFailure(
         }
 
         if (tokenIs(afterElse, "LeftBraceToken")) {
-            if (elseBranch === null) {
-                return {
-                    problem:
-                        "I could not inspect the else block for this if statement.",
-                    hint: "Write either `else if (...) { ... }` or `else { ... }`.",
-                    focusToken: afterElse,
-                    suggestion: null,
-                };
-            }
-
-            if (elseBranch.body === null) {
+            if (elseBranch !== null && elseBranch.kind === "Err") {
                 const elseBranchToken = tokens[elseBranch.index];
                 return {
                     problem: `There is an invalid statement inside the else block near ${tokenOrEndSummary(elseBranchToken)}.`,
@@ -590,7 +569,7 @@ function explainForFailure(
         };
     }
 
-    if (body.body === null) {
+    if (body.kind === "Err") {
         return {
             problem: `There is an invalid statement inside the for-loop body near ${tokenOrEndSummary(tokens[body.index])}.`,
             hint: "Fix the statement inside the loop body `{ ... }`.",
@@ -697,7 +676,7 @@ function explainFunctionFailure(
         };
     }
 
-    if (body.body === null) {
+    if (body.kind === "Err") {
         return {
             problem: `There is an invalid statement inside the function body near ${tokenOrEndSummary(tokens[body.index])}.`,
             hint: "Fix the statement inside the function `{ ... }` block.",
@@ -1055,8 +1034,8 @@ function explainStatementFailure(
                 tokens,
                 index,
                 context.ifCondition ?? { kind: "Err", error: "", index: 0 },
-                context.ifThenBranch || null,
-                context.ifElseBranch || null,
+                context.ifThenBranch ?? { kind: "Err", error: "", index: 0 },
+                context.ifElseBranch ?? { kind: "Err", error: "", index: 0 },
             ) || {
                 problem: "I could not parse this if statement.",
                 hint: "Use this shape: if (condition) { ... } else { ... }",

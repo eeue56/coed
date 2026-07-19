@@ -1,4 +1,3 @@
-import type { Result } from "../../types.ts";
 import type {
     Ast,
     Expression,
@@ -80,10 +79,6 @@ type NameLookupExpression = Extract<
     Expression,
     { kind: "NameLookupExpression" }
 >;
-
-export function okResult<value>(value: value): Result<value> {
-    return { kind: "Ok", value };
-}
 
 export function statementResult(
     statement: Ast,

@@ -6,7 +6,6 @@ import type {
     ParserState,
     StatementParseResult,
 } from "../types.ts";
-import type { OperatorExpression } from "./types.ts";
 
 type BaseToken = { startIndex: number; endIndex: number };
 type NumberToken = BaseToken & { kind: "NumberToken"; value: number };
@@ -151,10 +150,7 @@ export type StatementListParseResult = {
 };
 
 export type ParsedExpressionResult = IndexedResult<Expression>;
-export type ParsedBlockResult = {
-    body: Ast[] | null;
-    index: number;
-};
+export type ParsedBlockResult = IndexedResult<Ast[]>;
 export type ParsedStatementResult = StatementParseResult;
 type ChainableExpression = Extract<
     Expression,
