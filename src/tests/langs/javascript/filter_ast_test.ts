@@ -189,6 +189,7 @@ export function testFilterAstsFiltersFunctionAndIfBranchesRecursively() {
         {
             kind: "FunctionDeclaration",
             name: "main",
+            isAsync: false,
             parameters: [],
             body: [
                 {
@@ -211,6 +212,7 @@ export function testFilterAstsFiltersFunctionAndIfBranchesRecursively() {
         {
             kind: "FunctionDeclaration",
             name: "main",
+            isAsync: false,
             parameters: [],
             body: [
                 {
@@ -231,6 +233,7 @@ export function testFilterAstsFiltersFunctionAndIfBranchesRecursively() {
         {
             kind: "FunctionDeclaration",
             name: "main",
+            isAsync: false,
             parameters: [],
             body: [
                 {
@@ -251,6 +254,7 @@ export function testFilterAstsFiltersFunctionAndIfBranchesRecursively() {
         {
             kind: "FunctionDeclaration",
             name: "main",
+            isAsync: false,
             parameters: [],
             body: [],
         },
@@ -260,6 +264,7 @@ export function testFilterAstsFiltersFunctionAndIfBranchesRecursively() {
         {
             kind: "FunctionDeclaration",
             name: "main",
+            isAsync: false,
             parameters: [],
             body: [
                 {
@@ -327,6 +332,7 @@ export function testFilterAstsCanRemoveContainerNodes() {
         {
             kind: "FunctionDeclaration",
             name: "outer",
+            isAsync: false,
             parameters: [],
             body: [{ kind: "ConstStatement", name: "x", value: one }],
         },
@@ -354,6 +360,7 @@ export function testFilterAstsCanRemoveContainerNodes() {
         {
             kind: "FunctionDeclaration",
             name: "outer",
+            isAsync: false,
             parameters: [],
             body: [{ kind: "ConstStatement", name: "x", value: threes }],
         },
@@ -395,6 +402,7 @@ export function testFilterAstsKeepsAllAstTypesWhenPredicateAlwaysTrue() {
         {
             kind: "FunctionDeclaration",
             name: "f",
+            isAsync: false,
             parameters: ["x"],
             body: [{ kind: "ConstStatement", name: "e", value: one }],
         },
@@ -423,6 +431,7 @@ export function testFilterAstsKeepsAllAstTypesWhenPredicateAlwaysTrue() {
         {
             kind: "FunctionDeclaration",
             name: "f",
+            isAsync: false,
             parameters: ["x"],
             body: [{ kind: "ConstStatement", name: "e", value: one }],
         },
@@ -436,6 +445,7 @@ export function testFilterReturnWithValue() {
         {
             kind: "FunctionDeclaration",
             name: "f",
+            isAsync: false,
             parameters: ["x"],
             body: [
                 { kind: "ConstStatement", name: "e", value: one },
@@ -452,6 +462,7 @@ export function testFilterReturnWithValue() {
         {
             kind: "FunctionDeclaration",
             name: "f",
+            isAsync: false,
             parameters: ["x"],
             body: [
                 {
@@ -466,6 +477,7 @@ export function testFilterReturnWithValue() {
         {
             kind: "FunctionDeclaration",
             name: "f",
+            isAsync: false,
             parameters: ["x"],
             body: [{ kind: "ConstStatement", name: "e", value: one }],
         },
@@ -475,6 +487,7 @@ export function testFilterReturnWithValue() {
         {
             kind: "FunctionDeclaration",
             name: "f",
+            isAsync: false,
             parameters: ["x"],
             body: [
                 { kind: "ConstStatement", name: "e", value: threes },
@@ -492,6 +505,7 @@ export function testFilterBareReturn() {
         {
             kind: "FunctionDeclaration",
             name: "f",
+            isAsync: false,
             parameters: ["x"],
             body: [
                 { kind: "ConstStatement", name: "e", value: one },
@@ -508,6 +522,7 @@ export function testFilterBareReturn() {
         {
             kind: "FunctionDeclaration",
             name: "f",
+            isAsync: false,
             parameters: ["x"],
             body: [
                 {
@@ -524,6 +539,7 @@ export function testFilterBareReturn() {
             {
                 kind: "FunctionDeclaration",
                 name: "f",
+                isAsync: false,
                 parameters: ["x"],
                 body: [
                     { kind: "ConstStatement", name: "e", value: threes },
@@ -543,6 +559,7 @@ export function testFilterBareReturn() {
             {
                 kind: "FunctionDeclaration",
                 name: "f",
+                isAsync: false,
                 parameters: ["x"],
                 body: [
                     { kind: "ConstStatement", name: "e", value: threes },
