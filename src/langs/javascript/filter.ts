@@ -58,7 +58,7 @@ function filterAst(
 
             const hasInit = init.value.length > 0;
             const hasCondition = condition.value.length > 0;
-            const hasIncrement = condition.value.length > 0;
+            const hasIncrement = increment.value.length > 0;
 
             if (
                 !hasCondition ||
