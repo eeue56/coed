@@ -275,7 +275,7 @@ function walk(childNode: ChildNode): [HtmlNode<never>] | [] {
 
     const attributes: Attribute[] = [];
     for (const attribute of element.attributes) {
-        const kind: AttributeKind = attributeKind(attribute.name);
+        const kind = attributeKind(attribute.name);
 
         attribute.value = attribute.value.trim();
 

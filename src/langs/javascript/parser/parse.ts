@@ -799,8 +799,6 @@ function parseLeaf(state: ParserState): IndexedResult<Expression> {
     };
 }
 
-type AstParseResult = { body: Ast[]; index: number };
-
 function tryParseBlockAt(
     state: ParserState,
     index: number,

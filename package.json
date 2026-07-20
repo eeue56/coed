@@ -26,14 +26,9 @@
             "default": "./build/coed.js"
         },
         "./svg": {
-            "types": "./build/svg.d.ts",
-            "import": "./build/svg.js",
-            "default": "./build/svg.js"
-        },
-        "./parse": {
-            "types": "./build/parse.d.ts",
-            "import": "./build/parse.js",
-            "default": "./build/parse.js"
+            "types": "./build/coed/svg.d.ts",
+            "import": "./build/coed/svg.js",
+            "default": "./build/coed/svg.js"
         },
         "./types": {
             "types": "./build/types.d.ts",
