@@ -9,3 +9,5 @@ Each of the folders inside here support specific languages, beyond the pure `coe
 - `javascript` provides parsing, filter, and generation for a subset of JavaScript.
 
 Each module exposes an object with the name of the language. That object has the available parsers, filters, and generators. Generally: the full parser -> filter -> generate flow uses the same types, allowing for easy transition.
+
+A storage engine `engine` exists to store variations of the AST, with metadata. With the diffing of trees, this allows for semantic diffing between two versions of the parsed code
