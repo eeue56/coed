@@ -13,7 +13,11 @@
         "./build/parse.d.ts",
         "./build/types.d.ts",
         "./build/types.js",
-        "./build/langs/css"
+        "./build/langs/css",
+        "./build/langs/html",
+        "./build/langs/javascript",
+        "./build/langs/types.d.ts",
+        "./build/langs/types.js"
     ],
     "exports": {
         ".": {
@@ -40,6 +44,16 @@
             "types": "./build/langs/css/index.d.ts",
             "import": "./build/langs/css/index.js",
             "default": "./build/langs/css/index.js"
+        },
+        "./html": {
+            "types": "./build/langs/html/index.d.ts",
+            "import": "./build/langs/html/index.js",
+            "default": "./build/langs/html/index.js"
+        },
+        "./javascript": {
+            "types": "./build/langs/javascript/index.d.ts",
+            "import": "./build/langs/javascript/index.js",
+            "default": "./build/langs/javascript/index.js"
         }
     },
     "typings": "build/coed.d.ts",
