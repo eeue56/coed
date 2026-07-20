@@ -331,7 +331,8 @@ export function isAst(node: JsNode): node is Ast {
         kind === "FunctionDeclaration" ||
         kind === "ReturnStatement" ||
         kind === "ContinueStatement" ||
-        kind === "BreakStatement"
+        kind === "BreakStatement" ||
+        kind === "LineTerminatedExpression"
     );
 }
 
