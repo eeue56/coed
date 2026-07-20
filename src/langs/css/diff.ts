@@ -117,6 +117,10 @@ function isSameCssBlock(left: CssBlock, right: CssBlock): boolean {
         return false;
     }
 
+    if (left.body.length !== right.body.length) {
+        return false;
+    }
+
     for (let i = 0; i < left.body.length; i++) {
         const subLeft = left.body[i];
         const subRight = right.body[i];
