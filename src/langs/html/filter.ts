@@ -61,23 +61,13 @@ export function filter<a>(
         return { value: tree, errors: [] };
     }
 
-    const treeWithSplitClasses: HtmlNodesWithAttributes<a> = {
-        ...tree,
-        attributes: tree.attributes.flatMap((attr) => {
-            if (isStringAttributeWithClass(attr)) {
-                return splitClassAttribute(attr);
-            }
-            return [attr];
-        }),
-    };
-
     for (const rule of filterRules) {
-        if (!rule.shouldKeep(treeWithSplitClasses)) {
-            return returnReplacerOrEmptyText(rule, treeWithSplitClasses);
+        if (!rule.shouldKeep(tree)) {
+            return returnReplacerOrEmptyText(rule, tree);
         }
     }
 
-    switch (treeWithSplitClasses.kind) {
+    switch (tree.kind) {
         case "void":
         case "ns-void": {
             return { value: tree, errors: [] };
@@ -87,14 +77,14 @@ export function filter<a>(
             const children: HtmlNode<a>[] = [];
             const errors = [];
 
-            for (const child of treeWithSplitClasses.children) {
+            for (const child of tree.children) {
                 const result = filter(filterRules, child);
                 children.push(result.value);
                 errors.push(...result.errors);
             }
 
             const node: HtmlNodesWithAttributes<a> = {
-                ...treeWithSplitClasses,
+                ...tree,
                 children,
             };
 
@@ -112,6 +102,17 @@ function splitClassAttribute(
     return attribute.value
         .split(" ")
         .map((className: string) => ({ ...attribute, value: className }));
+}
+
+function recombineClassAttributes(
+    attributes: StringAttributeWithClass[],
+): StringAttributeWithClass {
+    const classes: string[] = [];
+    for (const attr of attributes) {
+        classes.push(attr.value);
+    }
+
+    return { kind: "string", key: "class", value: classes.join(" ") };
 }
 
 /**
@@ -132,7 +133,30 @@ function filterClassAttributes(
         errors.push(...result.errors);
     }
 
-    return { value: filteredAttributes, errors };
+    if (filteredAttributes.length === 0) {
+        return {
+            value: [],
+            errors,
+        };
+    }
+
+    const classAttributes: StringAttributeWithClass[] = [];
+    const nonClassAttributes: Attribute[] = [];
+
+    for (const attr of filteredAttributes) {
+        if (isStringAttributeWithClass(attr)) {
+            classAttributes.push(attr);
+        } else {
+            nonClassAttributes.push(attr);
+        }
+    }
+
+    const recombinedClassAttribute = recombineClassAttributes(classAttributes);
+
+    return {
+        value: [...nonClassAttributes, recombinedClassAttribute],
+        errors,
+    };
 }
 
 /**
