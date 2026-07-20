@@ -1,16 +1,14 @@
 import type { Err } from "../../types.ts";
 import type {
+    Ast,
     DetailedParseError,
+    Expression,
+    IndexedResult,
     ParserState,
     SourceLocation,
 } from "../types.ts";
 import { tokenIs } from "./parserHelpers.ts";
-import type {
-    ParsedBlockResult,
-    ParsedExpressionResult,
-    ParsedStatementResult,
-    Token,
-} from "./types.ts";
+import type { Token } from "./types.ts";
 
 function tokenSummary(token: Token): string {
     switch (token.kind) {
@@ -91,7 +89,7 @@ function expressionCanStart(token: Token | undefined): boolean {
 function explainExpressionFailure(
     tokens: Token[],
     index: number,
-    parsedInnerParen: ParsedExpressionResult | null,
+    parsedInnerParen: IndexedResult<Expression> | null,
 ): DetailedParseError {
     const token: Token | undefined = tokens[index];
 
@@ -223,8 +221,8 @@ function explainLetOrConstFailure(
     tokens: Token[],
     index: number,
     keyword: "let" | "const",
-    parsedValue: ParsedExpressionResult | null,
-    parsedInnerParen: ParsedExpressionResult | null,
+    parsedValue: IndexedResult<Expression> | null,
+    parsedInnerParen: IndexedResult<Expression> | null,
 ): DetailedParseError | null {
     const name = tokens[index + 1];
     if (!tokenIs(name, "IdentifierToken")) {
@@ -270,9 +268,9 @@ function explainLetOrConstFailure(
 function explainIfFailure(
     tokens: Token[],
     index: number,
-    condition: ParsedExpressionResult,
-    thenBranch: ParsedBlockResult,
-    elseBranch: ParsedBlockResult | null,
+    condition: IndexedResult<Expression>,
+    thenBranch: IndexedResult<Ast[]>,
+    elseBranch: IndexedResult<Ast[]> | null,
 ): DetailedParseError | null {
     const leftParen = tokens[index + 1];
     if (!tokenIs(leftParen, "LeftParenToken")) {
@@ -389,12 +387,12 @@ function explainIfFailure(
 function explainForFailure(
     tokens: Token[],
     index: number,
-    init: ParsedStatementResult | null,
-    initValue: ParsedExpressionResult | null,
-    initInnerParen: ParsedExpressionResult | null,
-    condition: ParsedExpressionResult | null,
-    increment: ParsedExpressionResult | null,
-    body: ParsedBlockResult | null,
+    init: IndexedResult<Ast> | null,
+    initValue: IndexedResult<Expression> | null,
+    initInnerParen: IndexedResult<Expression> | null,
+    condition: IndexedResult<Expression> | null,
+    increment: IndexedResult<Expression> | null,
+    body: IndexedResult<Ast[]> | null,
 ): DetailedParseError | null {
     const leftParen = tokens[index + 1];
     if (!tokenIs(leftParen, "LeftParenToken")) {
@@ -590,7 +588,7 @@ function explainForFailure(
 function explainFunctionFailure(
     tokens: Token[],
     index: number,
-    body: ParsedBlockResult | null,
+    body: IndexedResult<Ast[]> | null,
 ): DetailedParseError | null {
     const name = tokens[index + 1];
     if (!tokenIs(name, "IdentifierToken")) {
@@ -698,36 +696,36 @@ function explainFunctionFailure(
 }
 
 export type StatementFailureContext = {
-    letConstValue?: ParsedExpressionResult | null;
-    letConstInnerParen?: ParsedExpressionResult | null;
-    ifCondition?: ParsedExpressionResult;
-    ifThenBranch?: ParsedBlockResult | null;
-    ifElseBranch?: ParsedBlockResult | null;
-    forInit?: ParsedStatementResult | null;
-    forInitValue?: ParsedExpressionResult | null;
-    forInitInnerParen?: ParsedExpressionResult | null;
-    forCondition?: ParsedExpressionResult | null;
-    forIncrement?: ParsedExpressionResult | null;
-    forBody?: ParsedBlockResult | null;
-    functionBody?: ParsedBlockResult | null;
+    letConstValue?: IndexedResult<Expression> | null;
+    letConstInnerParen?: IndexedResult<Expression> | null;
+    ifCondition?: IndexedResult<Expression>;
+    ifThenBranch?: IndexedResult<Ast[]> | null;
+    ifElseBranch?: IndexedResult<Ast[]> | null;
+    forInit?: IndexedResult<Ast> | null;
+    forInitValue?: IndexedResult<Expression> | null;
+    forInitInnerParen?: IndexedResult<Expression> | null;
+    forCondition?: IndexedResult<Expression> | null;
+    forIncrement?: IndexedResult<Expression> | null;
+    forBody?: IndexedResult<Ast[]> | null;
+    functionBody?: IndexedResult<Ast[]> | null;
 };
 
 export type StatementFailureHelpers = {
     parseExpressionAt: (
         tokens: Token[],
         index: number,
-    ) => ParsedExpressionResult;
+    ) => IndexedResult<Expression>;
     parseBlock: (
         tokens: Token[],
         startIndex: number,
         parentState?: ParserState,
-    ) => ParsedBlockResult;
+    ) => IndexedResult<Ast[]>;
     parseLetOrConst: (
         state: ParserState,
         isConst: boolean,
         consumeSemicolon: boolean,
-    ) => ParsedStatementResult;
-    parseStatementAt: (state: ParserState) => ParsedStatementResult;
+    ) => IndexedResult<Ast>;
+    parseStatementAt: (state: ParserState) => IndexedResult<Ast>;
     createParserState: (
         tokens: Token[],
         index: number,

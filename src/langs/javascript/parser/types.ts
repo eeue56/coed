@@ -2,9 +2,9 @@ import type {
     Ast,
     Expression,
     IndexedResult,
+    LetStatement,
     OperatorRule,
     ParserState,
-    StatementParseResult,
 } from "../types.ts";
 
 type BaseToken = { startIndex: number; endIndex: number };
@@ -131,17 +131,12 @@ export type Token =
     | ThrowToken
     | DefaultToken;
 
-export type StatementParser = (state: ParserState) => StatementParseResult;
+export type StatementParser = (state: ParserState) => IndexedResult<Ast>;
 
 export type OperatorExpression = Extract<
     Expression,
     { left: Expression; right: Expression }
 >;
-
-export type ParsedFunctionBody = { body: Ast[]; index: number };
-type LetStatement = Extract<Ast, { kind: "LetStatement" }>;
-
-export type IfStatementAst = Extract<Ast, { kind: "IfStatement" }>;
 
 export type ParsedForHeader = {
     init: LetStatement;
@@ -171,9 +166,6 @@ export type StatementListParseResult = {
     noProgressToken?: Token;
 };
 
-export type ParsedExpressionResult = IndexedResult<Expression>;
-export type ParsedBlockResult = IndexedResult<Ast[]>;
-export type ParsedStatementResult = StatementParseResult;
 type ChainableExpression = Extract<
     Expression,
     {
@@ -187,6 +179,7 @@ type ChainableExpression = Extract<
             | "ArrayAccessExpression";
     }
 >;
+
 export function isChainableExpression(
     expression: Expression,
 ): expression is ChainableExpression {
@@ -200,6 +193,7 @@ export function isChainableExpression(
         expression.kind === "ArrayAccessExpression"
     );
 }
+
 export function isAssignmentTarget(
     expression: Expression,
 ): expression is Extract<
@@ -217,6 +211,7 @@ export function isAssignmentTarget(
         expression.kind === "ArrayAccessExpression"
     );
 }
+
 export function operatorRule(
     tokenKind: OperatorRule["tokenKind"],
     kind: OperatorExpression["kind"],

@@ -227,7 +227,7 @@ export type Expression =
     | AndExpression
     | OrExpression;
 
-type LetStatement = {
+export type LetStatement = {
     kind: "LetStatement";
     name: string;
     value: Expression;
@@ -239,14 +239,14 @@ type ConstStatement = {
     value: Expression;
 };
 
-type IfStatement = {
+export type IfStatement = {
     kind: "IfStatement";
     condition: Expression;
     thenBranch: Ast[];
     elseBranch?: Ast[];
 };
 
-type ForLoop = {
+export type ForLoop = {
     kind: "ForLoop";
     init: LetStatement;
     condition: Expression;
@@ -338,15 +338,6 @@ export type Ast =
     | ExportDefaultStatement
     | LineTerminatedExpression;
 
-export type ExpressionParseResult = {
-    expression: Expression;
-    index: number;
-};
-
-export type IndexedResult<a> = Result<a> & { index: number };
-
-export type StatementParseResult = IndexedResult<Ast>;
-
 export type ParserState = {
     tokens: Token[];
     index: number;
@@ -430,3 +421,5 @@ export function isDeclaration(
 export type JsNode = Ast | Expression;
 
 export type Program = JsNode[];
+
+export type IndexedResult<a> = Result<a> & { index: number };

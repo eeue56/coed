@@ -3,13 +3,13 @@ import {
     type FilterResult,
     type FilterRule,
 } from "../types.ts";
-import type { IfStatementAst } from "./parser/types.ts";
 import {
     isAst,
     isDeclaration,
     isExpression,
     type Ast,
     type Expression,
+    type IfStatement,
     type JsNode,
     type Program,
 } from "./types.ts";
@@ -107,7 +107,7 @@ function filterAst(
                 return { value: [], errors };
             }
 
-            const ifs: IfStatementAst = {
+            const ifs: IfStatement = {
                 ...ast,
                 condition: condition.value[0],
                 thenBranch: thenBranch.value,

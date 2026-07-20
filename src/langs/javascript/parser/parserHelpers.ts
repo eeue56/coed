@@ -1,7 +1,9 @@
 import type {
     Ast,
     Expression,
+    ForLoop,
     IndexedResult,
+    LetStatement,
     ParserState,
     TokenKinds,
 } from "../types.ts";
@@ -186,14 +188,12 @@ export type OptionalTerminatedExpression = {
     nextIndex: number;
 };
 
-type LetStatement = Extract<Ast, { kind: "LetStatement" }>;
-
 export function createForLoopStatement(
     init: LetStatement,
     condition: Expression,
     increment: Expression,
     body: Ast[],
-): Extract<Ast, { kind: "ForLoop" }> {
+): ForLoop {
     return {
         kind: "ForLoop",
         init,
