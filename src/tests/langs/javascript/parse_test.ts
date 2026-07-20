@@ -24,6 +24,163 @@ export function testParseNumberExpression() {
     });
 }
 
+export function testParseImportKeywordExpression() {
+    assert.deepStrictEqual(parse('import appState from "./state";'), {
+        kind: "Ok",
+        value: [
+            {
+                kind: "ImportStatement",
+                defaultImport: "appState",
+                namedImports: [],
+                source: "./state",
+            },
+        ],
+    });
+}
+
+export function testParseExportKeywordExpression() {
+    assert.deepStrictEqual(parse("export const count = 1;"), {
+        kind: "Ok",
+        value: [
+            {
+                kind: "ExportDeclarationStatement",
+                declaration: {
+                    kind: "ConstStatement",
+                    name: "count",
+                    value: { kind: "NumberExpression", value: 1 },
+                },
+            },
+        ],
+    });
+}
+
+export function testParseAsyncKeywordExpression() {
+    assert.deepStrictEqual(
+        parse("async function loadData() { return result; }"),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "FunctionDeclaration",
+                    isAsync: true,
+                    name: "loadData",
+                    parameters: [],
+                    body: [
+                        {
+                            kind: "ReturnStatement",
+                            value: {
+                                kind: "NameLookupExpression",
+                                name: "result",
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+    );
+}
+
+export function testParseAwaitKeywordExpression() {
+    assert.deepStrictEqual(expectOk(parseExpression(tokenize("await data"))), {
+        kind: "AwaitExpression",
+        value: {
+            kind: "NameLookupExpression",
+            name: "data",
+        },
+    });
+}
+
+export function testParseThisKeywordExpression() {
+    assert.deepStrictEqual(expectOk(parseExpression(tokenize("this"))), {
+        kind: "ThisExpression",
+    });
+}
+
+export function testParseNewKeywordExpression() {
+    assert.deepStrictEqual(expectOk(parseExpression(tokenize("new Date()"))), {
+        kind: "NewExpression",
+        callee: {
+            kind: "NameLookupExpression",
+            name: "Date",
+        },
+        arguments: [],
+    });
+}
+
+export function testParseSuperKeywordExpression() {
+    assert.deepStrictEqual(expectOk(parseExpression(tokenize("super"))), {
+        kind: "SuperExpression",
+    });
+}
+
+export function testParseTryKeywordExpression() {
+    assert.deepStrictEqual(
+        parse("try { const value = 1; } catch (err) { throw err; }"),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "TryCatchStatement",
+                    catchParameter: "err",
+                    tryBlock: [
+                        {
+                            kind: "ConstStatement",
+                            name: "value",
+                            value: { kind: "NumberExpression", value: 1 },
+                        },
+                    ],
+                    catchBlock: [
+                        {
+                            kind: "ThrowStatement",
+                            value: {
+                                kind: "NameLookupExpression",
+                                name: "err",
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+    );
+}
+
+export function testParseCatchKeywordExpression() {
+    const result = parse(
+        "try { const value = 1; } catch (error) { let retryCount = 1; }",
+    );
+    assert.strictEqual(result.kind, "Ok");
+}
+
+export function testParseThrowKeywordExpression() {
+    assert.deepStrictEqual(parse("throw reason;"), {
+        kind: "Ok",
+        value: [
+            {
+                kind: "ThrowStatement",
+                value: {
+                    kind: "NameLookupExpression",
+                    name: "reason",
+                },
+            },
+        ],
+    });
+}
+
+export function testParseDefaultKeywordExpression() {
+    assert.deepStrictEqual(parse("export default currentTheme;"), {
+        kind: "Ok",
+        value: [
+            {
+                kind: "ExportDefaultStatement",
+                value: {
+                    kind: "NameLookupExpression",
+                    name: "currentTheme",
+                },
+            },
+        ],
+    });
+}
+
 export function testParseStringExpression() {
     assert.deepStrictEqual(expectOk(parseExpression(tokenize('"hello"'))), {
         kind: "StringExpression",
@@ -259,6 +416,7 @@ export function testParseIncrementAndDecrementExpressions() {
 export function testParseArrowFunctionExpressions() {
     assert.deepStrictEqual(expectOk(parseExpression(tokenize("(x) => x"))), {
         kind: "ArrowFunctionExpression",
+        isAsync: false,
         parameters: ["x"],
         body: { kind: "NameLookupExpression", name: "x" },
     });
@@ -267,6 +425,7 @@ export function testParseArrowFunctionExpressions() {
         expectOk(parseExpression(tokenize("(x) => { return x; }"))),
         {
             kind: "ArrowFunctionExpression",
+            isAsync: false,
             parameters: ["x"],
             body: [
                 {
@@ -381,6 +540,7 @@ export function testParseFunctionDeclaration() {
             {
                 kind: "FunctionDeclaration",
                 name: "sum",
+                isAsync: false,
                 parameters: ["a", "b"],
                 body: [
                     {
@@ -422,6 +582,7 @@ export function testParseStripsTypeAnnotations() {
                 {
                     kind: "FunctionDeclaration",
                     name: "formatName",
+                    isAsync: false,
                     parameters: ["name", "count"],
                     body: [
                         {
@@ -436,6 +597,7 @@ export function testParseStripsTypeAnnotations() {
                 {
                     kind: "FunctionDeclaration",
                     name: "scale",
+                    isAsync: false,
                     parameters: ["value"],
                     body: [
                         {
@@ -634,6 +796,7 @@ export function testParseArrowFunctionExpressionAsFunctionDeclaration() {
                 {
                     kind: "FunctionDeclaration",
                     name: "buildInvoice",
+                    isAsync: false,
                     parameters: ["subtotal", "taxRate"],
                     body: [
                         {
@@ -695,6 +858,7 @@ export function testParseArrowFunctionBlockBodyAsFunctionDeclaration() {
                 {
                     kind: "FunctionDeclaration",
                     name: "createBanner",
+                    isAsync: false,
                     parameters: [],
                     body: [
                         {
@@ -721,6 +885,7 @@ export function testParseReturnStatementWithValue() {
                 {
                     kind: "FunctionDeclaration",
                     name: "formatName",
+                    isAsync: false,
                     parameters: ["name"],
                     body: [
                         {
@@ -744,6 +909,7 @@ export function testParseReturnStatementWithoutValue() {
             {
                 kind: "FunctionDeclaration",
                 name: "stop",
+                isAsync: false,
                 parameters: [],
                 body: [
                     {

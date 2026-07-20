@@ -298,6 +298,7 @@ export function testParseJs() {
                         arguments: [
                             {
                                 kind: "ArrowFunctionExpression",
+                                isAsync: false,
                                 parameters: ["x", "i"],
                                 body: {
                                     kind: "StringLiteralExpression",
@@ -326,6 +327,7 @@ export function testParseJs() {
             {
                 kind: "FunctionDeclaration",
                 name: "check",
+                isAsync: false,
                 parameters: [],
                 body: [
                     {
@@ -353,6 +355,7 @@ export function testParseJs() {
                                     {
                                         kind: "ArrowFunctionExpression",
                                         parameters: ["x", "i"],
+                                        isAsync: false,
                                         body: [
                                             {
                                                 kind: "ConstStatement",
@@ -527,6 +530,7 @@ export function testParseJs() {
                 {
                     kind: "FunctionDeclaration",
                     name: "check",
+                    isAsync: false,
                     parameters: [],
                     body: [
                         {

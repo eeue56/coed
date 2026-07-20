@@ -6,6 +6,7 @@ import {
 import type { IfStatementAst } from "./parser/types.ts";
 import {
     isAst,
+    isDeclaration,
     isExpression,
     type Ast,
     type Expression,
@@ -147,6 +148,81 @@ function filterAst(
         }
         case "BreakStatement": {
             return { value: [ast], errors: [] };
+        }
+        case "ThrowStatement": {
+            const thrown = filterExpression(ast.value, filterRules);
+            if (thrown.value.length === 0) {
+                return { value: [], errors: thrown.errors };
+            }
+
+            return {
+                value: [{ ...ast, value: thrown.value[0] }],
+                errors: thrown.errors,
+            };
+        }
+        case "TryCatchStatement": {
+            const tryBlock = filterAsts(ast.tryBlock, filterRules);
+            const catchBlock = filterAsts(ast.catchBlock, filterRules);
+
+            return {
+                value: [
+                    {
+                        ...ast,
+                        tryBlock: tryBlock.value,
+                        catchBlock: catchBlock.value,
+                    },
+                ],
+                errors: [...tryBlock.errors, ...catchBlock.errors],
+            };
+        }
+        case "ImportStatement": {
+            return { value: [ast], errors: [] };
+        }
+        case "ExportNamedStatement": {
+            return { value: [ast], errors: [] };
+        }
+        case "ExportDeclarationStatement": {
+            const declaration = filterAst(ast.declaration, filterRules);
+            if (declaration.value.length !== 1) {
+                return { value: [], errors: declaration.errors };
+            }
+
+            const node = declaration.value[0];
+
+            if (!isDeclaration(node)) {
+                return { value: [], errors: declaration.errors };
+            }
+
+            return {
+                value: [{ ...ast, declaration: node }],
+                errors: declaration.errors,
+            };
+        }
+        case "ExportDefaultStatement": {
+            if (isExpression(ast.value)) {
+                const value = filterExpression(ast.value, filterRules);
+                if (value.value.length !== 1) {
+                    return { value: [], errors: value.errors };
+                }
+
+                return {
+                    value: [{ ...ast, value: value.value[0] }],
+                    errors: value.errors,
+                };
+            }
+
+            const declaration = filterAst(ast.value, filterRules);
+            if (
+                declaration.value.length !== 1 ||
+                declaration.value[0].kind !== "FunctionDeclaration"
+            ) {
+                return { value: [], errors: declaration.errors };
+            }
+
+            return {
+                value: [{ ...ast, value: declaration.value[0] }],
+                errors: declaration.errors,
+            };
         }
         case "LineTerminatedExpression": {
             const values = [];
@@ -321,6 +397,61 @@ export function filterExpression(
         }
         case "NullExpression": {
             return { value: [expression], errors: [] };
+        }
+        case "ThisExpression": {
+            return { value: [expression], errors: [] };
+        }
+        case "SuperExpression": {
+            return { value: [expression], errors: [] };
+        }
+        case "AwaitExpression": {
+            const value = filterExpression(expression.value, filterRules);
+            if (value.value.length === 0) {
+                return { value: [], errors: value.errors };
+            }
+
+            return {
+                value: [{ ...expression, value: value.value[0] }],
+                errors: value.errors,
+            };
+        }
+        case "NewExpression": {
+            const callee = filterExpression(expression.callee, filterRules);
+            if (callee.value.length === 0) {
+                return { value: [], errors: callee.errors };
+            }
+
+            const args = [];
+            const errors = [...callee.errors];
+            for (const arg of expression.arguments) {
+                const filtered = filterExpression(arg, filterRules);
+                if (filtered.value.length === 0) {
+                    return {
+                        value: [],
+                        errors: [...errors, ...filtered.errors],
+                    };
+                }
+                args.push(filtered.value[0]);
+                errors.push(...filtered.errors);
+            }
+
+            return {
+                value: [
+                    { ...expression, callee: callee.value[0], arguments: args },
+                ],
+                errors,
+            };
+        }
+        case "ImportExpression": {
+            const source = filterExpression(expression.source, filterRules);
+            if (source.value.length === 0) {
+                return { value: [], errors: source.errors };
+            }
+
+            return {
+                value: [{ ...expression, source: source.value[0] }],
+                errors: source.errors,
+            };
         }
         case "BooleanExpression": {
             return { value: [expression], errors: [] };
@@ -498,6 +629,9 @@ export function getRootObjectName(expression: Expression): string | null {
         }
         case "ArrayAccessExpression": {
             return getRootObjectName(expression.array);
+        }
+        case "NewExpression": {
+            return getRootObjectName(expression.callee);
         }
         default: {
             return null;

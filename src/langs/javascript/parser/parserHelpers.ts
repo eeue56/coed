@@ -178,6 +178,7 @@ export type TypedParametersParseResult = {
 export type ArrowParametersParseResult = {
     parameters: string[];
     arrowIndex: number;
+    isAsync: boolean;
 };
 
 export type OptionalTerminatedExpression = {
@@ -363,14 +364,20 @@ export function parseArrowParameters(
     tokens: Token[],
     startIndex: number,
 ): ArrowParametersParseResult | null {
-    const firstToken = tokens[startIndex];
+    let index = startIndex;
+    let isAsync = false;
+
+    if (tokenIs(tokens[index], "AsyncToken")) {
+        isAsync = true;
+        index += 1;
+    }
+
+    const firstToken = tokens[index];
 
     if (tokenIs(firstToken, "IdentifierToken")) {
-        const afterType = consumeOptionalTypeAnnotation(
-            tokens,
-            startIndex + 1,
-            ["ArrowToken"],
-        );
+        const afterType = consumeOptionalTypeAnnotation(tokens, index + 1, [
+            "ArrowToken",
+        ]);
         if (afterType === null || !tokenIs(tokens[afterType], "ArrowToken")) {
             return null;
         }
@@ -378,6 +385,7 @@ export function parseArrowParameters(
         return {
             parameters: [firstToken.name],
             arrowIndex: afterType,
+            isAsync,
         };
     }
 
@@ -387,7 +395,7 @@ export function parseArrowParameters(
 
     const typedParameters = parseTypedParametersUntil(
         tokens,
-        startIndex + 1,
+        index + 1,
         "ArrowToken",
     );
     if (typedParameters === null) {
@@ -397,5 +405,6 @@ export function parseArrowParameters(
     return {
         parameters: typedParameters.parameters,
         arrowIndex: typedParameters.stopTokenIndex,
+        isAsync,
     };
 }

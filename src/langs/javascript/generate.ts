@@ -98,11 +98,27 @@ export function generateExpression(expression: Expression): string {
         }
         case "ArrowFunctionExpression": {
             const parameters = expression.parameters.join(", ");
+            const asyncPrefix = expression.isAsync ? "async " : "";
             if (Array.isArray(expression.body)) {
-                return `(${parameters}) => ${generateBlock(expression.body, 0)}`;
+                return `${asyncPrefix}(${parameters}) => ${generateBlock(expression.body, 0)}`;
             }
 
-            return `(${parameters}) => ${generateExpression(expression.body)}`;
+            return `${asyncPrefix}(${parameters}) => ${generateExpression(expression.body)}`;
+        }
+        case "ThisExpression": {
+            return `this`;
+        }
+        case "SuperExpression": {
+            return `super`;
+        }
+        case "AwaitExpression": {
+            return `await ${generateExpression(expression.value)}`;
+        }
+        case "NewExpression": {
+            return `new ${generateExpression(expression.callee)}(${expression.arguments.map(generateExpression).join(", ")})`;
+        }
+        case "ImportExpression": {
+            return `import(${generateExpression(expression.source)})`;
         }
         case "NullExpression": {
             return `null`;
@@ -209,9 +225,10 @@ export function generateAST(ast: Ast, level: number): string {
             );
         }
         case "FunctionDeclaration": {
+            const asyncPrefix = ast.isAsync ? "async " : "";
             return indent(
                 level,
-                `function ${ast.name}(${ast.parameters.join(", ")}) ${generateBlock(ast.body, level)}`,
+                `${asyncPrefix}function ${ast.name}(${ast.parameters.join(", ")}) ${generateBlock(ast.body, level)}`,
             );
         }
         case "ConstStatement": {
@@ -232,6 +249,52 @@ export function generateAST(ast: Ast, level: number): string {
         }
         case "BreakStatement": {
             return indent(level, `break;`);
+        }
+        case "ThrowStatement": {
+            return indent(level, `throw ${generateExpression(ast.value)};`);
+        }
+        case "TryCatchStatement": {
+            return indent(
+                level,
+                `try ${generateBlock(ast.tryBlock, level)} catch (${ast.catchParameter}) ${generateBlock(ast.catchBlock, level)}`,
+            );
+        }
+        case "ImportStatement": {
+            if (ast.defaultImport === null && ast.namedImports.length === 0) {
+                return indent(level, `import "${ast.source}";`);
+            }
+
+            const defaultPart = ast.defaultImport ?? "";
+            const namedPart =
+                ast.namedImports.length > 0
+                    ? `{ ${ast.namedImports.join(", ")} }`
+                    : "";
+            const separator =
+                defaultPart.length > 0 && namedPart.length > 0 ? ", " : "";
+
+            return indent(
+                level,
+                `import ${defaultPart}${separator}${namedPart} from "${ast.source}";`,
+            );
+        }
+        case "ExportDeclarationStatement": {
+            return indent(
+                level,
+                `export ${generateAST(ast.declaration, 0)}`,
+            );
+        }
+        case "ExportNamedStatement": {
+            return indent(level, `export { ${ast.names.join(", ")} };`);
+        }
+        case "ExportDefaultStatement": {
+            if (isExpression(ast.value)) {
+                return indent(
+                    level,
+                    `export default ${generateExpression(ast.value)};`,
+                );
+            }
+
+            return indent(level, `export default ${generateAST(ast.value, 0)}`);
         }
         case "LineTerminatedExpression": {
             return indent(

@@ -71,6 +71,12 @@ function expressionCanStart(token: Token | undefined): boolean {
         token.kind === "NumberToken" ||
         token.kind === "StringToken" ||
         token.kind === "IdentifierToken" ||
+        token.kind === "ThisToken" ||
+        token.kind === "SuperToken" ||
+        token.kind === "AwaitToken" ||
+        token.kind === "NewToken" ||
+        token.kind === "ImportToken" ||
+        token.kind === "AsyncToken" ||
         token.kind === "TrueToken" ||
         token.kind === "FalseToken" ||
         token.kind === "NullToken" ||

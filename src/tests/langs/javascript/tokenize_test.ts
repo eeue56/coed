@@ -463,6 +463,182 @@ export function testVarKeyword() {
     ]);
 }
 
+export function testImportKeyword() {
+    const tokens = tokenize("import;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "ImportToken",
+            startIndex: 0,
+            endIndex: 6,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 6,
+            endIndex: 7,
+        },
+    ]);
+}
+
+export function testExportKeyword() {
+    const tokens = tokenize("export;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "ExportToken",
+            startIndex: 0,
+            endIndex: 6,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 6,
+            endIndex: 7,
+        },
+    ]);
+}
+
+export function testAsyncKeyword() {
+    const tokens = tokenize("async;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "AsyncToken",
+            startIndex: 0,
+            endIndex: 5,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 5,
+            endIndex: 6,
+        },
+    ]);
+}
+
+export function testAwaitKeyword() {
+    const tokens = tokenize("await;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "AwaitToken",
+            startIndex: 0,
+            endIndex: 5,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 5,
+            endIndex: 6,
+        },
+    ]);
+}
+
+export function testThisKeyword() {
+    const tokens = tokenize("this;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "ThisToken",
+            startIndex: 0,
+            endIndex: 4,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 4,
+            endIndex: 5,
+        },
+    ]);
+}
+
+export function testNewKeyword() {
+    const tokens = tokenize("new;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "NewToken",
+            startIndex: 0,
+            endIndex: 3,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 3,
+            endIndex: 4,
+        },
+    ]);
+}
+
+export function testSuperKeyword() {
+    const tokens = tokenize("super;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "SuperToken",
+            startIndex: 0,
+            endIndex: 5,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 5,
+            endIndex: 6,
+        },
+    ]);
+}
+
+export function testTryKeyword() {
+    const tokens = tokenize("try;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "TryToken",
+            startIndex: 0,
+            endIndex: 3,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 3,
+            endIndex: 4,
+        },
+    ]);
+}
+
+export function testCatchKeyword() {
+    const tokens = tokenize("catch;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "CatchToken",
+            startIndex: 0,
+            endIndex: 5,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 5,
+            endIndex: 6,
+        },
+    ]);
+}
+
+export function testThrowKeyword() {
+    const tokens = tokenize("throw;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "ThrowToken",
+            startIndex: 0,
+            endIndex: 5,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 5,
+            endIndex: 6,
+        },
+    ]);
+}
+
+export function testDefaultKeyword() {
+    const tokens = tokenize("default;");
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "DefaultToken",
+            startIndex: 0,
+            endIndex: 7,
+        },
+        {
+            kind: "SemicolonToken",
+            startIndex: 7,
+            endIndex: 8,
+        },
+    ]);
+}
+
 export function testWhileAndWithKeywords() {
     const tokens = tokenize("while (ready) { with (scope) {} }");
     assert.deepStrictEqual(tokens[0], {

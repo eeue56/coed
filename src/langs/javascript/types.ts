@@ -83,8 +83,33 @@ type AssignmentExpression = {
 
 type ArrowFunctionExpression = {
     kind: "ArrowFunctionExpression";
+    isAsync: boolean;
     parameters: string[];
     body: Ast[] | Expression;
+};
+
+type ThisExpression = {
+    kind: "ThisExpression";
+};
+
+type SuperExpression = {
+    kind: "SuperExpression";
+};
+
+type AwaitExpression = {
+    kind: "AwaitExpression";
+    value: Expression;
+};
+
+type NewExpression = {
+    kind: "NewExpression";
+    callee: Expression;
+    arguments: Expression[];
+};
+
+type ImportExpression = {
+    kind: "ImportExpression";
+    source: Expression;
 };
 
 type FunctionCallExpression = {
@@ -100,6 +125,9 @@ export type NameLookupExpression = {
 
 type ChainableExpression =
     | NameLookupExpression
+    | ThisExpression
+    | SuperExpression
+    | NewExpression
     | ObjectPropertyExpression
     | ObjectMethodCallExpression
     | ArrayAccessExpression;
@@ -179,6 +207,11 @@ export type Expression =
     | DecreaseExpression
     | AssignmentExpression
     | ArrowFunctionExpression
+    | ThisExpression
+    | SuperExpression
+    | AwaitExpression
+    | NewExpression
+    | ImportExpression
     | NullExpression
     | BooleanExpression
     | StringLiteralExpression
@@ -223,6 +256,7 @@ type ForLoop = {
 
 type FunctionDeclaration = {
     kind: "FunctionDeclaration";
+    isAsync: boolean;
     name: string;
     parameters: string[];
     body: Ast[];
@@ -239,6 +273,40 @@ type ContinueStatement = {
 
 type BreakStatement = {
     kind: "BreakStatement";
+};
+
+type ThrowStatement = {
+    kind: "ThrowStatement";
+    value: Expression;
+};
+
+type TryCatchStatement = {
+    kind: "TryCatchStatement";
+    catchParameter: string;
+    tryBlock: Ast[];
+    catchBlock: Ast[];
+};
+
+type ImportStatement = {
+    kind: "ImportStatement";
+    defaultImport: string | null;
+    namedImports: string[];
+    source: string;
+};
+
+type ExportDeclarationStatement = {
+    kind: "ExportDeclarationStatement";
+    declaration: LetStatement | ConstStatement | FunctionDeclaration;
+};
+
+type ExportNamedStatement = {
+    kind: "ExportNamedStatement";
+    names: string[];
+};
+
+type ExportDefaultStatement = {
+    kind: "ExportDefaultStatement";
+    value: Expression | FunctionDeclaration;
 };
 
 /**
@@ -262,6 +330,12 @@ export type Ast =
     | ReturnStatement
     | ContinueStatement
     | BreakStatement
+    | ThrowStatement
+    | TryCatchStatement
+    | ImportStatement
+    | ExportDeclarationStatement
+    | ExportNamedStatement
+    | ExportDefaultStatement
     | LineTerminatedExpression;
 
 export type ExpressionParseResult = {
@@ -332,7 +406,24 @@ export function isAst(node: JsNode): node is Ast {
         kind === "ReturnStatement" ||
         kind === "ContinueStatement" ||
         kind === "BreakStatement" ||
+        kind === "ThrowStatement" ||
+        kind === "TryCatchStatement" ||
+        kind === "ImportStatement" ||
+        kind === "ExportDeclarationStatement" ||
+        kind === "ExportNamedStatement" ||
+        kind === "ExportDefaultStatement" ||
         kind === "LineTerminatedExpression"
+    );
+}
+
+export function isDeclaration(
+    node: JsNode,
+): node is FunctionDeclaration | LetStatement | ConstStatement {
+    const kind = node.kind;
+    return (
+        kind === "FunctionDeclaration" ||
+        kind === "LetStatement" ||
+        kind === "ConstStatement"
     );
 }
 

@@ -57,6 +57,17 @@ type FalseToken = BaseToken & { kind: "FalseToken" };
 type TypeofToken = BaseToken & { kind: "TypeofToken" };
 type AsToken = BaseToken & { kind: "AsToken" };
 type UndefinedToken = BaseToken & { kind: "UndefinedToken" };
+type ImportToken = BaseToken & { kind: "ImportToken" };
+type ExportToken = BaseToken & { kind: "ExportToken" };
+type AsyncToken = BaseToken & { kind: "AsyncToken" };
+type AwaitToken = BaseToken & { kind: "AwaitToken" };
+type ThisToken = BaseToken & { kind: "ThisToken" };
+type NewToken = BaseToken & { kind: "NewToken" };
+type SuperToken = BaseToken & { kind: "SuperToken" };
+type TryToken = BaseToken & { kind: "TryToken" };
+type CatchToken = BaseToken & { kind: "CatchToken" };
+type ThrowToken = BaseToken & { kind: "ThrowToken" };
+type DefaultToken = BaseToken & { kind: "DefaultToken" };
 
 export type Token =
     | NumberToken
@@ -107,7 +118,18 @@ export type Token =
     | FalseToken
     | TypeofToken
     | AsToken
-    | UndefinedToken;
+    | UndefinedToken
+    | ImportToken
+    | ExportToken
+    | AsyncToken
+    | AwaitToken
+    | ThisToken
+    | NewToken
+    | SuperToken
+    | TryToken
+    | CatchToken
+    | ThrowToken
+    | DefaultToken;
 
 export type StatementParser = (state: ParserState) => StatementParseResult;
 
@@ -157,6 +179,9 @@ type ChainableExpression = Extract<
     {
         kind:
             | "NameLookupExpression"
+            | "ThisExpression"
+            | "SuperExpression"
+            | "NewExpression"
             | "ObjectPropertyExpression"
             | "ObjectMethodCallExpression"
             | "ArrayAccessExpression";
@@ -167,6 +192,9 @@ export function isChainableExpression(
 ): expression is ChainableExpression {
     return (
         expression.kind === "NameLookupExpression" ||
+        expression.kind === "ThisExpression" ||
+        expression.kind === "SuperExpression" ||
+        expression.kind === "NewExpression" ||
         expression.kind === "ObjectPropertyExpression" ||
         expression.kind === "ObjectMethodCallExpression" ||
         expression.kind === "ArrayAccessExpression"

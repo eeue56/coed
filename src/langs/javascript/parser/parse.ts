@@ -1,13 +1,14 @@
 import type { Result } from "../../types.ts";
-import type {
-    Ast,
-    Expression,
-    IndexedResult,
-    OperatorRule,
-    ParserState,
-    Program,
-    StatementParseResult,
-    TokenKinds,
+import {
+    isDeclaration,
+    type Ast,
+    type Expression,
+    type IndexedResult,
+    type OperatorRule,
+    type ParserState,
+    type Program,
+    type StatementParseResult,
+    type TokenKinds,
 } from "../types.ts";
 
 import {
@@ -241,6 +242,7 @@ function parseArrowFunctionExpression(
             kind: "Ok",
             value: {
                 kind: "ArrowFunctionExpression",
+                isAsync: parameters.isAsync,
                 parameters: parameters.parameters,
                 body: body.value,
             },
@@ -258,8 +260,103 @@ function parseArrowFunctionExpression(
         kind: "Ok",
         value: {
             kind: "ArrowFunctionExpression",
+            isAsync: parameters.isAsync,
             parameters: parameters.parameters,
             body: body.value,
+        },
+        index: state.index,
+    };
+}
+
+function parseAwaitExpression(state: ParserState): IndexedResult<Expression> {
+    consumeToken(state);
+    const value = parsePostfix(state);
+    if (value.kind === "Err") {
+        return {
+            kind: "Err",
+            error: "Expected an expression after await",
+            index: state.index,
+        };
+    }
+
+    return {
+        kind: "Ok",
+        value: {
+            kind: "AwaitExpression",
+            value: value.value,
+        },
+        index: state.index,
+    };
+}
+
+function parseNewExpression(state: ParserState): IndexedResult<Expression> {
+    consumeToken(state);
+    const callee = parsePostfix(state);
+    if (callee.kind === "Err") {
+        return {
+            kind: "Err",
+            error: "Expected a constructor after new",
+            index: state.index,
+        };
+    }
+
+    let constructorCallee = callee.value;
+    let args: Expression[] = [];
+
+    if (callee.value.kind === "FunctionCallExpression") {
+        constructorCallee = {
+            kind: "NameLookupExpression",
+            name: callee.value.functionName,
+        };
+        args = callee.value.arguments;
+    }
+
+    if (tokenIs(currentToken(state), "LeftParenToken")) {
+        const parsedArgs = parseCallArgumentsAfterLeftParen(state);
+        if (parsedArgs.kind === "Err") {
+            return parsedArgs;
+        }
+        args = parsedArgs.value;
+    }
+
+    return {
+        kind: "Ok",
+        value: {
+            kind: "NewExpression",
+            callee: constructorCallee,
+            arguments: args,
+        },
+        index: state.index,
+    };
+}
+
+function parseDynamicImportExpression(
+    state: ParserState,
+): IndexedResult<Expression> {
+    consumeToken(state);
+
+    if (!tokenIs(currentToken(state), "LeftParenToken")) {
+        return {
+            kind: "Err",
+            error: "Expected '(' after import",
+            index: state.index,
+        };
+    }
+
+    const args = parseCallArgumentsAfterLeftParen(state);
+    if (args.kind === "Err" || args.value.length !== 1) {
+        return {
+            kind: "Err",
+            error: "Expected import to have exactly one argument",
+            index: state.index,
+        };
+    }
+
+    return {
+        kind: "Ok",
+        value: {
+            kind: "ImportExpression",
+            source: args.value[0],
         },
         index: state.index,
     };
@@ -627,6 +724,10 @@ function parseLeafExpression(token: Token): Expression | null {
         }
         case "IdentifierToken":
             return { kind: "NameLookupExpression", name: token.name };
+        case "ThisToken":
+            return { kind: "ThisExpression" };
+        case "SuperToken":
+            return { kind: "SuperExpression" };
         case "TrueToken":
             return { kind: "BooleanExpression", value: true };
         case "FalseToken":
@@ -652,6 +753,18 @@ function parseLeaf(state: ParserState): IndexedResult<Expression> {
 
     if (parseArrowParameters(state.tokens, state.index) !== null) {
         return parseArrowFunctionExpression(state);
+    }
+
+    if (token.kind === "AwaitToken") {
+        return parseAwaitExpression(state);
+    }
+
+    if (token.kind === "NewToken") {
+        return parseNewExpression(state);
+    }
+
+    if (token.kind === "ImportToken") {
+        return parseDynamicImportExpression(state);
     }
 
     if (token.kind === "NegationToken" || token.kind === "TypeofToken") {
@@ -920,6 +1033,7 @@ function parseFunctionDeclarationFromParts(
     name: string,
     parameters: string[],
     bodyStartIndex: number,
+    isAsync: boolean,
     allowExpressionBody: boolean,
     consumeSemicolon: boolean,
 ): StatementParseResult {
@@ -931,6 +1045,7 @@ function parseFunctionDeclarationFromParts(
     return statementResult(
         {
             kind: "FunctionDeclaration",
+            isAsync,
             name,
             parameters,
             body: body.value.body,
@@ -968,6 +1083,7 @@ function parseArrowFunctionDeclaration(
         declarationName.name,
         parameters.parameters,
         parameters.arrowIndex + 1,
+        parameters.isAsync,
         true,
         true,
     );
@@ -988,10 +1104,15 @@ const statementParsers: Partial<Record<TokenKinds, StatementParser>> = {
     LetToken: (state) => parseDeclarationStatement(state, false),
     VarToken: (state) => parseDeclarationStatement(state, false),
     ConstToken: (state) => parseDeclarationStatement(state, true),
+    ImportToken: parseImport,
+    ExportToken: parseExport,
+    AsyncToken: parseAsync,
     IfToken: parseIf,
     ForToken: parseFor,
     WhileToken: parseWhile,
     FunctionToken: parseFunction,
+    TryToken: parseTryCatch,
+    ThrowToken: parseThrow,
     ReturnToken: parseReturn,
     ContinueToken: (state) =>
         parseLoopControlStatement(state, "ContinueStatement"),
@@ -1438,7 +1559,23 @@ function parseFor(state: ParserState): StatementParseResult {
 
 /** parse a function declaration with a name, parameter list, and body */
 function parseFunction(state: ParserState): StatementParseResult {
-    const name = tryParseIdentifierAt(state.tokens, state.index + 1);
+    return parseFunctionAt(state, state.index, false);
+}
+
+function parseAsync(state: ParserState): StatementParseResult {
+    if (!tokenIs(state.tokens[state.index + 1], "FunctionToken")) {
+        return createFailedStatement(state);
+    }
+
+    return parseFunctionAt(state, state.index + 1, true);
+}
+
+function parseFunctionAt(
+    state: ParserState,
+    functionIndex: number,
+    isAsync: boolean,
+): StatementParseResult {
+    const name = tryParseIdentifierAt(state.tokens, functionIndex + 1);
     if (name === null) {
         return createFailedStatement(state);
     }
@@ -1466,8 +1603,240 @@ function parseFunction(state: ParserState): StatementParseResult {
         name.name,
         typedParameters.parameters,
         typedParameters.stopTokenIndex,
+        isAsync,
         false,
         false,
+    );
+}
+
+function parseThrow(state: ParserState): StatementParseResult {
+    const thrown = parseExpressionAt(state.tokens, state.index + 1);
+    if (thrown.kind === "Err") {
+        return createFailedStatement(state);
+    }
+
+    return statementResult(
+        {
+            kind: "ThrowStatement",
+            value: thrown.value,
+        },
+        consumeOptionalSemicolon(state.tokens, thrown.index),
+    );
+}
+
+function parseTryCatch(state: ParserState): StatementParseResult {
+    const parsedTry = tryParseBlockAt(state, state.index + 1);
+    if (parsedTry.kind === "Err") {
+        return createFailedStatement(state);
+    }
+
+    const catchTokenIndex = parsedTry.value.index;
+    if (!tokenIs(state.tokens[catchTokenIndex], "CatchToken")) {
+        return createFailedStatement(state);
+    }
+
+    if (!tokenIs(state.tokens[catchTokenIndex + 1], "LeftParenToken")) {
+        return createFailedStatement(state);
+    }
+
+    const catchParam = state.tokens[catchTokenIndex + 2];
+    if (!tokenIs(catchParam, "IdentifierToken")) {
+        return createFailedStatement(state);
+    }
+
+    if (!tokenIs(state.tokens[catchTokenIndex + 3], "RightParenToken")) {
+        return createFailedStatement(state);
+    }
+
+    const catchBlock = tryParseBlockAt(state, catchTokenIndex + 4);
+    if (catchBlock.kind === "Err") {
+        return createFailedStatement(state);
+    }
+
+    return statementResult(
+        {
+            kind: "TryCatchStatement",
+            catchParameter: catchParam.name,
+            tryBlock: parsedTry.value.body,
+            catchBlock: catchBlock.value.body,
+        },
+        catchBlock.value.index,
+    );
+}
+
+function parseIdentifierListInBraces(
+    tokens: Token[],
+    startIndex: number,
+): { names: string[]; nextIndex: number } | null {
+    if (!tokenIs(tokens[startIndex], "LeftBraceToken")) {
+        return null;
+    }
+
+    const names: string[] = [];
+    let index = startIndex + 1;
+
+    while (index < tokens.length) {
+        const token = tokens[index];
+        if (tokenIs(token, "RightBraceToken")) {
+            return { names, nextIndex: index + 1 };
+        }
+
+        if (!tokenIs(token, "IdentifierToken")) {
+            return null;
+        }
+
+        names.push(token.name);
+        index += 1;
+
+        if (tokenIs(tokens[index], "CommaToken")) {
+            index += 1;
+            continue;
+        }
+    }
+
+    return null;
+}
+
+function parseImport(state: ParserState): StatementParseResult {
+    let index = state.index + 1;
+    let defaultImport: string | null = null;
+    let namedImports: string[] = [];
+
+    const firstImportToken = state.tokens[index];
+    if (tokenIs(firstImportToken, "StringToken")) {
+        const source = stripStringQuotes(firstImportToken.value);
+        return statementResult(
+            {
+                kind: "ImportStatement",
+                defaultImport,
+                namedImports,
+                source,
+            },
+            consumeOptionalSemicolon(state.tokens, index + 1),
+        );
+    }
+
+    const maybeDefaultImport = state.tokens[index];
+    if (tokenIs(maybeDefaultImport, "IdentifierToken")) {
+        defaultImport = maybeDefaultImport.name;
+        index += 1;
+        if (tokenIs(state.tokens[index], "CommaToken")) {
+            index += 1;
+        }
+    }
+
+    const parsedNamed = parseIdentifierListInBraces(state.tokens, index);
+    if (parsedNamed !== null) {
+        namedImports = parsedNamed.names;
+        index = parsedNamed.nextIndex;
+    }
+
+    const fromToken = state.tokens[index];
+    if (!tokenIs(fromToken, "IdentifierToken") || fromToken.name !== "from") {
+        return createFailedStatement(state);
+    }
+    index += 1;
+
+    const sourceToken = state.tokens[index];
+    if (!tokenIs(sourceToken, "StringToken")) {
+        return createFailedStatement(state);
+    }
+    index += 1;
+
+    return statementResult(
+        {
+            kind: "ImportStatement",
+            defaultImport,
+            namedImports,
+            source: stripStringQuotes(sourceToken.value),
+        },
+        consumeOptionalSemicolon(state.tokens, index),
+    );
+}
+
+function parseExport(state: ParserState): StatementParseResult {
+    const next = state.tokens[state.index + 1];
+    if (typeof next === "undefined") {
+        return createFailedStatement(state);
+    }
+
+    if (tokenIs(next, "DefaultToken")) {
+        const defaultValueStart = state.index + 2;
+
+        if (tokenIs(state.tokens[defaultValueStart], "FunctionToken")) {
+            const declaration = parseFunctionAt(
+                updateParserState(state, defaultValueStart),
+                defaultValueStart,
+                false,
+            );
+
+            if (
+                declaration.kind === "Err" ||
+                declaration.value.kind !== "FunctionDeclaration"
+            ) {
+                return createFailedStatement(state);
+            }
+
+            return statementResult(
+                {
+                    kind: "ExportDefaultStatement",
+                    value: declaration.value,
+                },
+                declaration.index,
+            );
+        }
+
+        const parsedDefaultExpression = parseExpressionAt(
+            state.tokens,
+            defaultValueStart,
+        );
+        if (parsedDefaultExpression.kind === "Err") {
+            return createFailedStatement(state);
+        }
+
+        return statementResult(
+            {
+                kind: "ExportDefaultStatement",
+                value: parsedDefaultExpression.value,
+            },
+            consumeOptionalSemicolon(
+                state.tokens,
+                parsedDefaultExpression.index,
+            ),
+        );
+    }
+
+    if (tokenIs(next, "LeftBraceToken")) {
+        const exported = parseIdentifierListInBraces(
+            state.tokens,
+            state.index + 1,
+        );
+        if (exported === null) {
+            return createFailedStatement(state);
+        }
+
+        return statementResult(
+            {
+                kind: "ExportNamedStatement",
+                names: exported.names,
+            },
+            consumeOptionalSemicolon(state.tokens, exported.nextIndex),
+        );
+    }
+
+    const declaration = parseStatement(
+        updateParserState(state, state.index + 1),
+    );
+    if (declaration.kind === "Err" || !isDeclaration(declaration.value)) {
+        return createFailedStatement(state);
+    }
+
+    return statementResult(
+        {
+            kind: "ExportDeclarationStatement",
+            declaration: declaration.value,
+        },
+        declaration.index,
     );
 }
 

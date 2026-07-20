@@ -3,6 +3,7 @@ import { getRootObjectName } from "../../../langs/javascript/filter.ts";
 import { javascript } from "../../../langs/javascript/index.ts";
 import {
     isAst,
+    isDeclaration,
     type Ast,
     type Expression,
     type JsNode,
@@ -112,6 +113,69 @@ function sanitizeAst(ast: Ast, filterRule: FilterRule<JsNode>): JsNode | null {
         }
         case "BreakStatement": {
             return ast;
+        }
+        case "ThrowStatement": {
+            const value = javascript.filter([filterRule], [ast.value]);
+            if (value.value.length === 0) {
+                return null;
+            }
+
+            return { ...ast, value: value.value[0] as Expression };
+        }
+        case "TryCatchStatement": {
+            return {
+                ...ast,
+                tryBlock: sanitizeProgram(ast.tryBlock, filterRule),
+                catchBlock: sanitizeProgram(ast.catchBlock, filterRule),
+            };
+        }
+        case "ImportStatement": {
+            return ast;
+        }
+        case "ExportNamedStatement": {
+            return ast;
+        }
+        case "ExportDeclarationStatement": {
+            const declaration = sanitizeAst(ast.declaration, filterRule);
+            if (
+                declaration === null ||
+                !isAst(declaration) ||
+                !isDeclaration(declaration)
+            ) {
+                return null;
+            }
+
+            return {
+                ...ast,
+                declaration,
+            };
+        }
+        case "ExportDefaultStatement": {
+            if (isAst(ast.value)) {
+                const declaration = sanitizeAst(ast.value, filterRule);
+                if (
+                    declaration === null ||
+                    !isAst(declaration) ||
+                    declaration.kind !== "FunctionDeclaration"
+                ) {
+                    return null;
+                }
+
+                return {
+                    ...ast,
+                    value: declaration,
+                };
+            }
+
+            const value = javascript.filter([filterRule], [ast.value]);
+            if (value.value.length === 0) {
+                return null;
+            }
+
+            return {
+                ...ast,
+                value: value.value[0] as Expression,
+            };
         }
         case "LineTerminatedExpression": {
             return ast;
