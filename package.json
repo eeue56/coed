@@ -17,7 +17,9 @@
         "./build/langs/html",
         "./build/langs/javascript",
         "./build/langs/types.d.ts",
-        "./build/langs/types.js"
+        "./build/langs/types.js",
+        "./build/langs/engine.js",
+        "./build/langs/engine.d.ts"
     ],
     "exports": {
         ".": {
@@ -35,20 +37,25 @@
             "import": "./build/types.js",
             "default": "./build/types.js"
         },
-        "./css": {
+        "./langs/css": {
             "types": "./build/langs/css/index.d.ts",
             "import": "./build/langs/css/index.js",
             "default": "./build/langs/css/index.js"
         },
-        "./html": {
+        "./langs/html": {
             "types": "./build/langs/html/index.d.ts",
             "import": "./build/langs/html/index.js",
             "default": "./build/langs/html/index.js"
         },
-        "./javascript": {
+        "./langs/javascript": {
             "types": "./build/langs/javascript/index.d.ts",
             "import": "./build/langs/javascript/index.js",
             "default": "./build/langs/javascript/index.js"
+        },
+        "./langs/engine": {
+            "types": "./build/langs/engine.d.ts",
+            "import": "./build/langs/engine.js",
+            "default": "./build/langs/engine.js"
         }
     },
     "typings": "build/coed.d.ts",
