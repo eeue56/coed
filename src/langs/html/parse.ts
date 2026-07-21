@@ -54,8 +54,69 @@ export function parse(string: string): Result<HtmlNode<never>> {
     };
 }
 
+function svgTagNameToCorrectCase(tagName: string): SvgTag {
+    tagName = tagName.toLowerCase();
+    switch (tagName) {
+        case "svg":
+        case "symbol":
+        case "stop":
+        case "g":
+        case "a":
+        case "defs":
+        case "marker":
+        case "mask":
+        case "pattern":
+        case "switch":
+        case "text":
+        case "circle":
+        case "ellipse":
+        case "line":
+        case "path":
+        case "polygon":
+        case "polyline":
+        case "rect":
+        case "image":
+        case "tspan":
+        case "use":
+        case "filter":
+            return tagName;
+        case "textpath":
+            return "textPath";
+        case "clippath":
+            return "clipPath";
+        case "foreignobject":
+            return "foreignObject";
+        case "lineargradient":
+            return "linearGradient";
+        case "radialgradient":
+            return "radialGradient";
+        case "feblend":
+            return "feBlend";
+        case "fecolormatrix":
+            return "feColorMatrix";
+        case "fecomponenttransfer":
+            return "feComponentTransfer";
+        case "fecomposite":
+            return "feComposite";
+        case "feconvolvematrix":
+            return "feConvolveMatrix";
+        case "fediffuselighting":
+            return "feDiffuseLighting";
+        case "fedisplacementmap":
+            return "feDisplacementMap";
+        case "fedropshadow":
+            return "feDropShadow";
+        default: {
+            console.error(`Unknown SVG tag: ${tagName}`);
+            return "text";
+        }
+    }
+}
+
 function namespaceNodeKind(tagName: string, namespace: string): HtmlNodeKind {
     if (namespace !== "http://www.w3.org/2000/svg") return "regular";
+
+    // lower case the tag names, and add tests to ensure they are the right case
 
     switch (tagName as SvgTag) {
         case "svg":
@@ -95,6 +156,8 @@ function namespaceNodeKind(tagName: string, namespace: string): HtmlNodeKind {
         case "feDisplacementMap":
         case "feDropShadow":
             return "ns-void";
+        default:
+            return "ns-regular";
     }
 }
 
@@ -256,6 +319,16 @@ function attributeKind(name: string): AttributeKind {
     }
 }
 
+function getElementTagName(element: Element): string {
+    const namespace = element.namespaceURI;
+
+    if (namespace === null || !namespace.endsWith("svg")) {
+        return element.tagName.toLowerCase();
+    }
+
+    return svgTagNameToCorrectCase(element.tagName.toLowerCase());
+}
+
 function walk(childNode: ChildNode): [HtmlNode<never>] | [] {
     if (childNode.nodeType === childNode.TEXT_NODE) {
         return [text(childNode.textContent || "")];
@@ -304,7 +377,7 @@ function walk(childNode: ChildNode): [HtmlNode<never>] | [] {
         }
     }
 
-    const tagName = element.tagName.toLowerCase();
+    const tagName = getElementTagName(element);
     const kind = nodeKind(tagName, namespace || "");
 
     switch (kind) {
@@ -334,4 +407,6 @@ function walk(childNode: ChildNode): [HtmlNode<never>] | [] {
             }
             return [voidNodeNS(tagName as Tag, namespace, [], attributes)];
     }
+
+    return [];
 }

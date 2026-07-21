@@ -33,7 +33,7 @@ import {
     title,
     u,
 } from "../coed.ts";
-import { circle, svg } from "../coed/svg.ts";
+import { circle, radialGradient, svg } from "../coed/svg.ts";
 import { parse } from "../langs/html/parse.ts";
 import type { Result } from "../langs/types.ts";
 
@@ -802,5 +802,44 @@ export function testParseHtml() {
             ],
         ),
     };
+    assert.deepStrictEqual(parsed, expectedCoed);
+}
+
+export function testParseSvgCaseInsensitive() {
+    const rawHtml = `<!DOCTYPE html><html><body><svg><circle cx="50" cy="50" r="40" /><radialGradient></radialGradient></svg></body></html>`;
+    const parsed = parse(rawHtml);
+
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
+            [],
+            [],
+            [
+                head([], [], []),
+                body(
+                    [],
+                    [],
+                    [
+                        svg(
+                            [],
+                            [],
+                            [
+                                circle(
+                                    [],
+                                    [
+                                        attribute("cx", "50"),
+                                        attribute("cy", "50"),
+                                        attribute("r", "40"),
+                                    ],
+                                ),
+                                radialGradient([], []),
+                            ],
+                        ),
+                    ],
+                ),
+            ],
+        ),
+    };
+
     assert.deepStrictEqual(parsed, expectedCoed);
 }
