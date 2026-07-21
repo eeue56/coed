@@ -7,19 +7,13 @@
     "files": [
         "./build/coed.js",
         "./build/coed.d.ts",
-        "./build/svg.js",
-        "./build/svg.d.ts",
+        "./build/coed/svg.js",
+        "./build/coed/svg.d.ts",
         "./build/parse.js",
         "./build/parse.d.ts",
         "./build/types.d.ts",
         "./build/types.js",
-        "./build/langs/css",
-        "./build/langs/html",
-        "./build/langs/javascript",
-        "./build/langs/types.d.ts",
-        "./build/langs/types.js",
-        "./build/langs/engine.js",
-        "./build/langs/engine.d.ts"
+        "./build/langs/**/*"
     ],
     "exports": {
         ".": {

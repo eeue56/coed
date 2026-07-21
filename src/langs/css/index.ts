@@ -35,3 +35,6 @@ export const css: CssLanguage = {
 };
 
 export * from "./types.ts";
+
+export type CssBlockFilterRule = FilterRule<CssBlock>;
+export type CssDeclarationFilterRule = FilterRule<Declaration>;

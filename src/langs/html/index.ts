@@ -51,3 +51,7 @@ export const html: HtmlLanguage<unknown> = {
         };
     },
 };
+
+export type HtmlFilterRule = FilterRule<HtmlNode<unknown>>;
+export type HtmlAttributeFilterRule = FilterRule<Attribute>;
+export type HtmlEventFilterRule = FilterRule<Event<unknown>>;
