@@ -1175,6 +1175,11 @@ export function program<Model, Msg>(
         program.root.appendChild(currentTree);
     }
 
+    if (program.postRender) {
+        /* eslint-disable-next-line */
+        program.postRender(model);
+    }
+
     return {
         program: program,
         send: listener,
