@@ -23,3 +23,5 @@ export const javascript: Language<Program, JsNode> = {
         };
     },
 };
+
+export * from "./types.ts";

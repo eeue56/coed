@@ -16,7 +16,7 @@ type RuleFilter = {
     ) => FilterResult<CssBlock[]>;
 };
 
-type CssLanguage = Language<CssBlock[], CssBlock> & RuleFilter;
+export type CssLanguage = Language<CssBlock[], CssBlock> & RuleFilter;
 
 /**
  * filters, parser, and generator for working with raw CSS, or CSS blocks
@@ -33,3 +33,5 @@ export const css: CssLanguage = {
     filterDeclarations: filterCssDeclarations,
     _diff: diff,
 };
+
+export * from "./types.ts";

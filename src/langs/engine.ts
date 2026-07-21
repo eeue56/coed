@@ -1,6 +1,6 @@
 import type { Result } from "./types.ts";
 
-type Row<tree> = {
+export type Row<tree> = {
     kind: "Row";
     id: number;
     tree: tree;
@@ -9,8 +9,10 @@ type Row<tree> = {
     feedbackGiven: string[];
 };
 
-type OpenMode = { kind: "in-memory" } | { kind: "on-disk"; path: string };
-type Status = { kind: "open" } | { kind: "closed" };
+export type OpenMode =
+    | { kind: "in-memory" }
+    | { kind: "on-disk"; path: string };
+export type Status = { kind: "open" } | { kind: "closed" };
 type Connection<tree> =
     | { kind: "sqlite" }
     | { kind: "indexeddb" }

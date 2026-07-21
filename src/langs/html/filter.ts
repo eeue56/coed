@@ -5,11 +5,8 @@ import {
     type StringAttribute,
     text,
 } from "../../coed.ts";
-import {
-    type FilterResult,
-    type FilterRule,
-    returnReplacerOrEmptyList,
-} from "../types.ts";
+import { returnReplacerOrEmptyList } from "../helpers.ts";
+import { type FilterResult, type FilterRule } from "../types.ts";
 
 /**
  * If a replacer exists, return that value

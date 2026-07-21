@@ -1,8 +1,5 @@
-import {
-    returnReplacerOrEmptyList,
-    type FilterResult,
-    type FilterRule,
-} from "../types.ts";
+import { returnReplacerOrEmptyList } from "../helpers.ts";
+import { type FilterResult, type FilterRule } from "../types.ts";
 import {
     isAst,
     isDeclaration,

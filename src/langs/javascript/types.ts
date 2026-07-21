@@ -3,116 +3,119 @@ import type { OperatorExpression, Token } from "./parser/types.ts";
 
 export type NumberExpression = { kind: "NumberExpression"; value: number };
 
-type StringExpression = { kind: "StringExpression"; value: string };
-type StringLiteralExpression = {
+export type StringExpression = { kind: "StringExpression"; value: string };
+export type StringLiteralExpression = {
     kind: "StringLiteralExpression";
     values: Expression[];
 };
-type ArrayExpression = { kind: "ArrayExpression"; elements: Expression[] };
-type ObjectExpression = {
+export type ArrayExpression = {
+    kind: "ArrayExpression";
+    elements: Expression[];
+};
+export type ObjectExpression = {
     kind: "ObjectExpression";
     properties: { [key: string]: Expression };
 };
-type EqualityExpression = {
+export type EqualityExpression = {
     kind: "EqualityExpression";
     left: Expression;
     right: Expression;
 };
-type InequalityExpression = {
+export type InequalityExpression = {
     kind: "InequalityExpression";
     left: Expression;
     right: Expression;
 };
 
-type LessThanExpression = {
+export type LessThanExpression = {
     kind: "LessThanExpression";
     left: Expression;
     right: Expression;
 };
 
-type MoreThanExpression = {
+export type MoreThanExpression = {
     kind: "MoreThanExpression";
     left: Expression;
     right: Expression;
 };
 
-type LessThanOrEqualExpression = {
+export type LessThanOrEqualExpression = {
     kind: "LessThanOrEqualExpression";
     left: Expression;
     right: Expression;
 };
 
-type MoreThanOrEqualExpression = {
+export type MoreThanOrEqualExpression = {
     kind: "MoreThanOrEqualExpression";
     left: Expression;
     right: Expression;
 };
 
-type IncrementExpression = {
+export type IncrementExpression = {
     kind: "IncrementExpression";
     variable: string;
 };
 
-type DecrementExpression = {
+export type DecrementExpression = {
     kind: "DecrementExpression";
     variable: string;
 };
 
-type IncreaseExpression = {
+export type IncreaseExpression = {
     kind: "IncreaseExpression";
     variable: string;
     amount: Expression;
 };
 
-type DecreaseExpression = {
+export type DecreaseExpression = {
     kind: "DecreaseExpression";
     variable: string;
     amount: Expression;
 };
 
-type AssignmentTarget =
+export type AssignmentTarget =
     | NameLookupExpression
     | ObjectPropertyExpression
     | ArrayAccessExpression;
 
-type AssignmentExpression = {
+export type AssignmentExpression = {
     kind: "AssignmentExpression";
     target: AssignmentTarget;
     value: Expression;
 };
 
-type ArrowFunctionExpression = {
+export type ArrowFunctionExpression = {
     kind: "ArrowFunctionExpression";
     isAsync: boolean;
     parameters: string[];
     body: Ast[] | Expression;
 };
 
-type ThisExpression = {
+export type ThisExpression = {
     kind: "ThisExpression";
 };
 
-type SuperExpression = {
+export type SuperExpression = {
     kind: "SuperExpression";
 };
 
-type AwaitExpression = {
+export type AwaitExpression = {
     kind: "AwaitExpression";
     value: Expression;
 };
 
-type NewExpression = {
+export type NewExpression = {
     kind: "NewExpression";
     callee: Expression;
     arguments: Expression[];
 };
 
-type ImportExpression = {
+export type ImportExpression = {
     kind: "ImportExpression";
     source: Expression;
 };
 
-type FunctionCallExpression = {
+export type FunctionCallExpression = {
     kind: "FunctionCallExpression";
     functionName: string;
     arguments: Expression[];
@@ -123,7 +126,7 @@ export type NameLookupExpression = {
     name: string;
 };
 
-type ChainableExpression =
+export type ChainableExpression =
     | NameLookupExpression
     | ThisExpression
     | SuperExpression
@@ -132,63 +135,63 @@ type ChainableExpression =
     | ObjectMethodCallExpression
     | ArrayAccessExpression;
 
-type ObjectPropertyExpression = {
+export type ObjectPropertyExpression = {
     kind: "ObjectPropertyExpression";
     object: ChainableExpression;
     property: NameLookupExpression | StringLiteralExpression;
 };
 
-type ObjectMethodCallExpression = {
+export type ObjectMethodCallExpression = {
     kind: "ObjectMethodCallExpression";
     object: ChainableExpression;
     method: NameLookupExpression | StringLiteralExpression;
     arguments: Expression[];
 };
 
-type ArrayAccessExpression = {
+export type ArrayAccessExpression = {
     kind: "ArrayAccessExpression";
     array: ChainableExpression;
     index: NumberExpression;
 };
 
-type AdditionExpression = {
+export type AdditionExpression = {
     kind: "AdditionExpression";
     left: Expression;
     right: Expression;
 };
 
-type SubtractionExpression = {
+export type SubtractionExpression = {
     kind: "SubtractionExpression";
     left: Expression;
     right: Expression;
 };
 
-type MultiplicationExpression = {
+export type MultiplicationExpression = {
     kind: "MultiplicationExpression";
     left: Expression;
     right: Expression;
 };
 
-type DivisionExpression = {
+export type DivisionExpression = {
     kind: "DivisionExpression";
     left: Expression;
     right: Expression;
 };
 
-type AndExpression = {
+export type AndExpression = {
     kind: "AndExpression";
     left: Expression;
     right: Expression;
 };
 
-type OrExpression = {
+export type OrExpression = {
     kind: "OrExpression";
     left: Expression;
     right: Expression;
 };
 
-type NullExpression = { kind: "NullExpression" };
-type BooleanExpression = { kind: "BooleanExpression"; value: boolean };
+export type NullExpression = { kind: "NullExpression" };
+export type BooleanExpression = { kind: "BooleanExpression"; value: boolean };
 
 export type Expression =
     | NumberExpression
@@ -233,7 +236,7 @@ export type LetStatement = {
     value: Expression;
 };
 
-type ConstStatement = {
+export type ConstStatement = {
     kind: "ConstStatement";
     name: string;
     value: Expression;
@@ -254,7 +257,7 @@ export type ForLoop = {
     body: Ast[];
 };
 
-type FunctionDeclaration = {
+export type FunctionDeclaration = {
     kind: "FunctionDeclaration";
     isAsync: boolean;
     name: string;
@@ -262,49 +265,49 @@ type FunctionDeclaration = {
     body: Ast[];
 };
 
-type ReturnStatement = {
+export type ReturnStatement = {
     kind: "ReturnStatement";
     value: Expression | null;
 };
 
-type ContinueStatement = {
+export type ContinueStatement = {
     kind: "ContinueStatement";
 };
 
-type BreakStatement = {
+export type BreakStatement = {
     kind: "BreakStatement";
 };
 
-type ThrowStatement = {
+export type ThrowStatement = {
     kind: "ThrowStatement";
     value: Expression;
 };
 
-type TryCatchStatement = {
+export type TryCatchStatement = {
     kind: "TryCatchStatement";
     catchParameter: string;
     tryBlock: Ast[];
     catchBlock: Ast[];
 };
 
-type ImportStatement = {
+export type ImportStatement = {
     kind: "ImportStatement";
     defaultImport: string | null;
     namedImports: string[];
     source: string;
 };
 
-type ExportDeclarationStatement = {
+export type ExportDeclarationStatement = {
     kind: "ExportDeclarationStatement";
     declaration: LetStatement | ConstStatement | FunctionDeclaration;
 };
 
-type ExportNamedStatement = {
+export type ExportNamedStatement = {
     kind: "ExportNamedStatement";
     names: string[];
 };
 
-type ExportDefaultStatement = {
+export type ExportDefaultStatement = {
     kind: "ExportDefaultStatement";
     value: Expression | FunctionDeclaration;
 };
@@ -316,7 +319,7 @@ type ExportDefaultStatement = {
  * main();
  * ```
  */
-type LineTerminatedExpression = {
+export type LineTerminatedExpression = {
     kind: "LineTerminatedExpression";
     expressions: Expression[];
 };

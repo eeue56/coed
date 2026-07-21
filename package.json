@@ -37,6 +37,16 @@
             "import": "./build/types.js",
             "default": "./build/types.js"
         },
+        "./langs": {
+            "types": "./build/langs/index.d.ts",
+            "import": "./build/langs/index.js",
+            "default": "./build/langs/index.js"
+        },
+        "./langs/types": {
+            "types": "./build/langs/types.d.ts",
+            "import": "./build/langs/types.js",
+            "default": "./build/langs/types.js"
+        },
         "./langs/css": {
             "types": "./build/langs/css/index.d.ts",
             "import": "./build/langs/css/index.js",
