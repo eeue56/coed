@@ -23,5 +23,6 @@ export default defineConfig(globalIgnores(["build/**/*"]), {
             "error",
             { allowNumber: true },
         ],
+        "@typescript-eslint/require-await": ["off"],
     },
 });

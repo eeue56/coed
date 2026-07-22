@@ -97,6 +97,23 @@ function sanitizeAst(ast: Ast, filterRule: FilterRule<JsNode>): JsNode | null {
                 body: sanitizeProgram(ast.body, filterRule),
             };
         }
+        case "ClassDeclaration": {
+            return {
+                ...ast,
+                body: sanitizeProgram(ast.body, filterRule),
+            };
+        }
+        case "DoWhileLoop": {
+            return {
+                ...ast,
+                condition: javascript.filter([filterRule], [ast.condition])
+                    .value[0] as Expression,
+                body: sanitizeProgram(ast.body, filterRule),
+            };
+        }
+        case "LetListStatement": {
+            return ast;
+        }
         case "ReturnStatement": {
             if (ast.value === null) {
                 return ast;

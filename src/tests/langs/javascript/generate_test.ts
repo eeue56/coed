@@ -297,6 +297,17 @@ let greeting = \`hello \${name}\`;
     );
 }
 
+export function testGenerateStringWithEscapedQuote() {
+    assertGeneratedFromSource(
+        `
+const message = 'Enemy\\'s turn';
+        `.trim(),
+        `
+const message = "Enemy's turn";
+        `.trim(),
+    );
+}
+
 export function testGenerateIncrementExpressionAssignment() {
     assertMatchingParsedAndGeneratedCode(
         `
@@ -404,6 +415,111 @@ function syncMailbox(unreadCount) {
     }
 }
         `.trim(),
+    );
+}
+
+export function testGenerateClass() {
+    assertMatchingParsedAndGeneratedCode(
+        `
+class FishFrog {}
+        `.trim(),
+    );
+}
+
+export function testGenerateClassWithProperties() {
+    assertMatchingParsedAndGeneratedCode(
+        `
+class GridEntity {
+    constructor(col, row, type) {
+        this.col = col;
+        this.row = row;
+        this.type = type;
+        this.hp = 50;
+        this.maxHp = 50;
+        this.element = document.createElement("div");
+        this.element.className = "grid-entity";
+        this.element.setAttribute("data-type", type);
+        this.render();
+    }
+    render() {
+        this.element.style.left = this.col * GRID_SIZE + "px";
+        this.element.style.top = this.row * GRID_SIZE + "px";
+        this.element.textContent = animalEmojis[this.type] || "?";
+        gameGrid.appendChild(this.element);
+    }
+    remove() {
+        this.element.remove();
+        gridEntities = gridEntities.filter((e) => e !== this);
+    }
+}`.trim(),
+    );
+}
+
+export function testGenerateComplexForLoop() {
+    assertGeneratedFromSource(
+        `
+for (let i = 0; i < 12; i++) {
+    let col = Math.floor(Math.random() * GRID_WIDTH);
+    let row = Math.floor(Math.random() * GRID_HEIGHT);
+    let isBlocked =
+        (col === playerCol && row === playerRow) ||
+        gridEntities.some((e) => e.col === col && e.row === row);
+    const type =
+        animalTypes[Math.floor(Math.random() * animalTypes.length)];
+    gridEntities.push(new GridEntity(col, row, type));
+}`.trim(),
+        `
+for (let i = 0; i < 12; i++) {
+    let col = Math.floor(Math.random() * GRID_WIDTH);
+    let row = Math.floor(Math.random() * GRID_HEIGHT);
+    let isBlocked = col === playerCol && row === playerRow || gridEntities.some((e) => e.col === col && e.row === row);
+    const type = animalTypes[Math.floor(Math.random() * animalTypes.length)];
+    gridEntities.push(new GridEntity(col, row, type));
+}`.trim(),
+    );
+}
+
+export function testGenerateComplexIf() {
+    assertMatchingParsedAndGeneratedCode(
+        `function playerAttack(moveIndex) {
+    if (!battleState.playerTurn || !inBattle) return;
+    const move = moves[moveIndex];
+    battleState.playerTurn = false;
+    const hit = Math.random() < move.accuracy;
+    if (hit) {
+        const damage = Math.floor(Math.random() * 20 + move.power * 0.8);
+        battleState.enemyHp = Math.max(0, battleState.enemyHp - damage);
+        battleLog.innerHTML +=
+            "<p>You used " + move.name + " for " + damage + " damage!</p>";
+    } else {
+        battleLog.innerHTML += "<p>" + move.name + " missed!</p>";
+    }
+    updateBattleUI();
+    if (battleState.enemyHp <= 0) {
+        battleLog.innerHTML += "<p>You won! +50 Score!</p>";
+        endBattle(true);
+        return;
+    }
+    setTimeout(enemyAttack, 1000);
+}`.trim(),
+    );
+}
+
+export function testGenerateDocumentMethodCall() {
+    assertMatchingParsedAndGeneratedCode(
+        `
+document.addEventListener("keydown", (e) => {
+    if (inBattle) return;
+    if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
+        movePlayer(0, -1);
+    } else if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
+        movePlayer(0, 1);
+    } else if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+        movePlayer(-1, 0);
+    } else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
+        movePlayer(1, 0);
+    }
+});`.trim(),
     );
 }
 

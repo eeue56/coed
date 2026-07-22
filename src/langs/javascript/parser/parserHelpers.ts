@@ -23,7 +23,24 @@ export function stripStringQuotes(value: string): string {
         return value;
     }
 
-    return value.slice(1, value.length - 1);
+    const innerValue = value.slice(1, value.length - 1);
+
+    if (firstChar === "`") {
+        return innerValue;
+    }
+
+    return innerValue.replace(/\\([\\'"nrt])/g, (_, escaped: string) => {
+        switch (escaped) {
+            case "n":
+                return "\n";
+            case "r":
+                return "\r";
+            case "t":
+                return "\t";
+            default:
+                return escaped;
+        }
+    });
 }
 
 export function tokenIs<kind extends TokenKinds>(

@@ -80,6 +80,27 @@ function filterAst(
                 errors,
             };
         }
+        case "DoWhileLoop": {
+            const condition = filterExpression(ast.condition, filterRules);
+            const body = filterAsts(ast.body, filterRules);
+
+            const errors = [...condition.errors, ...body.errors];
+
+            if (condition.value.length !== 1) {
+                return { value: [], errors };
+            }
+
+            return {
+                value: [
+                    {
+                        ...ast,
+                        condition: condition.value[0],
+                        body: body.value,
+                    },
+                ],
+                errors,
+            };
+        }
         case "FunctionDeclaration": {
             const body = filterAsts(ast.body, filterRules);
             return {
@@ -87,9 +108,35 @@ function filterAst(
                 errors: body.errors,
             };
         }
+        case "ClassDeclaration": {
+            const superClass = ast.superClass
+                ? filterExpression(ast.superClass, filterRules)
+                : { value: [], errors: [] };
+            const body = filterAsts(ast.body, filterRules);
+
+            const errors = [...superClass.errors, ...body.errors];
+
+            if (ast.superClass && superClass.value.length === 0) {
+                return { value: [], errors };
+            }
+
+            return {
+                value: [
+                    {
+                        ...ast,
+                        superClass: ast.superClass ? superClass.value[0] : null,
+                        body: body.value,
+                    },
+                ],
+                errors,
+            };
+        }
         case "IfStatement": {
             const condition = filterExpression(ast.condition, filterRules);
             const thenBranch = filterAsts(ast.thenBranch, filterRules);
+            const elseIf = ast.elseIf
+                ? filterAst(ast.elseIf, filterRules)
+                : undefined;
             const elseBranch = ast.elseBranch
                 ? filterAsts(ast.elseBranch, filterRules)
                 : undefined;
@@ -97,6 +144,7 @@ function filterAst(
             const errors = [
                 ...condition.errors,
                 ...thenBranch.errors,
+                ...(elseIf?.errors || []),
                 ...(elseBranch?.errors || []),
             ];
 
@@ -104,12 +152,34 @@ function filterAst(
                 return { value: [], errors };
             }
 
+            let filteredElseIf: IfStatement | undefined = undefined;
+            if (elseIf) {
+                if (elseIf.value.length !== 1) {
+                    return { value: [], errors };
+                }
+
+                const candidateElseIf = elseIf.value[0];
+                if (candidateElseIf.kind !== "IfStatement") {
+                    return { value: [], errors };
+                }
+
+                filteredElseIf = candidateElseIf;
+            }
+
             const ifs: IfStatement = {
                 ...ast,
                 condition: condition.value[0],
                 thenBranch: thenBranch.value,
-                elseBranch: elseBranch?.value,
             };
+
+            if (typeof filteredElseIf !== "undefined") {
+                ifs.elseIf = filteredElseIf;
+            }
+
+            if (typeof elseBranch !== "undefined") {
+                ifs.elseBranch = elseBranch.value;
+            }
+
             return {
                 value: [ifs],
                 errors,
@@ -124,6 +194,9 @@ function filterAst(
                 value: [{ ...ast, value: expression.value[0] }],
                 errors: expression.errors,
             };
+        }
+        case "LetListStatement": {
+            return { value: [ast], errors: [] };
         }
         case "ReturnStatement": {
             if (ast.value === null) {
@@ -352,6 +425,17 @@ export function filterExpression(
                 errors: [...amount.errors],
             };
         }
+        case "NegationExpression": {
+            const value = filterExpression(expression.value, filterRules);
+            if (value.value.length === 0) {
+                return { value: [], errors: [...value.errors] };
+            }
+
+            return {
+                value: [{ ...expression, value: value.value[0] }],
+                errors: [...value.errors],
+            };
+        }
         case "AssignmentExpression": {
             const target = filterExpression(expression.target, filterRules);
             const value = filterExpression(expression.value, filterRules);
@@ -555,7 +639,7 @@ export function filterExpression(
                     {
                         ...expression,
                         array: array.value[0] as typeof expression.array,
-                        index: index.value[0] as typeof expression.index,
+                        index: index.value[0],
                     },
                 ],
                 errors: [...array.errors, ...index.errors],

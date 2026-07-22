@@ -270,6 +270,8 @@ const keywordKinds = {
     let: "LetToken",
     var: "VarToken",
     const: "ConstToken",
+    class: "ClassToken",
+    extends: "ExtendsToken",
     import: "ImportToken",
     export: "ExportToken",
     async: "AsyncToken",
@@ -283,6 +285,7 @@ const keywordKinds = {
     default: "DefaultToken",
     for: "ForToken",
     while: "WhileToken",
+    do: "DoToken",
     with: "WithToken",
     if: "IfToken",
     else: "ElseToken",
@@ -304,7 +307,9 @@ function switchIdentifierToken(
     endIndex: number,
     tokens: Token[],
 ): void {
-    const keywordKind = keywordKinds[buffer as keyof typeof keywordKinds];
+    const keywordKind = Object.keys(keywordKinds).includes(buffer)
+        ? keywordKinds[buffer as keyof typeof keywordKinds]
+        : undefined;
 
     if (typeof keywordKind === "undefined") {
         tokens.push({
@@ -449,6 +454,20 @@ function appendOrSwitchToReady(
     tokenizerModel.buffer += char;
 }
 
+function hasOddTrailingBackslashes(value: string): boolean {
+    let backslashCount = 0;
+
+    for (let index = value.length - 1; index >= 0; index -= 1) {
+        if (value[index] !== "\\") {
+            break;
+        }
+
+        backslashCount += 1;
+    }
+
+    return backslashCount % 2 === 1;
+}
+
 function shouldAppendBufferedChar(
     state: "ReadingNumber" | "ReadingIdentifier" | "ReadingWhitespace",
     char: string,
@@ -479,7 +498,7 @@ function processBufferedState(
         const openingQuote = tokenizerModel.buffer[0];
         tokenizerModel.buffer += char;
 
-        if (char === openingQuote) {
+        if (char === openingQuote && !hasOddTrailingBackslashes(tokenizerModel.buffer.slice(0, -1))) {
             switchToReady(tokenizerModel, tokens, currentIndex);
             return true;
         }

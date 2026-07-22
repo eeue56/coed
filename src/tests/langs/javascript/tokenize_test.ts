@@ -25,6 +25,18 @@ export function testSingleQuoteString() {
     ]);
 }
 
+export function testSingleQuoteStringWithEscapedQuote() {
+    const tokens = tokenize(`'Enemy\\'s turn'`);
+    assert.deepStrictEqual(tokens, [
+        {
+            kind: "StringToken",
+            value: `'Enemy\\'s turn'`,
+            startIndex: 0,
+            endIndex: 15,
+        },
+    ]);
+}
+
 export function testBacktickString() {
     const tokens = tokenize("`hello world`");
     assert.deepStrictEqual(tokens, [
@@ -650,6 +662,15 @@ export function testWhileAndWithKeywords() {
         kind: "WithToken",
         startIndex: 16,
         endIndex: 20,
+    });
+}
+
+export function testDoKeyword() {
+    const tokens = tokenize("do { work(); } while (ready);");
+    assert.deepStrictEqual(tokens[0], {
+        kind: "DoToken",
+        startIndex: 0,
+        endIndex: 2,
     });
 }
 

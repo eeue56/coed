@@ -1,6 +1,7 @@
 import type {
     Ast,
     Expression,
+    IfStatement,
     IndexedResult,
     LetStatement,
     OperatorRule,
@@ -46,6 +47,7 @@ type IfToken = BaseToken & { kind: "IfToken" };
 type ElseToken = BaseToken & { kind: "ElseToken" };
 type ForToken = BaseToken & { kind: "ForToken" };
 type WhileToken = BaseToken & { kind: "WhileToken" };
+type DoToken = BaseToken & { kind: "DoToken" };
 type WithToken = BaseToken & { kind: "WithToken" };
 type FunctionToken = BaseToken & { kind: "FunctionToken" };
 type ReturnToken = BaseToken & { kind: "ReturnToken" };
@@ -68,6 +70,9 @@ type TryToken = BaseToken & { kind: "TryToken" };
 type CatchToken = BaseToken & { kind: "CatchToken" };
 type ThrowToken = BaseToken & { kind: "ThrowToken" };
 type DefaultToken = BaseToken & { kind: "DefaultToken" };
+type ClassToken = BaseToken & { kind: "ClassToken" };
+type ExtendsToken = BaseToken & { kind: "ExtendsToken" };
+type ConstructorToken = BaseToken & { kind: "ConstructorToken" };
 
 export type Token =
     | NumberToken
@@ -108,6 +113,7 @@ export type Token =
     | ElseToken
     | ForToken
     | WhileToken
+    | DoToken
     | WithToken
     | FunctionToken
     | ReturnToken
@@ -129,7 +135,10 @@ export type Token =
     | TryToken
     | CatchToken
     | ThrowToken
-    | DefaultToken;
+    | DefaultToken
+    | ClassToken
+    | ExtendsToken
+    | ConstructorToken;
 
 export type StatementParser = (state: ParserState) => IndexedResult<Ast>;
 
@@ -154,6 +163,7 @@ export type ParsedConditionBlock = {
 };
 
 export type ParsedOptionalElse = {
+    elseIf?: IfStatement;
     elseBranch?: Ast[];
     nextIndex: number;
 };

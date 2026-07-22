@@ -22,6 +22,11 @@ export function testParseNumberExpression() {
         kind: "NumberExpression",
         value: 42,
     });
+
+    assert.deepStrictEqual(expectOk(parseExpression(tokenize("-1"))), {
+        kind: "NumberExpression",
+        value: -1,
+    });
 }
 
 export function testParseImportKeywordExpression() {
@@ -86,6 +91,16 @@ export function testParseAwaitKeywordExpression() {
         value: {
             kind: "NameLookupExpression",
             name: "data",
+        },
+    });
+}
+
+export function testParseNegationExpression() {
+    assert.deepStrictEqual(expectOk(parseExpression(tokenize("!inBattle"))), {
+        kind: "NegationExpression",
+        value: {
+            kind: "NameLookupExpression",
+            name: "inBattle",
         },
     });
 }
@@ -262,6 +277,31 @@ export function testParseProgramWithStatementAndExpression() {
     );
 }
 
+export function testParseStringExpressionWithEscapedQuote() {
+    assert.deepStrictEqual(parse(`const message = 'Enemy\\'s turn';`), {
+        kind: "Ok",
+        value: [
+            {
+                kind: "ConstStatement",
+                name: "message",
+                value: {
+                    kind: "StringExpression",
+                    value: "Enemy's turn",
+                },
+            },
+        ],
+    });
+}
+
+export function testParseMinifiedFunctionWithEscapedQuoteString() {
+    assert.deepStrictEqual(
+        parse(
+            `function enemyAttack(){const hit=Math.random()<move.accuracy;if(hit){battleLog.innerHTML+='<p>Enemy used '+move.name+' for '+damage+' damage!</p>';}else{battleLog.innerHTML+='<p>Enemy\\'s '+move.name+' missed!</p>';}}`,
+        ).kind,
+        "Ok",
+    );
+}
+
 export function testParseProgramWithMultipleExpressions() {
     assert.deepStrictEqual(expectOk(javascript.parse("alpha(); beta();")), [
         {
@@ -399,6 +439,15 @@ export function testParseFunctionAndMemberExpressions() {
             value: { kind: "NameLookupExpression", name: "questions" },
         },
     );
+
+    assert.deepStrictEqual(
+        expectOk(parseExpression(tokenize("battleLog.innerHTML += damage"))),
+        {
+            kind: "IncreaseExpression",
+            variable: "battleLog.innerHTML",
+            amount: { kind: "NameLookupExpression", name: "damage" },
+        },
+    );
 }
 
 export function testParseIncrementAndDecrementExpressions() {
@@ -466,6 +515,18 @@ export function testParseLetAndConstStatements() {
     });
 }
 
+export function testParseLetDeclarationList() {
+    assert.deepStrictEqual(parse("let col, row;"), {
+        kind: "Ok",
+        value: [
+            {
+                kind: "LetListStatement",
+                names: ["col", "row"],
+            },
+        ],
+    });
+}
+
 export function testParseIfElseStatements() {
     assert.deepStrictEqual(
         parse("if (x) { let a = 1; } else { const b = 2; }"),
@@ -489,6 +550,55 @@ export function testParseIfElseStatements() {
                             value: { kind: "NumberExpression", value: 2 },
                         },
                     ],
+                },
+            ],
+        },
+    );
+}
+
+export function testParseElseIfStatements() {
+    assert.deepStrictEqual(
+        parse("if (a) { let x = 1; } else if (b) { let y = 2; } else { let z = 3; }"),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "IfStatement",
+                    condition: { kind: "NameLookupExpression", name: "a" },
+                    thenBranch: [
+                        {
+                            kind: "LetStatement",
+                            name: "x",
+                            value: { kind: "NumberExpression", value: 1 },
+                        },
+                    ],
+                    elseIf: {
+                        kind: "IfStatement",
+                        condition: {
+                            kind: "NameLookupExpression",
+                            name: "b",
+                        },
+                        thenBranch: [
+                            {
+                                kind: "LetStatement",
+                                name: "y",
+                                value: {
+                                    kind: "NumberExpression",
+                                    value: 2,
+                                },
+                            },
+                        ],
+                        elseBranch: [
+                            {
+                                kind: "LetStatement",
+                                name: "z",
+                                value: {
+                                    kind: "NumberExpression",
+                                    value: 3,
+                                },
+                            },
+                        ],
+                    },
                 },
             ],
         },
@@ -559,6 +669,73 @@ export function testParseFunctionDeclaration() {
             },
         ],
     });
+}
+
+export function testParseClassDeclarationWithMethods() {
+    assert.deepStrictEqual(
+        parse(
+            "class FishFrog { constructor(name) { return; } async sayHi(person) { return person; } }",
+        ),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "ClassDeclaration",
+                    name: "FishFrog",
+                    superClass: null,
+                    body: [
+                        {
+                            kind: "FunctionDeclaration",
+                            name: "constructor",
+                            isAsync: false,
+                            parameters: ["name"],
+                            body: [
+                                {
+                                    kind: "ReturnStatement",
+                                    value: null,
+                                },
+                            ],
+                        },
+                        {
+                            kind: "FunctionDeclaration",
+                            name: "sayHi",
+                            isAsync: true,
+                            parameters: ["person"],
+                            body: [
+                                {
+                                    kind: "ReturnStatement",
+                                    value: {
+                                        kind: "NameLookupExpression",
+                                        name: "person",
+                                    },
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    );
+}
+
+export function testParseClassDeclarationWithSuperClass() {
+    assert.deepStrictEqual(
+        parse("class FishFrog extends Animal {}"),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "ClassDeclaration",
+                    name: "FishFrog",
+                    superClass: {
+                        kind: "NameLookupExpression",
+                        name: "Animal",
+                    },
+                    body: [],
+                },
+            ],
+        },
+    );
 }
 
 export function testParseStripsTypeAnnotations() {
@@ -759,6 +936,38 @@ export function testParseWhileWithContinue() {
                         },
                         {
                             kind: "ContinueStatement",
+                        },
+                    ],
+                },
+            ],
+        },
+    );
+}
+
+export function testParseDoWhileLoop() {
+    assert.deepStrictEqual(
+        parse("do { let x = count; } while (x < maxCount);"),
+        {
+            kind: "Ok",
+            value: [
+                {
+                    kind: "DoWhileLoop",
+                    condition: {
+                        kind: "LessThanExpression",
+                        left: { kind: "NameLookupExpression", name: "x" },
+                        right: {
+                            kind: "NameLookupExpression",
+                            name: "maxCount",
+                        },
+                    },
+                    body: [
+                        {
+                            kind: "LetStatement",
+                            name: "x",
+                            value: {
+                                kind: "NameLookupExpression",
+                                name: "count",
+                            },
                         },
                     ],
                 },

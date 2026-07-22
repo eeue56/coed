@@ -73,6 +73,11 @@ export type DecreaseExpression = {
     amount: Expression;
 };
 
+export type NegationExpression = {
+    kind: "NegationExpression";
+    value: Expression;
+};
+
 export type AssignmentTarget =
     | NameLookupExpression
     | ObjectPropertyExpression
@@ -151,7 +156,7 @@ export type ObjectMethodCallExpression = {
 export type ArrayAccessExpression = {
     kind: "ArrayAccessExpression";
     array: ChainableExpression;
-    index: NumberExpression;
+    index: Expression;
 };
 
 export type AdditionExpression = {
@@ -208,6 +213,7 @@ export type Expression =
     | DecrementExpression
     | IncreaseExpression
     | DecreaseExpression
+    | NegationExpression
     | AssignmentExpression
     | ArrowFunctionExpression
     | ThisExpression
@@ -236,6 +242,11 @@ export type LetStatement = {
     value: Expression;
 };
 
+export type LetListStatement = {
+    kind: "LetListStatement";
+    names: string[];
+};
+
 export type ConstStatement = {
     kind: "ConstStatement";
     name: string;
@@ -246,6 +257,7 @@ export type IfStatement = {
     kind: "IfStatement";
     condition: Expression;
     thenBranch: Ast[];
+    elseIf?: IfStatement;
     elseBranch?: Ast[];
 };
 
@@ -257,11 +269,24 @@ export type ForLoop = {
     body: Ast[];
 };
 
+export type DoWhileLoop = {
+    kind: "DoWhileLoop";
+    condition: Expression;
+    body: Ast[];
+};
+
 export type FunctionDeclaration = {
     kind: "FunctionDeclaration";
     isAsync: boolean;
     name: string;
     parameters: string[];
+    body: Ast[];
+};
+
+export type ClassDeclaration = {
+    kind: "ClassDeclaration";
+    name: string;
+    superClass: Expression | null;
     body: Ast[];
 };
 
@@ -299,7 +324,12 @@ export type ImportStatement = {
 
 export type ExportDeclarationStatement = {
     kind: "ExportDeclarationStatement";
-    declaration: LetStatement | ConstStatement | FunctionDeclaration;
+    declaration:
+        | LetStatement
+    | LetListStatement
+        | ConstStatement
+        | FunctionDeclaration
+        | ClassDeclaration;
 };
 
 export type ExportNamedStatement = {
@@ -326,9 +356,12 @@ export type LineTerminatedExpression = {
 
 export type Ast =
     | LetStatement
+    | LetListStatement
     | IfStatement
     | ForLoop
+    | DoWhileLoop
     | FunctionDeclaration
+    | ClassDeclaration
     | ConstStatement
     | ReturnStatement
     | ContinueStatement
@@ -393,10 +426,13 @@ export function isAst(node: JsNode): node is Ast {
 
     return (
         kind === "LetStatement" ||
+        kind === "LetListStatement" ||
         kind === "ConstStatement" ||
         kind === "IfStatement" ||
         kind === "ForLoop" ||
+        kind === "DoWhileLoop" ||
         kind === "FunctionDeclaration" ||
+        kind === "ClassDeclaration" ||
         kind === "ReturnStatement" ||
         kind === "ContinueStatement" ||
         kind === "BreakStatement" ||
@@ -412,12 +448,19 @@ export function isAst(node: JsNode): node is Ast {
 
 export function isDeclaration(
     node: JsNode,
-): node is FunctionDeclaration | LetStatement | ConstStatement {
+): node is
+    | FunctionDeclaration
+    | LetStatement
+    | LetListStatement
+    | ConstStatement
+    | ClassDeclaration {
     const kind = node.kind;
     return (
         kind === "FunctionDeclaration" ||
         kind === "LetStatement" ||
-        kind === "ConstStatement"
+        kind === "LetListStatement" ||
+        kind === "ConstStatement" ||
+        kind === "ClassDeclaration"
     );
 }
 

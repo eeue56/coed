@@ -16,6 +16,13 @@ function indent(level: number, str: string): string {
         .join("\n");
 }
 
+function shouldTerminateTopLevelExpression(expression: Expression): boolean {
+    return (
+        expression.kind === "FunctionCallExpression" ||
+        expression.kind === "ObjectMethodCallExpression"
+    );
+}
+
 function generateStatements(statements: Ast[]): string {
     return statements.map((statement) => generateAST(statement, 0)).join("\n");
 }
@@ -27,6 +34,28 @@ function generateBlock(statements: Ast[], level: number): string {
 
     return `{
 ${indent(level + 1, generateStatements(statements))}
+${indent(level, "}")}`;
+}
+
+function generateClassBody(statements: Ast[], level: number): string {
+    if (statements.length === 0) {
+        return "{}";
+    }
+
+    const methods = statements.map((statement) => {
+        if (statement.kind !== "FunctionDeclaration") {
+            return generateAST(statement, level + 1);
+        }
+
+        const asyncPrefix = statement.isAsync ? "async " : "";
+        return indent(
+            level + 1,
+            `${asyncPrefix}${statement.name}(${statement.parameters.join(", ")}) ${generateBlock(statement.body, 0)}`,
+        );
+    });
+
+    return `{
+${methods.join("\n")}
 ${indent(level, "}")}`;
 }
 
@@ -42,6 +71,17 @@ function generateForInit(ast: Ast): string {
             return generateAST(ast, 0).replace(/;$/, "");
         }
     }
+}
+
+function additionExpressionTermCount(expression: Expression): number {
+    if (expression.kind !== "AdditionExpression") {
+        return 1;
+    }
+
+    return (
+        additionExpressionTermCount(expression.left) +
+        additionExpressionTermCount(expression.right)
+    );
 }
 
 export function generateExpression(expression: Expression): string {
@@ -92,6 +132,9 @@ export function generateExpression(expression: Expression): string {
         }
         case "DecreaseExpression": {
             return `${expression.variable} -= ${generateExpression(expression.amount)}`;
+        }
+        case "NegationExpression": {
+            return `!${generateExpression(expression.value)}`;
         }
         case "AssignmentExpression": {
             return `${generateExpression(expression.target)} = ${generateExpression(expression.value)}`;
@@ -205,7 +248,37 @@ export function generateAST(ast: Ast, level: number): string {
                 `let ${ast.name} = ${generateExpression(ast.value)};`,
             );
         }
+        case "LetListStatement": {
+            return indent(level, `let ${ast.names.join(", ")};`);
+        }
         case "IfStatement": {
+            if (
+                !ast.elseBranch &&
+                !ast.elseIf &&
+                ast.thenBranch.length === 1 &&
+                ast.thenBranch[0].kind === "ReturnStatement"
+            ) {
+                const onlyReturn = ast.thenBranch[0];
+                if (onlyReturn.value === null) {
+                    return indent(
+                        level,
+                        `if (${generateExpression(ast.condition)}) return;`,
+                    );
+                }
+
+                return indent(
+                    level,
+                    `if (${generateExpression(ast.condition)}) return ${generateExpression(onlyReturn.value)};`,
+                );
+            }
+
+            if (ast.elseIf) {
+                return indent(
+                    level,
+                    `if (${generateExpression(ast.condition)}) ${generateBlock(ast.thenBranch, level)} else ${generateAST(ast.elseIf, 0)}`,
+                );
+            }
+
             if (ast.elseBranch) {
                 return indent(
                     level,
@@ -224,11 +297,26 @@ export function generateAST(ast: Ast, level: number): string {
                 `for (${generateForInit(ast.init)}; ${generateExpression(ast.condition)}; ${generateExpression(ast.increment)}) ${generateBlock(ast.body, level)}`,
             );
         }
+        case "DoWhileLoop": {
+            return indent(
+                level,
+                `do ${generateBlock(ast.body, level)} while (${generateExpression(ast.condition)});`,
+            );
+        }
         case "FunctionDeclaration": {
             const asyncPrefix = ast.isAsync ? "async " : "";
             return indent(
                 level,
                 `${asyncPrefix}function ${ast.name}(${ast.parameters.join(", ")}) ${generateBlock(ast.body, level)}`,
+            );
+        }
+        case "ClassDeclaration": {
+            const superClassPart = ast.superClass
+                ? ` extends ${generateExpression(ast.superClass)}`
+                : "";
+            return indent(
+                level,
+                `class ${ast.name}${superClassPart} ${generateClassBody(ast.body, level)}`,
             );
         }
         case "ConstStatement": {
@@ -278,10 +366,7 @@ export function generateAST(ast: Ast, level: number): string {
             );
         }
         case "ExportDeclarationStatement": {
-            return indent(
-                level,
-                `export ${generateAST(ast.declaration, 0)}`,
-            );
+            return indent(level, `export ${generateAST(ast.declaration, 0)}`);
         }
         case "ExportNamedStatement": {
             return indent(level, `export { ${ast.names.join(", ")} };`);
@@ -297,6 +382,25 @@ export function generateAST(ast: Ast, level: number): string {
             return indent(level, `export default ${generateAST(ast.value, 0)}`);
         }
         case "LineTerminatedExpression": {
+            if (
+                ast.expressions.length === 1 &&
+                ast.expressions[0].kind === "IncreaseExpression"
+            ) {
+                const expression = ast.expressions[0];
+                const amount = generateExpression(expression.amount);
+                const line = `${expression.variable} += ${amount};`;
+
+                if (
+                    line.length > 90 ||
+                    additionExpressionTermCount(expression.amount) >= 4
+                ) {
+                    return indent(
+                        level,
+                        `${expression.variable} +=\n    ${amount};`,
+                    );
+                }
+            }
+
             return indent(
                 level,
                 `${ast.expressions.map(generateExpression).join(" \n")};`,
@@ -309,7 +413,10 @@ export function generateProgram(program: Program): string {
     return program
         .map((node) => {
             if (isExpression(node)) {
-                return generateExpression(node);
+                const generated = generateExpression(node);
+                return shouldTerminateTopLevelExpression(node)
+                    ? `${generated};`
+                    : generated;
             }
             return generateAST(node, 0);
         })

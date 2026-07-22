@@ -83,7 +83,15 @@ function parseAssignmentExpression(
     if (left.kind === "Err") return left;
 
     state.index = left.index;
-    if (!tokenIs(currentToken(state), "AssignToken")) {
+    const assignmentToken = currentToken(state);
+    if (
+        !tokenIs(assignmentToken, "AssignToken") &&
+        !(
+            (tokenIs(assignmentToken, "AdditionToken") ||
+                tokenIs(assignmentToken, "SubtractionToken")) &&
+            tokenIs(state.tokens[state.index + 1], "AssignToken")
+        )
+    ) {
         return left;
     }
 
@@ -91,6 +99,44 @@ function parseAssignmentExpression(
         return {
             kind: "Err",
             error: "Expected an assignment target",
+            index: state.index,
+        };
+    }
+
+    if (
+        tokenIs(assignmentToken, "AdditionToken") ||
+        tokenIs(assignmentToken, "SubtractionToken")
+    ) {
+        state.index += 2;
+
+        const right = parseAssignmentExpression(state);
+        if (right.kind === "Err") return right;
+
+        state.index = right.index;
+
+        const variable = assignmentTargetToString(left.value);
+        if (variable === null) {
+            return {
+                kind: "Err",
+                error: "Expected a valid += or -= assignment target",
+                index: state.index,
+            };
+        }
+
+        return {
+            kind: "Ok",
+            value:
+                assignmentToken.kind === "AdditionToken"
+                    ? {
+                          kind: "IncreaseExpression",
+                          variable,
+                          amount: right.value,
+                      }
+                    : {
+                          kind: "DecreaseExpression",
+                          variable,
+                          amount: right.value,
+                      },
             index: state.index,
         };
     }
@@ -109,6 +155,53 @@ function parseAssignmentExpression(
         },
         index: state.index,
     };
+}
+
+function assignmentTargetToString(expression: Expression): string | null {
+    switch (expression.kind) {
+        case "NameLookupExpression":
+            return expression.name;
+        case "ObjectPropertyExpression": {
+            const object = assignmentTargetToString(expression.object);
+            if (object === null) {
+                return null;
+            }
+
+            if (expression.property.kind === "NameLookupExpression") {
+                return `${object}.${expression.property.name}`;
+            }
+
+            if (
+                expression.property.values.length === 1 &&
+                expression.property.values[0].kind === "StringExpression"
+            ) {
+                return `${object}[\`${expression.property.values[0].value}\`]`;
+            }
+
+            return null;
+        }
+        case "ArrayAccessExpression": {
+            const array = assignmentTargetToString(expression.array);
+            if (array === null) {
+                return null;
+            }
+
+            const index = expression.index;
+
+            switch (index.kind) {
+                case "NumberExpression":
+                    return `${array}[${index.value}]`;
+                case "NameLookupExpression":
+                    return `${array}[${index.name}]`;
+                case "StringExpression":
+                    return `${array}["${index.value}"]`;
+                default:
+                    return null;
+            }
+        }
+        default:
+            return null;
+    }
 }
 
 function parseDelimitedExpressionList(
@@ -469,27 +562,16 @@ function parseBracketPostfix(
     consumeToken(state);
     const indexToken = currentToken(state);
 
-    if (
-        !tokenIs(indexToken, "NumberToken") &&
-        !tokenIs(indexToken, "StringToken")
-    ) {
-        return {
-            kind: "Err",
-            error: "Expected a number or string",
-            index: state.index,
-        };
-    }
+    if (indexToken && tokenIs(indexToken, "NumberToken")) {
+        consumeToken(state);
+        const rightBracket = consumeRequiredTokenOrExpressionError(
+            state,
+            "RightBracketToken",
+        );
+        if (rightBracket.kind === "Err") {
+            return rightBracket;
+        }
 
-    consumeToken(state);
-    const rightBracket = consumeRequiredTokenOrExpressionError(
-        state,
-        "RightBracketToken",
-    );
-    if (rightBracket.kind === "Err") {
-        return rightBracket;
-    }
-
-    if (indexToken.kind === "NumberToken") {
         return {
             kind: "Ok",
             value: {
@@ -501,14 +583,54 @@ function parseBracketPostfix(
         };
     }
 
+    if (indexToken && tokenIs(indexToken, "StringToken")) {
+        consumeToken(state);
+        const rightBracket = consumeRequiredTokenOrExpressionError(
+            state,
+            "RightBracketToken",
+        );
+        if (rightBracket.kind === "Err") {
+            return rightBracket;
+        }
+
+        return {
+            kind: "Ok",
+            value: {
+                kind: "ObjectPropertyExpression",
+                object: expression,
+                property: createStringLiteralExpression(
+                    stripStringQuotes(indexToken.value),
+                ),
+            },
+            index: state.index,
+        };
+    }
+
+    const parsedIndex = parseAssignmentExpression(state);
+    if (parsedIndex.kind === "Err") {
+        return {
+            kind: "Err",
+            error: "Expected a number, string, or expression",
+            index: state.index,
+        };
+    }
+
+    state.index = parsedIndex.index;
+
+    const rightBracket = consumeRequiredTokenOrExpressionError(
+        state,
+        "RightBracketToken",
+    );
+    if (rightBracket.kind === "Err") {
+        return rightBracket;
+    }
+
     return {
         kind: "Ok",
         value: {
-            kind: "ObjectPropertyExpression",
-            object: expression,
-            property: createStringLiteralExpression(
-                stripStringQuotes(indexToken.value),
-            ),
+            kind: "ArrayAccessExpression",
+            array: expression,
+            index: parsedIndex.value,
         },
         index: state.index,
     };
@@ -665,6 +787,14 @@ function parseOperatorLevel(
         );
         if (!rule) break;
 
+        if (
+            (token.kind === "AdditionToken" ||
+                token.kind === "SubtractionToken") &&
+            tokenIs(state.tokens[state.index + 1], "AssignToken")
+        ) {
+            break;
+        }
+
         consumeToken(state);
 
         const right = parseOperatorLevel(state, level + 1);
@@ -679,6 +809,23 @@ function parseOperatorLevel(
 
 /** parse postfix operations: function calls, dot access, bracket access, */
 function parsePostfix(state: ParserState): IndexedResult<Expression> {
+    if (tokenIs(currentToken(state), "NegationToken")) {
+        consumeToken(state);
+        const value = parsePostfix(state);
+        if (value.kind === "Err") {
+            return value;
+        }
+
+        return {
+            kind: "Ok",
+            value: {
+                kind: "NegationExpression",
+                value: value.value,
+            },
+            index: state.index,
+        };
+    }
+
     const parsedExpression = parseLeaf(state);
     if (parsedExpression.kind === "Err") return parsedExpression;
 
@@ -749,6 +896,23 @@ function parseLeaf(state: ParserState): IndexedResult<Expression> {
         };
     }
 
+    const nextToken = state.tokens[state.index + 1];
+    if (
+        token.kind === "SubtractionToken" &&
+        tokenIs(nextToken, "NumberToken")
+    ) {
+        state.index += 2;
+
+        return {
+            kind: "Ok",
+            value: {
+                kind: "NumberExpression",
+                value: -nextToken.value,
+            },
+            index: state.index,
+        };
+    }
+
     if (parseArrowParameters(state.tokens, state.index) !== null) {
         return parseArrowFunctionExpression(state);
     }
@@ -765,7 +929,7 @@ function parseLeaf(state: ParserState): IndexedResult<Expression> {
         return parseDynamicImportExpression(state);
     }
 
-    if (token.kind === "NegationToken" || token.kind === "TypeofToken") {
+    if (token.kind === "TypeofToken") {
         consumeToken(state);
         return parseLeaf(state);
     }
@@ -1088,6 +1252,184 @@ function parseArrowFunctionDeclaration(state: ParserState): IndexedResult<Ast> {
     );
 }
 
+function tryParseSuperClass(
+    state: ParserState,
+    index: number,
+): IndexedResult<Expression> {
+    const extendsToken = tryConsumeToken(state.tokens, index, "ExtendsToken");
+    if (extendsToken === null) {
+        return { kind: "Err", index: index, error: "Expected extends token" };
+    }
+
+    const superClass = parseExpressionAt(state.tokens, extendsToken);
+    if (superClass.kind === "Err") {
+        return {
+            kind: "Err",
+            index: index,
+            error: "Failed to parse super class",
+        };
+    }
+
+    return {
+        kind: "Ok",
+        value: superClass.value,
+        index: superClass.index,
+    };
+}
+
+function parseClassMethodDeclaration(
+    state: ParserState,
+    index: number,
+): IndexedResult<Ast> {
+    let methodIndex = index;
+    let isAsync = false;
+
+    if (tokenIs(state.tokens[methodIndex], "AsyncToken")) {
+        isAsync = true;
+        methodIndex += 1;
+    }
+
+    const methodNameToken = state.tokens[methodIndex];
+    let methodName: string | null = null;
+
+    if (tokenIs(methodNameToken, "IdentifierToken")) {
+        methodName = methodNameToken.name;
+    } else if (
+        tokenIs(methodNameToken, "FunctionToken") &&
+        methodNameToken.startIndex === methodNameToken.endIndex
+    ) {
+        methodName = "constructor";
+    }
+
+    if (methodName === null) {
+        return {
+            kind: "Err",
+            error: "Expected class method name",
+            index,
+        };
+    }
+
+    const parameterStartIndex = tryConsumeToken(
+        state.tokens,
+        methodIndex + 1,
+        "LeftParenToken",
+    );
+    if (parameterStartIndex === null) {
+        return {
+            kind: "Err",
+            error: "Expected '(' after class method name",
+            index,
+        };
+    }
+
+    const typedParameters = parseTypedParametersUntil(
+        state.tokens,
+        parameterStartIndex,
+        "LeftBraceToken",
+    );
+    if (typedParameters === null) {
+        return {
+            kind: "Err",
+            error: "Expected class method declaration",
+            index,
+        };
+    }
+
+    return parseFunctionDeclarationFromParts(
+        state,
+        methodName,
+        typedParameters.parameters,
+        typedParameters.stopTokenIndex,
+        isAsync,
+        false,
+        false,
+    );
+}
+
+function parseClassBody(
+    state: ParserState,
+    index: number,
+): IndexedResult<Ast[]> {
+    if (!tokenIs(state.tokens[index], "LeftBraceToken")) {
+        return {
+            kind: "Err",
+            error: "Expected '{' for class body",
+            index,
+        };
+    }
+
+    const body: Ast[] = [];
+    let currentIndex = index + 1;
+
+    while (currentIndex < state.tokens.length) {
+        currentIndex = skipSemicolonTokens(state.tokens, currentIndex);
+
+        if (tokenIs(state.tokens[currentIndex], "RightBraceToken")) {
+            return {
+                kind: "Ok",
+                value: body,
+                index: currentIndex + 1,
+            };
+        }
+
+        const method = parseClassMethodDeclaration(state, currentIndex);
+        if (method.kind === "Err") {
+            return method;
+        }
+
+        body.push(method.value);
+        currentIndex = method.index;
+    }
+
+    return {
+        kind: "Err",
+        error: "Expected '}' to close class body",
+        index: currentIndex,
+    };
+}
+
+/**
+ * parse something like:
+ *
+ * ```
+ * class FishFrog extends Banana {
+ *   constructor(name) {
+ *      this.name = name;
+ *   }
+ *
+ *   async sayHi(person) {
+ *     console.log("Oh, hi", person, "I'm ", this.name);
+ *   }
+ * }
+ * ```
+ */
+function parseClassDeclaration(state: ParserState): IndexedResult<Ast> {
+    const className = tryParseIdentifierAt(state.tokens, state.index + 1);
+    if (className === null) {
+        return createFailedStatement(state);
+    }
+
+    const afterClassName = className.nextIndex;
+    const superClass = tryParseSuperClass(state, afterClassName);
+    const bodyStartIndex =
+        superClass.kind === "Ok" ? superClass.index : afterClassName;
+
+    const body = parseClassBody(state, bodyStartIndex);
+    if (body.kind === "Err") {
+        return createFailedStatement(state);
+    }
+
+    return statementResult(
+        {
+            kind: "ClassDeclaration",
+            name: className.name,
+            superClass: superClass.kind === "Ok" ? superClass.value : null,
+            body: body.value,
+        },
+        consumeOptionalSemicolon(state.tokens, body.index),
+    );
+}
+
 function parseDeclarationStatement(
     state: ParserState,
     isConst: boolean,
@@ -1109,7 +1451,9 @@ const statementParsers: Partial<Record<TokenKinds, StatementParser>> = {
     IfToken: parseIf,
     ForToken: parseFor,
     WhileToken: parseWhile,
+    DoToken: parseDoWhile,
     FunctionToken: parseFunction,
+    ClassToken: parseClassDeclaration,
     TryToken: parseTryCatch,
     ThrowToken: parseThrow,
     ReturnToken: parseReturn,
@@ -1299,6 +1643,48 @@ export function parseLetOrConst(
 
     let index = parsedName.nextIndex;
 
+    if (!isConst && tokenIs(state.tokens[index], "CommaToken")) {
+        const names = [parsedName.name];
+
+        while (tokenIs(state.tokens[index], "CommaToken")) {
+            index += 1;
+
+            const nextName = tryParseIdentifierAt(state.tokens, index);
+            if (nextName === null) {
+                return createFailedStatement(state);
+            }
+
+            names.push(nextName.name);
+            index = nextName.nextIndex;
+        }
+
+        const finalIndex = consumeSemicolon
+            ? consumeOptionalSemicolon(state.tokens, index)
+            : index;
+
+        return statementResult(
+            {
+                kind: "LetListStatement",
+                names,
+            },
+            finalIndex,
+        );
+    }
+
+    if (!isConst && isStatementTerminator(state.tokens[index])) {
+        const finalIndex = consumeSemicolon
+            ? consumeOptionalSemicolon(state.tokens, index)
+            : index;
+
+        return statementResult(
+            {
+                kind: "LetListStatement",
+                names: [parsedName.name],
+            },
+            finalIndex,
+        );
+    }
+
     const afterType = consumeOptionalTypeAnnotation(state.tokens, index, [
         "AssignToken",
     ]);
@@ -1443,7 +1829,7 @@ function parseOptionalElseBranch(
         return {
             kind: "Ok",
             value: {
-                elseBranch: [elseIf.value],
+                elseIf: elseIf.value,
                 nextIndex: elseIf.index,
             },
         };
@@ -1466,12 +1852,18 @@ function parseOptionalElseBranch(
 function createIfStatement(
     condition: Expression,
     thenBranch: Ast[],
+    elseIf?: IfStatement,
     elseBranch?: Ast[],
 ): IfStatement {
-    if (typeof elseBranch === "undefined") {
-        return { kind: "IfStatement", condition, thenBranch };
+    if (typeof elseIf !== "undefined") {
+        return { kind: "IfStatement", condition, thenBranch, elseIf };
     }
-    return { kind: "IfStatement", condition, thenBranch, elseBranch };
+
+    if (typeof elseBranch !== "undefined") {
+        return { kind: "IfStatement", condition, thenBranch, elseBranch };
+    }
+
+    return { kind: "IfStatement", condition, thenBranch };
 }
 
 /**
@@ -1511,6 +1903,35 @@ function parseWhile(state: ParserState): IndexedResult<Ast> {
     );
 }
 
+function parseDoWhile(state: ParserState): IndexedResult<Ast> {
+    const body = parseBlockOrSingleStatement(state, state.index + 1);
+    if (body.kind === "Err") {
+        return createFailedStatement(state);
+    }
+
+    const whileTokenIndex = body.value.nextIndex;
+    if (!tokenIs(state.tokens[whileTokenIndex], "WhileToken")) {
+        return createFailedStatement(state);
+    }
+
+    const condition = parseParenthesizedExpressionFrom(
+        state.tokens,
+        whileTokenIndex + 1,
+    );
+    if (condition.kind === "Err") {
+        return createFailedStatement(state);
+    }
+
+    return statementResult(
+        {
+            kind: "DoWhileLoop",
+            condition: condition.value,
+            body: body.value.body,
+        },
+        consumeOptionalSemicolon(state.tokens, condition.index),
+    );
+}
+
 function parseIf(state: ParserState): IndexedResult<Ast> {
     const parsedIf = parseConditionAndBlock(state, state.index + 1);
     if (parsedIf.kind === "Err") {
@@ -1526,6 +1947,7 @@ function parseIf(state: ParserState): IndexedResult<Ast> {
         createIfStatement(
             parsedIf.value.condition,
             parsedIf.value.body,
+            parsedElse.value.elseIf,
             parsedElse.value.elseBranch,
         ),
         parsedElse.value.nextIndex,

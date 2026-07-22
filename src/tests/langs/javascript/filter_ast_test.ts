@@ -301,7 +301,6 @@ export function testFilterAstsHandlesIfStatementWithoutElseBranch() {
             kind: "IfStatement",
             condition: { kind: "BooleanExpression", value: true },
             thenBranch: [{ kind: "ConstStatement", name: "b", value: two }],
-            elseBranch: undefined,
         },
     ]);
 
@@ -310,7 +309,6 @@ export function testFilterAstsHandlesIfStatementWithoutElseBranch() {
             kind: "IfStatement",
             condition: { kind: "BooleanExpression", value: true },
             thenBranch: [{ kind: "ConstStatement", name: "b", value: two }],
-            elseBranch: undefined,
         },
     ]);
 
@@ -322,7 +320,6 @@ export function testFilterAstsHandlesIfStatementWithoutElseBranch() {
                 { kind: "LetStatement", name: "a", value: threes },
                 { kind: "ConstStatement", name: "b", value: two },
             ],
-            elseBranch: undefined,
         },
     ]);
 }
@@ -415,7 +412,6 @@ export function testFilterAstsKeepsAllAstTypesWhenPredicateAlwaysTrue() {
             kind: "IfStatement",
             condition: { kind: "BooleanExpression", value: false },
             thenBranch: [{ kind: "ConstStatement", name: "c", value: one }],
-            elseBranch: undefined,
         },
         {
             kind: "ForLoop",
