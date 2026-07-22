@@ -521,6 +521,35 @@ document.addEventListener("keydown", (e) => {
     }
 });`.trim(),
     );
+
+    const parsedJavascript = javascript.parse(
+        `document.addEventListener('DOMContentLoaded',function(){const battleScreen=document.getElementById('battle-screen');if(battleScreen&&!battleScreen.classList.contains('hidden')){battleScreen.classList.remove('hidden');}const moveBtns=document.querySelectorAll('.move-btn');moveBtns.forEach(btn=>{btn.addEventListener('click',function(){const moveIndex=this.getAttribute('data-move');const battleLog=document.getElementById('battle-log');if(battleLog){const entry=document.createElement('p');entry.textContent='Move '+moveIndex+' selected!';battleLog.appendChild(entry);battleLog.scrollTop=battleLog.scrollHeight;}});});});`,
+    );
+
+    assert.deepStrictEqual(parsedJavascript.kind, "Ok");
+    assert.deepStrictEqual(
+        javascript.generate(parsedJavascript.value),
+        `
+document.addEventListener("DOMContentLoaded", () => {
+    const battleScreen = document.getElementById("battle-screen");
+    if (battleScreen && !battleScreen.classList.contains("hidden")) {
+        battleScreen.classList.remove("hidden");
+    }
+    const moveBtns = document.querySelectorAll(".move-btn");
+    moveBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const moveIndex = this.getAttribute("data-move");
+            const battleLog = document.getElementById("battle-log");
+            if (battleLog) {
+                const entry = document.createElement("p");
+                entry.textContent = "Move " + moveIndex + " selected!";
+                battleLog.appendChild(entry);
+                battleLog.scrollTop = battleLog.scrollHeight;
+            }
+        });
+    });
+});`.trim(),
+    );
 }
 
 export function testGenerateMultiStatementWorkflow() {

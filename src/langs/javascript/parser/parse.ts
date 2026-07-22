@@ -359,6 +359,75 @@ function parseArrowFunctionExpression(
     };
 }
 
+function parseFunctionExpression(state: ParserState): IndexedResult<Expression> {
+    consumeToken(state);
+
+    let index = state.index;
+    if (tokenIs(state.tokens[index], "IdentifierToken")) {
+        index += 1;
+    }
+
+    const parameterStartIndex = tryConsumeToken(
+        state.tokens,
+        index,
+        "LeftParenToken",
+    );
+    if (parameterStartIndex === null) {
+        return {
+            kind: "Err",
+            error: "Expected a function expression",
+            index: state.index,
+        };
+    }
+
+    const typedParameters = parseTypedParametersUntil(
+        state.tokens,
+        parameterStartIndex,
+        "LeftBraceToken",
+    );
+    if (typedParameters === null) {
+        return {
+            kind: "Err",
+            error: "Expected function expression parameters",
+            index: state.index,
+        };
+    }
+
+    const functionState = updateParserState(
+        state,
+        typedParameters.stopTokenIndex,
+        {
+            insideFunction: true,
+            insideForLoop: false,
+        },
+    );
+
+    const body = parseBlock(
+        state.tokens,
+        typedParameters.stopTokenIndex,
+        functionState,
+    );
+    if (body.kind === "Err") {
+        return {
+            kind: "Err",
+            error: "Expected a block body for function expression",
+            index: state.index,
+        };
+    }
+
+    state.index = body.index;
+    return {
+        kind: "Ok",
+        value: {
+            kind: "ArrowFunctionExpression",
+            isAsync: false,
+            parameters: typedParameters.parameters,
+            body: body.value,
+        },
+        index: state.index,
+    };
+}
+
 function parseAwaitExpression(state: ParserState): IndexedResult<Expression> {
     consumeToken(state);
     const value = parsePostfix(state);
@@ -932,6 +1001,10 @@ function parseLeaf(state: ParserState): IndexedResult<Expression> {
     if (token.kind === "TypeofToken") {
         consumeToken(state);
         return parseLeaf(state);
+    }
+
+    if (token.kind === "FunctionToken") {
+        return parseFunctionExpression(state);
     }
 
     if (token.kind === "LeftParenToken") {

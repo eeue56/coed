@@ -450,6 +450,15 @@ export function testParseFunctionAndMemberExpressions() {
     );
 }
 
+export function testParseTopLevelObjectMethodCallWithFunctionCallbacks() {
+    assert.deepStrictEqual(
+        parse(
+            `document.addEventListener('DOMContentLoaded',function(){const moveBtns=document.querySelectorAll('.move-btn');moveBtns.forEach(btn=>{btn.addEventListener('click',function(){const moveIndex=this.getAttribute('data-move');});});});`,
+        ).kind,
+        "Ok",
+    );
+}
+
 export function testParseIncrementAndDecrementExpressions() {
     assert.deepStrictEqual(expectOk(parseExpression(tokenize("count++"))), {
         kind: "IncrementExpression",
