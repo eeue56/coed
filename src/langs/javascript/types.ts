@@ -136,6 +136,7 @@ export type ChainableExpression =
     | ThisExpression
     | SuperExpression
     | NewExpression
+    | FunctionCallExpression
     | ObjectPropertyExpression
     | ObjectMethodCallExpression
     | ArrayAccessExpression;

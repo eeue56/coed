@@ -552,6 +552,46 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 }
 
+export function testGenerateFetchCalls() {
+    assertGeneratedFromSource(
+        `
+function fetchFact(animal) {
+    return fetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + animal)
+        .then(response => response.json())
+        .then(data => {
+            const extract = data.extract || "Fact unavailable";
+            return extract.split(".")[0] + ".";
+        })
+        .catch(e => "Could not fetch fact.");
+}
+
+function loadFacts() {
+    fetchFact("Lion").then(lionFact => {
+        document.getElementById("lion-fact").textContent = lionFact;
+    });
+    fetchFact("Tiger").then(tigerFact => {
+        document.getElementById("tiger-fact").textContent = tigerFact;
+    });
+}`.trim(),
+        `
+function fetchFact(animal) {
+    return fetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + animal).then((response) => response.json()).then((data) => {
+        const extract = data.extract || "Fact unavailable";
+        return extract.split(".")[0] + ".";
+    }).catch((e) => "Could not fetch fact.");
+}
+
+function loadFacts() {
+    fetchFact("Lion").then((lionFact) => {
+        document.getElementById("lion-fact").textContent = lionFact;
+    });
+    fetchFact("Tiger").then((tigerFact) => {
+        document.getElementById("tiger-fact").textContent = tigerFact;
+    });
+}`.trim(),
+    );
+}
+
 export function testGenerateMultiStatementWorkflow() {
     assertMatchingParsedAndGeneratedCode(
         `

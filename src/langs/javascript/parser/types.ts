@@ -184,6 +184,7 @@ type ChainableExpression = Extract<
             | "ThisExpression"
             | "SuperExpression"
             | "NewExpression"
+            | "FunctionCallExpression"
             | "ObjectPropertyExpression"
             | "ObjectMethodCallExpression"
             | "ArrayAccessExpression";
@@ -198,6 +199,7 @@ export function isChainableExpression(
         expression.kind === "ThisExpression" ||
         expression.kind === "SuperExpression" ||
         expression.kind === "NewExpression" ||
+        expression.kind === "FunctionCallExpression" ||
         expression.kind === "ObjectPropertyExpression" ||
         expression.kind === "ObjectMethodCallExpression" ||
         expression.kind === "ArrayAccessExpression"

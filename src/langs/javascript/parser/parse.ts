@@ -300,6 +300,56 @@ function parseFunctionCallPostfix(
     };
 }
 
+/**
+ * annoying helper due to promise api using `.catch` and the impossibility of
+ * strange prototype names
+ *
+ * todo: do this better
+ */
+function propertyNameFromToken(token: Token): string | null {
+    if (token.kind === "IdentifierToken") {
+        return token.name;
+    }
+
+    switch (token.kind) {
+        case "LetToken":
+        case "VarToken":
+        case "ConstToken":
+        case "ClassToken":
+        case "ExtendsToken":
+        case "ImportToken":
+        case "ExportToken":
+        case "AsyncToken":
+        case "AwaitToken":
+        case "ThisToken":
+        case "NewToken":
+        case "SuperToken":
+        case "TryToken":
+        case "CatchToken":
+        case "ThrowToken":
+        case "DefaultToken":
+        case "ForToken":
+        case "WhileToken":
+        case "DoToken":
+        case "WithToken":
+        case "IfToken":
+        case "ElseToken":
+        case "FunctionToken":
+        case "ReturnToken":
+        case "ContinueToken":
+        case "BreakToken":
+        case "NullToken":
+        case "TypeofToken":
+        case "AsToken":
+        case "UndefinedToken":
+        case "TrueToken":
+        case "FalseToken":
+            return token.kind.slice(0, -5).toLowerCase();
+        default:
+            return null;
+    }
+}
+
 function parseArrowFunctionExpression(
     state: ParserState,
 ): IndexedResult<Expression> {
@@ -549,7 +599,11 @@ function parseDotPostfix(
 
     consumeToken(state);
     const propertyToken = currentToken(state);
-    if (!tokenIs(propertyToken, "IdentifierToken")) {
+    const propertyName = propertyToken
+        ? propertyNameFromToken(propertyToken)
+        : null;
+    // console.log(propertyName);
+    if (propertyName === null) {
         return {
             kind: "Err",
             error: "Expected an identifier token",
@@ -566,7 +620,7 @@ function parseDotPostfix(
                 object: expression,
                 property: {
                     kind: "NameLookupExpression",
-                    name: propertyToken.name,
+                    name: propertyName,
                 },
             },
             index: state.index,
@@ -581,7 +635,7 @@ function parseDotPostfix(
         value: {
             kind: "ObjectMethodCallExpression",
             object: expression,
-            method: { kind: "NameLookupExpression", name: propertyToken.name },
+            method: { kind: "NameLookupExpression", name: propertyName },
             arguments: args.value,
         },
         index: state.index,
