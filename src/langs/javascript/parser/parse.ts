@@ -359,7 +359,9 @@ function parseArrowFunctionExpression(
     };
 }
 
-function parseFunctionExpression(state: ParserState): IndexedResult<Expression> {
+function parseFunctionExpression(
+    state: ParserState,
+): IndexedResult<Expression> {
     consumeToken(state);
 
     let index = state.index;
@@ -367,12 +369,11 @@ function parseFunctionExpression(state: ParserState): IndexedResult<Expression> 
         index += 1;
     }
 
-    const parameterStartIndex = tryConsumeToken(
+    const typedParameters = parseFunctionParametersUntilBody(
         state.tokens,
         index,
-        "LeftParenToken",
     );
-    if (parameterStartIndex === null) {
+    if (typedParameters.kind === "Err") {
         return {
             kind: "Err",
             error: "Expected a function expression",
@@ -380,33 +381,7 @@ function parseFunctionExpression(state: ParserState): IndexedResult<Expression> 
         };
     }
 
-    const typedParameters = parseTypedParametersUntil(
-        state.tokens,
-        parameterStartIndex,
-        "LeftBraceToken",
-    );
-    if (typedParameters === null) {
-        return {
-            kind: "Err",
-            error: "Expected function expression parameters",
-            index: state.index,
-        };
-    }
-
-    const functionState = updateParserState(
-        state,
-        typedParameters.stopTokenIndex,
-        {
-            insideFunction: true,
-            insideForLoop: false,
-        },
-    );
-
-    const body = parseBlock(
-        state.tokens,
-        typedParameters.stopTokenIndex,
-        functionState,
-    );
+    const body = parseFunctionBody(state, typedParameters.index, false);
     if (body.kind === "Err") {
         return {
             kind: "Err",
@@ -421,10 +396,48 @@ function parseFunctionExpression(state: ParserState): IndexedResult<Expression> 
         value: {
             kind: "ArrowFunctionExpression",
             isAsync: false,
-            parameters: typedParameters.parameters,
+            parameters: typedParameters.value,
             body: body.value,
         },
         index: state.index,
+    };
+}
+
+function parseFunctionParametersUntilBody(
+    tokens: Token[],
+    startIndex: number,
+): IndexedResult<string[]> {
+    const parameterStartIndex = tryConsumeToken(
+        tokens,
+        startIndex,
+        "LeftParenToken",
+    );
+    if (parameterStartIndex === null) {
+        return {
+            kind: "Err",
+            error: "Expected function expression parameters",
+            index: startIndex,
+        };
+    }
+
+    const typedParameters = parseTypedParametersUntil(
+        tokens,
+        parameterStartIndex,
+        "LeftBraceToken",
+    );
+
+    if (typedParameters === null || typedParameters.kind === "Err") {
+        return {
+            kind: "Err",
+            error: "Expected function expression parameters",
+            index: startIndex,
+        };
+    }
+
+    return {
+        kind: "Ok",
+        value: typedParameters.value,
+        index: typedParameters.index,
     };
 }
 
@@ -1149,16 +1162,16 @@ function parseForHeader(
         "SemicolonToken",
         parseExpressionAt(state.tokens, index),
     );
-    if (condition === null) {
+    if (condition === null || condition.kind === "Err") {
         return { kind: "Err", error: "Expected condition in for loop" };
     }
 
     const increment = parseExpressionThenConsumeToken(
         state.tokens,
         "RightParenToken",
-        parseExpressionAt(state.tokens, condition.nextIndex),
+        parseExpressionAt(state.tokens, condition.index),
     );
-    if (increment === null) {
+    if (increment === null || increment.kind === "Err") {
         return { kind: "Err", error: "Expected increment in for loop" };
     }
 
@@ -1166,9 +1179,9 @@ function parseForHeader(
         kind: "Ok",
         value: {
             init: init.value,
-            condition: condition.expression,
-            increment: increment.expression,
-            afterRightParenIndex: increment.nextIndex,
+            condition: condition.value,
+            increment: increment.value,
+            afterRightParenIndex: increment.index,
         },
     };
 }
@@ -1400,7 +1413,7 @@ function parseClassMethodDeclaration(
         parameterStartIndex,
         "LeftBraceToken",
     );
-    if (typedParameters === null) {
+    if (typedParameters === null || typedParameters.kind === "Err") {
         return {
             kind: "Err",
             error: "Expected class method declaration",
@@ -1411,8 +1424,8 @@ function parseClassMethodDeclaration(
     return parseFunctionDeclarationFromParts(
         state,
         methodName,
-        typedParameters.parameters,
-        typedParameters.stopTokenIndex,
+        typedParameters.value,
+        typedParameters.index,
         isAsync,
         false,
         false,
@@ -2089,15 +2102,15 @@ function parseFunctionAt(
         parameterStartIndex,
         "LeftBraceToken",
     );
-    if (typedParameters === null) {
+    if (typedParameters === null || typedParameters.kind === "Err") {
         return createFailedStatement(state);
     }
 
     return parseFunctionDeclarationFromParts(
         state,
         name.name,
-        typedParameters.parameters,
-        typedParameters.stopTokenIndex,
+        typedParameters.value,
+        typedParameters.index,
         isAsync,
         false,
         false,

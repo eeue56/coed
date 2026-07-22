@@ -189,11 +189,6 @@ export type ParameterListParseResult = {
     afterRightParenIndex: number;
 };
 
-export type TypedParametersParseResult = {
-    parameters: string[];
-    stopTokenIndex: number;
-};
-
 export type ArrowParametersParseResult = {
     parameters: string[];
     arrowIndex: number;
@@ -246,7 +241,7 @@ export function parseExpressionThenConsumeToken(
     tokens: Token[],
     delimiter: TokenKinds,
     parsed: IndexedResult<Expression>,
-): { expression: Expression; nextIndex: number } | null {
+): IndexedResult<Expression> | null {
     if (parsed.kind === "Err") {
         return null;
     }
@@ -257,8 +252,9 @@ export function parseExpressionThenConsumeToken(
     }
 
     return {
-        expression: parsed.value,
-        nextIndex,
+        kind: "Ok",
+        value: parsed.value,
+        index: nextIndex,
     };
 }
 
@@ -353,7 +349,7 @@ export function parseTypedParametersUntil(
     tokens: Token[],
     parameterStartIndex: number,
     stopTokenKind: "ArrowToken" | "LeftBraceToken",
-): TypedParametersParseResult | null {
+): IndexedResult<string[]> | null {
     const parsedParameters = parseParameterList(tokens, parameterStartIndex);
     if (parsedParameters === null) {
         return null;
@@ -372,8 +368,9 @@ export function parseTypedParametersUntil(
     }
 
     return {
-        parameters: parsedParameters.parameters,
-        stopTokenIndex: afterReturnType,
+        kind: "Ok",
+        value: parsedParameters.parameters,
+        index: afterReturnType,
     };
 }
 
@@ -418,10 +415,13 @@ export function parseArrowParameters(
     if (typedParameters === null) {
         return null;
     }
+    if (typedParameters.kind === "Err") {
+        return null;
+    }
 
     return {
-        parameters: typedParameters.parameters,
-        arrowIndex: typedParameters.stopTokenIndex,
+        parameters: typedParameters.value,
+        arrowIndex: typedParameters.index,
         isAsync,
     };
 }
