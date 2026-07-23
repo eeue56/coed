@@ -17,7 +17,9 @@ export function testHtml() {
 
     const htmlStorage = Storage<HtmlNode<unknown>>();
 
-    htmlStorage.save(parsedHtml.value, "Make me a quiz about dinosaurs", []);
+    htmlStorage.save(parsedHtml.value, "first-commit-1", {
+        "feedback-given": [],
+    });
 
     deepStrictEqual(htmlStorage.rowCount(), 1);
 
@@ -38,11 +40,9 @@ export function testHtml() {
         ],
         parsedHtml.value,
     );
-    htmlStorage.save(
-        withoutNewlines.value,
-        "Remove newlines",
-        withoutNewlines.errors,
-    );
+    htmlStorage.save(withoutNewlines.value, "first-commit-2", {
+        "feedback-given": withoutNewlines.errors,
+    });
     deepStrictEqual(htmlStorage.rowCount(), 2);
 
     deepStrictEqual(htmlStorage.lookup(0), {
@@ -50,10 +50,9 @@ export function testHtml() {
         value: {
             kind: "Row",
             id: 0,
-            label: "Make me a quiz about dinosaurs",
-            feedbackGiven: [],
+            commitId: "first-commit-1",
+            metadata: { "feedback-given": [] },
             tree: parsedHtml.value,
-            timesUsed: 0,
         },
     });
 
@@ -62,10 +61,11 @@ export function testHtml() {
         value: {
             kind: "Row",
             id: 1,
-            label: "Remove newlines",
-            feedbackGiven: withoutNewlines.errors,
+            commitId: "first-commit-2",
+            metadata: {
+                "feedback-given": withoutNewlines.errors,
+            },
             tree: withoutNewlines.value,
-            timesUsed: 0,
         },
     });
 
@@ -74,14 +74,38 @@ export function testHtml() {
         error: "Not found",
     });
 
-    deepStrictEqual(htmlStorage.search("newlines"), [
-        {
+    deepStrictEqual(
+        htmlStorage.search({ "feedback-given": withoutNewlines.errors }),
+        [
+            {
+                kind: "Row",
+                id: 1,
+                commitId: "first-commit-2",
+                metadata: { "feedback-given": withoutNewlines.errors },
+                tree: withoutNewlines.value,
+            },
+        ],
+    );
+
+    deepStrictEqual(htmlStorage.lookupCommit("first-commit-1"), {
+        kind: "Ok",
+        value: {
+            kind: "Row",
+            id: 0,
+            commitId: "first-commit-1",
+            metadata: { "feedback-given": [] },
+            tree: parsedHtml.value,
+        },
+    });
+
+    deepStrictEqual(htmlStorage.lookupCommit("first-commit-2"), {
+        kind: "Ok",
+        value: {
             kind: "Row",
             id: 1,
-            label: "Remove newlines",
-            feedbackGiven: withoutNewlines.errors,
+            commitId: "first-commit-2",
+            metadata: { "feedback-given": withoutNewlines.errors },
             tree: withoutNewlines.value,
-            timesUsed: 0,
         },
-    ]);
+    });
 }

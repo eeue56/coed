@@ -15,8 +15,13 @@ export function testDiffClassToTag() {
     deepStrictEqual(parsedLeft.kind, "Ok");
     deepStrictEqual(parsedRight.kind, "Ok");
 
-    deepStrictEqual(css._diff(parsedLeft.value, parsedRight.value), {
-        added: parsedRight.value,
-        removed: parsedLeft.value,
+    deepStrictEqual(css.diff(parsedLeft.value, parsedRight.value), {
+        diffs: [
+            {
+                added: parsedRight.value,
+                removed: parsedLeft.value,
+                path: "0",
+            },
+        ],
     });
 }

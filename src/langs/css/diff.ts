@@ -175,7 +175,7 @@ function isSameCssDeclaration(left: Declaration, right: Declaration): boolean {
     }
 }
 
-export function diff(left: CssBlock[], right: CssBlock[]): Diff<CssBlock> {
+export function diff(left: CssBlock[], right: CssBlock[]): Diff<CssBlock[]> {
     const added = [];
     const removed = [];
 
@@ -202,7 +202,12 @@ export function diff(left: CssBlock[], right: CssBlock[]): Diff<CssBlock> {
     }
 
     return {
-        added,
-        removed,
+        diffs: [
+            {
+                path: "0",
+                added,
+                removed,
+            },
+        ],
     };
 }

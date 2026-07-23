@@ -1,3 +1,4 @@
+import { Storage } from "../engine.ts";
 import type { FilterResult, FilterRule, Language } from "../types.ts";
 import { diff } from "./diff.ts";
 import { filter, filterCssDeclarations } from "./filter.ts";
@@ -21,17 +22,24 @@ export type CssLanguage = Language<CssBlock[], CssBlock> & RuleFilter;
 /**
  * filters, parser, and generator for working with raw CSS, or CSS blocks
  *
- * @property `filter`: filter `CssBlock[]` by the block themselves
- * @property `filterDeclarations`: filter the declarations of `CssBlock[]`
- * @property `generate`: generate CSS string from `CssBlock[]`
- * @property `parse`: turn a string into a `CssBlock[]` array of trees, or string if parsing failed (`Result` type)
+ * @prop `filter`: filter `CssBlock[]` by the block themselves
+ * @prop `filterDeclarations`: filter the declarations of `CssBlock[]`
+ * @prop `generate`: generate CSS string from `CssBlock[]`
+ * @prop `parse`: turn a string into a `CssBlock[]` array of trees, or string if parsing failed (`Result` type)
+ * @prop `diff`: diff two trees
+ * @prop `storage`: storage engine for the trees (diff aware)
  */
 export const css: CssLanguage = {
     parse: parseCssBlocks,
     filter,
     generate,
     filterDeclarations: filterCssDeclarations,
-    _diff: diff,
+    diff,
+    storage: () => {
+        const storage = Storage<CssBlock[]>();
+        storage.registerDiffer(css.diff);
+        return storage;
+    },
 };
 
 export * from "./types.ts";

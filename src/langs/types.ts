@@ -1,3 +1,5 @@
+import type { Storage } from "./engine.ts";
+
 export type Ok<value> = {
     kind: "Ok";
     value: value;
@@ -28,9 +30,21 @@ export type FilterResult<value> = {
     errors: string[];
 };
 
+export type DiffEntry<node> = {
+    node: node;
+    path: string;
+};
+
+export type Index = string | number;
+
+export type DiffNode<tree> = {
+    path: string;
+    added: tree;
+    removed: tree;
+};
+
 export type Diff<tree> = {
-    added: tree[];
-    removed: tree[];
+    diffs: DiffNode<tree>[];
 };
 
 /**
@@ -39,6 +53,8 @@ export type Diff<tree> = {
  * @prop `parse`: turn a string into a tree
  * @prop `filter`: remove elements from a tree
  * @prop `generate`: turn the tree into a string
+ * @prop `diff`: diff two trees
+ * @prop `storage`: storage engine for the trees (diff aware)
  *
  * language dialects may be extended with additional filters
  *
@@ -48,5 +64,6 @@ export type Language<tree, node> = {
     parse: (input: string) => Result<tree>;
     filter: (filterRules: FilterRule<node>[], tree: tree) => FilterResult<tree>;
     generate: (value: tree) => string;
-    _diff: (left: tree, right: tree) => Diff<node>;
+    diff: (left: tree, right: tree) => Diff<tree>;
+    storage: () => Storage<tree>;
 };

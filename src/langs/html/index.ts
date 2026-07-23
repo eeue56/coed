@@ -4,7 +4,9 @@ import {
     type Event,
     type HtmlNode,
 } from "../../coed.ts";
+import { Storage } from "../engine.ts";
 import type { FilterResult, FilterRule, Language } from "../types.ts";
+import { diff } from "./diff.ts";
 import { filter, filterAttributes, filterEvents } from "./filter.ts";
 import { parse } from "./parse.ts";
 
@@ -31,11 +33,13 @@ export type HtmlLanguage<a> = Language<HtmlNode<a>, HtmlNode<a>> &
 /**
  * filters, parser, and generator for working with raw html, or html nodes (i.e `coed`'s fundemental structure)
  *
- * @property `filter`: filter `HtmlNode` by the node themselves
- * @property `filterAttributes`: filter the attributes of `HtmlNode`s
- * @property `filterEvents`: filter the events of `HtmlNode`s
- * @property `generate`: generate HTML string from a `HtmlNode`
- * @property `parse`: turn a string into a `HtmlNode` tree, or string if parsing failed (`Result` type)
+ * @prop `filter`: filter `HtmlNode` by the node themselves
+ * @prop `filterAttributes`: filter the attributes of `HtmlNode`s
+ * @prop `filterEvents`: filter the events of `HtmlNode`s
+ * @prop `generate`: generate HTML string from a `HtmlNode`
+ * @prop `parse`: turn a string into a `HtmlNode` tree, or string if parsing failed (`Result` type)
+ * @prop `diff`: diff two trees
+ * @prop `storage`: storage engine for the trees (diff aware)
  */
 export const html: HtmlLanguage<unknown> = {
     filter: filter,
@@ -43,12 +47,11 @@ export const html: HtmlLanguage<unknown> = {
     generate: flatRender,
     filterEvents,
     filterAttributes,
-    _diff: () => {
-        throw new Error("Not implemented yet!");
-        return {
-            added: [],
-            removed: [],
-        };
+    diff,
+    storage: () => {
+        const storage = Storage<HtmlNode<unknown>>();
+        storage.registerDiffer(html.diff);
+        return storage;
     },
 };
 
