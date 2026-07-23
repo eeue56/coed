@@ -62,6 +62,13 @@
             "default": "./build/langs/engine.js"
         }
     },
+    "imports": {
+        "#dom_parser": {
+            "browser": "./build/langs/html/dom_parser/browser.js",
+            "node": "./build/langs/html/dom_parser/node.js",
+            "default": "./build/langs/html/dom_parser/browser.js"
+        }
+    },
     "typings": "build/coed.d.ts",
     "scripts": {
         "build": "tsc -p tsconfig.json",

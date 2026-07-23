@@ -15,19 +15,7 @@ import {
 import { type SvgTag } from "../../coed/svg.ts";
 import type { Result } from "../types.ts";
 
-let domParser: typeof DOMParser;
-
-/** load jsdom server-side, or dom parser in the browser */
-if (typeof window === "undefined") {
-    const jsdom = await import("jsdom");
-    domParser = new jsdom.JSDOM().window.DOMParser;
-} else {
-    domParser = DOMParser;
-}
-
-function jsdomOrDomParser(): DOMParser {
-    return new domParser();
-}
+import { createDOMParser } from "#dom_parser";
 
 /**
  * Parse a fragment of html string into Coed.
@@ -35,7 +23,7 @@ function jsdomOrDomParser(): DOMParser {
  * e.g `<div>hello world</div>`
  */
 export function parseFragment(string: string): HtmlNode<never>[] {
-    const parser = jsdomOrDomParser();
+    const parser = createDOMParser();
     const parsed = parser.parseFromString("", "text/html");
     parsed.body.innerHTML = string;
     return [...parsed.body.childNodes].flatMap((child) => walk(child)).flat();
@@ -47,7 +35,7 @@ export function parseFragment(string: string): HtmlNode<never>[] {
  * e.g `<html><body><div>hello world</div></body></html>`
  */
 export function parse(string: string): Result<HtmlNode<never>> {
-    const parser = jsdomOrDomParser();
+    const parser = createDOMParser();
 
     const documentElement = parser.parseFromString(string, "text/html");
     const walked = walk(documentElement.documentElement);
