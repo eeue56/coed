@@ -35,8 +35,6 @@ export type DiffEntry<node> = {
     path: string;
 };
 
-export type Index = string | number;
-
 export type DiffNode<tree> = {
     path: string;
     added: tree;
@@ -48,7 +46,7 @@ export type Diff<tree> = {
 };
 
 /**
- * Every language dialect supports three things:
+ * Every language dialect supports five things:
  *
  * @prop `parse`: turn a string into a tree
  * @prop `filter`: remove elements from a tree
@@ -57,13 +55,34 @@ export type Diff<tree> = {
  * @prop `storage`: storage engine for the trees (diff aware)
  *
  * language dialects may be extended with additional filters
- *
- * todo: add support for diffing
  */
 export type Language<tree, node> = {
+    /**
+     * turn source code into a tree
+     */
     parse: (input: string) => Result<tree>;
+
+    /**
+     * filter a tree based on provided rules
+     */
     filter: (filterRules: FilterRule<node>[], tree: tree) => FilterResult<tree>;
+
+    /**
+     * generate a string from the tree
+     *
+     * i.e turn an AST back into code
+     */
     generate: (value: tree) => string;
+
+    /**
+     * diff two trees and get the response
+     */
     diff: (left: tree, right: tree) => Diff<tree>;
+
+    /**
+     * create a storage engine for the language
+     *
+     * used for keeping track of changes to an AST over time
+     */
     storage: () => Storage<tree>;
 };
