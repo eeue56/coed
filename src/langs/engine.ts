@@ -163,6 +163,22 @@ function search<tree>(
     }
 }
 
+function latest<tree>(storage: Storage<tree>): Result<Row<tree>> {
+    switch (storage._status.connection.kind) {
+        case "in-memory": {
+            const rows = storage._status.connection.rows;
+            if (rows.length === 0) {
+                return { kind: "Err", error: "No rows found" };
+            }
+            return { kind: "Ok", value: rows[rows.length - 1] };
+        }
+
+        case "sqlite":
+        case "indexeddb":
+            throw new Error("Not implemented");
+    }
+}
+
 function rows<tree>(storage: Storage<tree>): Row<tree>[] {
     switch (storage._status.connection.kind) {
         case "in-memory": {
@@ -307,6 +323,7 @@ export type Storage<tree> = {
     search: (query: Record<string, unknown>) => Row<tree>[];
     rows: () => Row<tree>[];
     rowCount: () => number;
+    latest: () => Result<Row<tree>>;
     serialize: () => string;
     deserialize: (string: string) => Result<{ numberOfRowsLoaded: number }>;
     diff: (leftId: number, rightId: number) => Diff<tree>;
@@ -328,6 +345,7 @@ export function Storage<tree>(): Storage<tree> {
         search: (query: Record<string, unknown>) => search(query, storage),
         rows: () => rows(storage),
         rowCount: () => rowCount(storage),
+        latest: () => latest(storage),
         serialize: () => serialize(storage),
         deserialize: (string: string) => deserialize(string, storage),
         registerDiffer: (callback: (left: tree, right: tree) => Diff<tree>) => {
