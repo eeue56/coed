@@ -1,4 +1,3 @@
-import * as jsdom from "jsdom";
 import {
     booleanAttribute,
     node,
@@ -16,14 +15,28 @@ import {
 import { type SvgTag } from "../../coed/svg.ts";
 import type { Result } from "../types.ts";
 
+let domParser: typeof DOMParser;
+
+/** load jsdom server-side, or dom parser in the browser */
+if (typeof window === "undefined") {
+    const jsdom = await import("jsdom");
+    domParser = new jsdom.JSDOM().window.DOMParser;
+} else {
+    domParser = DOMParser;
+}
+
+function jsdomOrDomParser(): DOMParser {
+    return new domParser();
+}
+
 /**
  * Parse a fragment of html string into Coed.
  *
  * e.g `<div>hello world</div>`
  */
 export function parseFragment(string: string): HtmlNode<never>[] {
-    const parser = new jsdom.JSDOM();
-    const parsed = parser.window.document;
+    const parser = jsdomOrDomParser();
+    const parsed = parser.parseFromString("", "text/html");
     parsed.body.innerHTML = string;
     return [...parsed.body.childNodes].flatMap((child) => walk(child)).flat();
 }
@@ -34,11 +47,10 @@ export function parseFragment(string: string): HtmlNode<never>[] {
  * e.g `<html><body><div>hello world</div></body></html>`
  */
 export function parse(string: string): Result<HtmlNode<never>> {
-    const parser = new jsdom.JSDOM(string, { contentType: "text/html" });
-    parser.window.document.normalize();
+    const parser = jsdomOrDomParser();
 
-    const documentElement = parser.window.document.documentElement;
-    const walked = walk(documentElement);
+    const documentElement = parser.parseFromString(string, "text/html");
+    const walked = walk(documentElement.documentElement);
     const value = walked[0];
 
     if (typeof value === "undefined") {
