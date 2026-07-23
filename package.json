@@ -1,6 +1,6 @@
 {
     "name": "@eeue56/coed",
-    "version": "1.0.0-8",
+    "version": "1.0.0-9",
     "description": "Write HTML in pure TS",
     "main": "build/coed.js",
     "type": "module",
