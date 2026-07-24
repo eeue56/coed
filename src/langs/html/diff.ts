@@ -1,72 +1,147 @@
-import type { Attribute, HtmlNode, StringAttribute } from "../../coed.ts";
-import type { Diff } from "../types.ts";
+import type { Attribute, HtmlNode } from "../../coed.ts";
+import type { Diff, DiffNode } from "../types.ts";
 
+function isSameAttribute(a: Attribute, b: Attribute): boolean {
+    if (a.kind !== b.kind) {
+        return false;
+    }
+    if (a.kind === "none") {
+        return true;
+    }
+
+    /* eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion */
+    b = b as typeof a;
+    return a.key === b.key && a.value === b.value;
+}
+
+function getAttributeKey(attribute: Attribute): string {
+    switch (attribute.kind) {
+        case "none":
+            return "none";
+        case "string":
+        case "boolean":
+        case "number":
+        case "style":
+            return attribute.key;
+    }
+}
+
+function getAttributeDiffPath(pathSoFar: string, key: string): string {
+    return `${pathSoFar}->attributes{${key}}`;
+}
+
+function groupAttributesByKey(
+    attributes: Attribute[],
+): Map<string, Attribute[]> {
+    const grouped = new Map<string, Attribute[]>();
+
+    for (const attribute of attributes) {
+        const key = getAttributeKey(attribute);
+        const existing = grouped.get(key);
+
+        if (typeof existing === "undefined") {
+            grouped.set(key, [attribute]);
+            continue;
+        }
+
+        existing.push(attribute);
+    }
+
+    return grouped;
+}
+
+function attributeDiffsByKey(
+    pathSoFar: string,
+    previousAttributes: Attribute[],
+    nextAttributes: Attribute[],
+): Diff<Attribute[]>["diffs"] {
+    const previousByKey = groupAttributesByKey(previousAttributes);
+    const nextByKey = groupAttributesByKey(nextAttributes);
+    const keys = [...new Set([...previousByKey.keys(), ...nextByKey.keys()])];
+    const diffs: Diff<Attribute[]>["diffs"] = [];
+
+    for (const key of keys) {
+        const removed = previousByKey.get(key) ?? [];
+        const added = nextByKey.get(key) ?? [];
+
+        if (removed.length === added.length) {
+            let same = true;
+            for (let i = 0; i < removed.length; i++) {
+                if (!isSameAttribute(removed[i], added[i])) {
+                    same = false;
+                    break;
+                }
+            }
+
+            if (same) {
+                continue;
+            }
+        }
+
+        diffs.push({
+            path: getAttributeDiffPath(pathSoFar, key),
+            removed,
+            added,
+        });
+    }
+
+    return diffs;
+}
+
+function nodeReplacementDiff(
+    path: string,
+    currentTree: HtmlNode<unknown>,
+    nextTree: HtmlNode<unknown>,
+): Diff<HtmlNode<unknown>> {
+    return {
+        diffs: [{ added: nextTree, removed: currentTree, path }],
+    };
+}
+
+function mapAttributeDiffsToNodeDiffs(
+    facts: Diff<Attribute[]>,
+    currentTree: HtmlNode<unknown>,
+    nextTree: HtmlNode<unknown>,
+): Diff<HtmlNode<unknown>> {
+    return {
+        diffs: facts.diffs.map((attributeDiff) => ({
+            path: attributeDiff.path,
+            added: nextTree,
+            removed: currentTree,
+        })),
+    };
+}
+
+/**
+ * diff attributes, gives the path with the name of the attribute at the end
+ * e.g:
+ * `->attributes{width}` if width changes
+ * `->attributes{height}` if height changes
+ */
 function diffFacts<Msg>(
     previousTree: HtmlNode<Msg>,
     nextTree: HtmlNode<Msg>,
     pathSoFar: string,
 ): Diff<Attribute[]> {
-    pathSoFar = `${pathSoFar}->attributes`;
     switch (nextTree.kind) {
         case "void":
         case "regular":
         case "ns-void":
         case "ns-regular": {
-            const removed: Attribute[] = [];
-            const added: Attribute[] = [];
+            const typedPreviousTree = previousTree as Exclude<
+                HtmlNode<Msg>,
+                { kind: "text" } | { kind: "html-string" }
+            >;
 
-            if (previousTree.kind !== nextTree.kind) {
-                return {
-                    diffs: [
-                        {
-                            path: pathSoFar,
-                            removed: [],
-                            added: nextTree.attributes,
-                        },
-                    ],
-                };
-            }
-
-            const previousAttributes: string[] = [];
-            for (const attr of previousTree.attributes) {
-                if (attr.kind != "none") {
-                    previousAttributes.push(attr.key);
-                }
-            }
-
-            const nextAttributes: string[] = [];
-            for (const attr of nextTree.attributes) {
-                if (attr.kind != "none") {
-                    nextAttributes.push(attr.key);
-                }
-            }
-
-            for (const attribute of previousTree.attributes) {
-                if (
-                    attribute.kind !== "none" &&
-                    nextAttributes.indexOf(attribute.key) === -1
-                ) {
-                    removed.push(attribute);
-                }
-            }
-            nextTree.attributes.forEach((attribute: Attribute) => {
-                if (
-                    attribute.kind !== "none" &&
-                    removed.indexOf(attribute) === -1
-                ) {
-                    added.push(attribute);
-                }
-            });
-
-            if (removed.length === 0 && added.length === 0) {
-                return { diffs: [] };
-            }
-
-            return { diffs: [{ path: pathSoFar, removed, added }] };
+            return {
+                diffs: attributeDiffsByKey(
+                    pathSoFar,
+                    typedPreviousTree.attributes,
+                    nextTree.attributes,
+                ),
+            };
         }
-        case "text": {
-            return { diffs: [] };
-        }
+        case "text":
         case "html-string": {
             return { diffs: [] };
         }
@@ -79,117 +154,71 @@ function diffNode(
     pathSoFar: string,
 ): Diff<HtmlNode<unknown>> {
     if (currentTree.kind !== nextTree.kind) {
-        return {
-            diffs: [{ added: nextTree, removed: currentTree, path: pathSoFar }],
-        };
+        return nodeReplacementDiff(pathSoFar, currentTree, nextTree);
     }
 
     switch (currentTree.kind) {
         case "text": {
-            if (currentTree.text == (nextTree as typeof currentTree).text) {
+            if (currentTree.text === (nextTree as typeof currentTree).text) {
                 return { diffs: [] };
-            } else {
-                return {
-                    diffs: [
-                        {
-                            added: nextTree,
-                            removed: currentTree,
-                            path: pathSoFar,
-                        },
-                    ],
-                };
             }
+
+            return nodeReplacementDiff(pathSoFar, currentTree, nextTree);
         }
         case "void":
         case "ns-void": {
-            if (currentTree.tag != (nextTree as typeof currentTree).tag) {
-                return {
-                    diffs: [
-                        {
-                            added: nextTree,
-                            removed: currentTree,
-                            path: pathSoFar,
-                        },
-                    ],
-                };
-            } else {
-                const facts = diffFacts(currentTree, nextTree, pathSoFar);
-                if (facts.diffs.length > 0) {
-                    return {
-                        diffs: [
-                            {
-                                added: nextTree,
-                                removed: currentTree,
-                                path: facts.diffs[0].path,
-                            },
-                        ],
-                    };
-                }
-                return { diffs: [] };
+            const typedNextTree = nextTree as typeof currentTree;
+
+            if (currentTree.tag !== typedNextTree.tag) {
+                return nodeReplacementDiff(pathSoFar, currentTree, nextTree);
             }
+
+            const facts = diffFacts(currentTree, nextTree, pathSoFar);
+            if (facts.diffs.length > 0) {
+                return mapAttributeDiffsToNodeDiffs(
+                    facts,
+                    currentTree,
+                    nextTree,
+                );
+            }
+
+            return { diffs: [] };
         }
         case "regular":
         case "ns-regular": {
-            const currentTreeAttribute = currentTree.attributes.find(
-                (x) => x.kind === "string" && x.key === "id",
-            ) as StringAttribute | undefined;
-            const currentTreeId = currentTreeAttribute?.value ?? "";
+            const typedNextTree = nextTree as typeof currentTree;
 
-            const nextTreeAttribute = (
-                nextTree as typeof currentTree
-            ).attributes.find((x) => x.kind === "string" && x.key === "id") as
-                | StringAttribute
-                | undefined;
-            const nextTreeId = nextTreeAttribute?.value ?? "";
-
-            if (
-                currentTree.tag !== (nextTree as typeof currentTree).tag ||
-                currentTreeId !== nextTreeId
-            ) {
-                return {
-                    diffs: [
-                        {
-                            path: pathSoFar,
-                            added: nextTree,
-                            removed: currentTree,
-                        },
-                    ],
-                };
+            if (currentTree.tag !== typedNextTree.tag) {
+                return nodeReplacementDiff(pathSoFar, currentTree, nextTree);
             }
 
             const facts = diffFacts(currentTree, nextTree, pathSoFar);
 
             if (facts.diffs.length > 0) {
-                return {
-                    diffs: [
-                        {
-                            path: facts.diffs[0].path,
-                            added: nextTree,
-                            removed: currentTree,
-                        },
-                    ],
-                };
+                return mapAttributeDiffsToNodeDiffs(
+                    facts,
+                    currentTree,
+                    nextTree,
+                );
             }
 
-            const diffs = [];
+            if (currentTree.children.length !== typedNextTree.children.length) {
+                return nodeReplacementDiff(pathSoFar, currentTree, nextTree);
+            }
 
-            for (
-                let i = 0;
-                i < (nextTree as typeof currentTree).children.length;
-                i++
-            ) {
+            const diffs: DiffNode<HtmlNode<unknown>>[] = [];
+
+            for (let i = 0; i < typedNextTree.children.length; i++) {
                 const currentChild = currentTree.children[i];
-                const nextChild = (nextTree as typeof currentTree).children[i];
+                const nextChild = typedNextTree.children[i];
 
                 diffs.push(
-                    ...diffNode(currentChild, nextChild, `${pathSoFar}/${i}`)
+                    ...diffNode(currentChild, nextChild, `${pathSoFar}.${i}`)
                         .diffs,
                 );
             }
 
-            return {
-                diffs,
-            };
+            return { diffs };
         }
         case "html-string": {
             if (
@@ -198,18 +227,23 @@ function diffNode(
                 return { diffs: [] };
             }
 
-            return {
-                diffs: [
-                    { added: nextTree, removed: currentTree, path: pathSoFar },
-                ],
-            };
+            return nodeReplacementDiff(pathSoFar, currentTree, nextTree);
         }
     }
 }
 
+/**
+ * the `path` is based on the location of the element
+ *
+ * e.g
+ *
+ * `0` is the first (root)
+ * `0->attributes{width}` is the width of the first element
+ * `0->1->attributes{height}` is the height of the second element of the root element
+ */
 export function diff(
     left: HtmlNode<unknown>,
     right: HtmlNode<unknown>,
 ): Diff<HtmlNode<unknown>> {
-    return diffNode(left, right, "");
+    return diffNode(left, right, "0");
 }

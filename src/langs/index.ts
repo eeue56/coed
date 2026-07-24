@@ -2,7 +2,7 @@ export { css } from "./css/index.ts";
 export { html } from "./html/index.ts";
 export { javascript } from "./javascript/index.ts";
 
-export {
+export type {
     Diff,
     DiffEntry,
     Err,
