@@ -6,11 +6,7 @@ function isSameValue(left: unknown, right: unknown): boolean {
         return true;
     }
 
-    if (typeof left !== typeof right) {
-        return false;
-    }
-
-    if (left === null || right === null) {
+    if (typeof left !== typeof right || left === null || right === null) {
         return false;
     }
 
@@ -62,78 +58,152 @@ function isSameValue(left: unknown, right: unknown): boolean {
     return true;
 }
 
-/**
- * todo: semantic aware diffing, this is okay for a first pass
- */
-function diffNode(left: JsNode, right: JsNode, path: string): Diff<JsNode> {
-    if (isSameValue(left, right)) {
-        return { diffs: [] };
-    }
-
-    return {
-        diffs: [
-            {
-                path,
-                added: right,
-                removed: left,
-            },
-        ],
-    };
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function diff(left: JsNode[], right: JsNode[]): Diff<JsNode[]> {
-    const added: JsNode[] = [];
-    const removed: JsNode[] = [];
-    let path = "0";
-    let hasDiff = false;
+function isPropertyMap(value: unknown): value is Record<string, unknown> {
+    return isRecord(value) && !("kind" in value);
+}
 
-    const sharedLength = Math.min(left.length, right.length);
+function appendPath(path: string, segment: string): string {
+    return `${path}->${segment}`;
+}
 
-    for (let i = 0; i < sharedLength; i++) {
-        const nodeDiff = diffNode(left[i], right[i], String(i));
+function appendPropertyPath(path: string, property: string): string {
+    return `${path}{${property}}`;
+}
 
-        if (nodeDiff.diffs.length === 0) {
+function diffPropertyMap(
+    left: Record<string, unknown>,
+    right: Record<string, unknown>,
+    path: string,
+): string[] {
+    const paths: string[] = [];
+    const keys = [...new Set([...Object.keys(left), ...Object.keys(right)])];
+
+    for (const key of keys) {
+        if (!(key in left) || !(key in right)) {
+            paths.push(appendPropertyPath(path, key));
             continue;
         }
 
-        if (!hasDiff) {
-            path = String(i);
-            hasDiff = true;
+        paths.push(
+            ...diffValue(left[key], right[key], appendPropertyPath(path, key)),
+        );
+    }
+
+    return paths;
+}
+
+function diffArray(left: unknown[], right: unknown[], path: string): string[] {
+    const paths: string[] = [];
+    const sharedLength = Math.min(left.length, right.length);
+
+    for (let i = 0; i < sharedLength; i++) {
+        paths.push(
+            ...diffValue(left[i], right[i], appendPath(path, String(i))),
+        );
+    }
+
+    for (let i = sharedLength; i < left.length; i++) {
+        paths.push(appendPath(path, String(i)));
+    }
+
+    for (let i = sharedLength; i < right.length; i++) {
+        paths.push(appendPath(path, String(i)));
+    }
+
+    return paths;
+}
+
+function diffObject(
+    left: Record<string, unknown>,
+    right: Record<string, unknown>,
+    path: string,
+): string[] {
+    if ("kind" in left && "kind" in right && left.kind !== right.kind) {
+        return [path];
+    }
+
+    const paths: string[] = [];
+    const keys = [...new Set([...Object.keys(left), ...Object.keys(right)])];
+
+    for (const key of keys) {
+        if (!(key in left) || !(key in right)) {
+            paths.push(appendPath(path, key));
+            continue;
         }
 
-        removed.push(left[i]);
-        added.push(right[i]);
-    }
+        if (key === "properties") {
+            const leftValue = left[key];
+            const rightValue = right[key];
 
-    if (right.length > left.length) {
-        if (!hasDiff) {
-            path = String(left.length);
-            hasDiff = true;
+            if (isPropertyMap(leftValue) && isPropertyMap(rightValue)) {
+                paths.push(
+                    ...diffPropertyMap(
+                        leftValue,
+                        rightValue,
+                        appendPath(path, key),
+                    ),
+                );
+                continue;
+            }
         }
 
-        added.push(...right.slice(left.length));
+        paths.push(...diffValue(left[key], right[key], appendPath(path, key)));
     }
 
-    if (left.length > right.length) {
-        if (!hasDiff) {
-            path = String(right.length);
-            hasDiff = true;
-        }
+    return paths;
+}
 
-        removed.push(...left.slice(right.length));
+function diffValue(left: unknown, right: unknown, path: string): string[] {
+    if (isSameValue(left, right)) {
+        return [];
     }
 
-    if (!hasDiff) {
-        return { diffs: [] };
+    if (Array.isArray(left) && Array.isArray(right)) {
+        return diffArray(left, right, path);
     }
 
-    return {
-        diffs: [
-            {
+    if (isRecord(left) && isRecord(right)) {
+        return diffObject(left, right, path);
+    }
+
+    return [path];
+}
+
+export function diff(left: JsNode[], right: JsNode[]): Diff<JsNode[]> {
+    const diffs: Diff<JsNode[]>["diffs"] = [];
+    const sharedLength = Math.min(left.length, right.length);
+
+    for (let i = 0; i < sharedLength; i++) {
+        const nodePaths = diffValue(left[i], right[i], String(i));
+
+        for (const path of nodePaths) {
+            diffs.push({
                 path,
-                added,
-                removed,
-            },
-        ],
-    };
+                added: [right[i]],
+                removed: [left[i]],
+            });
+        }
+    }
+
+    for (let i = sharedLength; i < right.length; i++) {
+        diffs.push({
+            path: String(i),
+            added: [right[i]],
+            removed: [],
+        });
+    }
+
+    for (let i = sharedLength; i < left.length; i++) {
+        diffs.push({
+            path: String(i),
+            added: [],
+            removed: [left[i]],
+        });
+    }
+
+    return { diffs };
 }
