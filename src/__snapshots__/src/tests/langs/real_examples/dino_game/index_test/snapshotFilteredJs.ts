@@ -792,7 +792,7 @@ export const snapshotFilteredJs = {
                     ]
                 },
                 {
-                    "kind": "ForLoop",
+                    "kind": "ClassicForLoop",
                     "init": {
                         "kind": "LetStatement",
                         "name": "i",

@@ -23,6 +23,7 @@ import {
     consumeToken,
     consumeTypeSyntax,
     createFailedStatement,
+    createForInOfLoopStatement,
     createForLoopStatement,
     createParserState,
     createWhileLoopParts,
@@ -1198,8 +1199,66 @@ function parseForHeader(
         return { kind: "Err", error: "Expected '('" };
     }
 
-    const init = parseLetOrConst(updateParserState(state, index), false, false);
-    if (init.kind === "Err" || init.value.kind !== "LetStatement") {
+    const declarationToken = state.tokens[index];
+    const isConst = tokenIs(declarationToken, "ConstToken");
+
+    if (!isConst && !tokenIs(declarationToken, "LetToken")) {
+        return { kind: "Err", error: "Expected let or const in for loop" };
+    }
+
+    const parsedName = tryParseIdentifierAt(state.tokens, index + 1);
+    if (parsedName === null) {
+        return { kind: "Err", error: "Expected loop variable name" };
+    }
+
+    const afterType = consumeOptionalTypeAnnotation(
+        state.tokens,
+        parsedName.nextIndex,
+        ["AssignToken", "SemicolonToken", "InToken", "OfToken"],
+    );
+    if (afterType === null) {
+        return { kind: "Err", error: "Expected valid loop variable type" };
+    }
+
+    const operatorToken = state.tokens[afterType];
+    if (
+        tokenIs(operatorToken, "InToken") ||
+        tokenIs(operatorToken, "OfToken")
+    ) {
+        const iterable = parseExpressionThenConsumeToken(
+            state.tokens,
+            "RightParenToken",
+            parseExpressionAt(state.tokens, afterType + 1),
+        );
+        if (iterable === null || iterable.kind === "Err") {
+            return { kind: "Err", error: "Expected iterable in for loop" };
+        }
+
+        return {
+            kind: "Ok",
+            value: {
+                kind: "ForInOfHeader",
+                binding: {
+                    declarationKind: isConst ? "const" : "let",
+                    name: parsedName.name,
+                },
+                operator: operatorToken.kind === "InToken" ? "in" : "of",
+                iterable: iterable.value,
+                afterRightParenIndex: iterable.index,
+            },
+        };
+    }
+
+    const init = parseLetOrConst(
+        updateParserState(state, index),
+        isConst,
+        false,
+    );
+    if (
+        init.kind === "Err" ||
+        (init.value.kind !== "LetStatement" &&
+            init.value.kind !== "ConstStatement")
+    ) {
         return { kind: "Err", error: "Expected init statement in for loop" };
     }
 
@@ -1232,6 +1291,7 @@ function parseForHeader(
     return {
         kind: "Ok",
         value: {
+            kind: "ClassicForHeader",
             init: init.value,
             condition: condition.value,
             increment: increment.value,
@@ -2106,6 +2166,18 @@ function parseFor(state: ParserState): IndexedResult<Ast> {
     });
     if (body.kind === "Err") {
         return createFailedStatement(state);
+    }
+
+    if (header.value.kind === "ForInOfHeader") {
+        return statementResult(
+            createForInOfLoopStatement(
+                header.value.binding,
+                header.value.operator,
+                header.value.iterable,
+                body.value,
+            ),
+            body.index,
+        );
     }
 
     return statementResult(

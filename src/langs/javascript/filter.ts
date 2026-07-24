@@ -41,7 +41,27 @@ function filterAst(
                 errors: expression.errors,
             };
         }
-        case "ForLoop": {
+        case "ForInOfLoop": {
+            const iterable = filterExpression(ast.iterable, filterRules);
+            const body = filterAsts(ast.body, filterRules);
+            const errors = [...iterable.errors, ...body.errors];
+
+            if (iterable.value.length === 0) {
+                return { value: [], errors };
+            }
+
+            return {
+                value: [
+                    {
+                        ...ast,
+                        iterable: iterable.value[0],
+                        body: body.value,
+                    },
+                ],
+                errors,
+            };
+        }
+        case "ClassicForLoop": {
             const init = filterAst(ast.init, filterRules);
             const condition = filterExpression(ast.condition, filterRules);
             const increment = filterExpression(ast.increment, filterRules);
@@ -62,7 +82,8 @@ function filterAst(
                 !hasCondition ||
                 !hasIncrement ||
                 !hasInit ||
-                init.value[0].kind !== "LetStatement"
+                (init.value[0].kind !== "LetStatement" &&
+                    init.value[0].kind !== "ConstStatement")
             ) {
                 return { value: [], errors };
             }
@@ -70,7 +91,7 @@ function filterAst(
             return {
                 value: [
                     {
-                        kind: "ForLoop",
+                        kind: "ClassicForLoop",
                         init: init.value[0],
                         condition: condition.value[0],
                         increment: increment.value[0],

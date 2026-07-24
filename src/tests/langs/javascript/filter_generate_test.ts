@@ -70,7 +70,19 @@ function sanitizeAst(ast: Ast, filterRule: FilterRule<JsNode>): JsNode | null {
                 elseBranch,
             };
         }
-        case "ForLoop": {
+        case "ForInOfLoop": {
+            const iterable = javascript.filter([filterRule], [ast.iterable]);
+            if (iterable.value.length === 0) {
+                return null;
+            }
+
+            return {
+                ...ast,
+                iterable: iterable.value[0] as Expression,
+                body: sanitizeProgram(ast.body, filterRule),
+            };
+        }
+        case "ClassicForLoop": {
             const initValue = javascript.filter([filterRule], [ast.init.value]);
             const condition = javascript.filter([filterRule], [ast.condition]);
             const increment = javascript.filter([filterRule], [ast.increment]);

@@ -1,7 +1,9 @@
 import type {
     Ast,
+    ConstStatement,
     Expression,
     ForLoop,
+    ForLoopBinding,
     IndexedResult,
     LetStatement,
     ParserState,
@@ -201,16 +203,31 @@ export type OptionalTerminatedExpression = {
 };
 
 export function createForLoopStatement(
-    init: LetStatement,
+    init: LetStatement | ConstStatement,
     condition: Expression,
     increment: Expression,
     body: Ast[],
 ): ForLoop {
     return {
-        kind: "ForLoop",
+        kind: "ClassicForLoop",
         init,
         condition,
         increment,
+        body,
+    };
+}
+
+export function createForInOfLoopStatement(
+    init: ForLoopBinding,
+    operator: "in" | "of",
+    iterable: Expression,
+    body: Ast[],
+): ForLoop {
+    return {
+        kind: "ForInOfLoop",
+        init,
+        operator,
+        iterable,
         body,
     };
 }

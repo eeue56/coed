@@ -20,7 +20,11 @@ const keepNonLetNodes: FilterRule<JsNode> = {
 
 const removeFunctionAndForLoop: FilterRule<JsNode> = {
     shouldKeep: (node: JsNode) => {
-        return node.kind !== "FunctionDeclaration" && node.kind !== "ForLoop";
+        return (
+            node.kind !== "FunctionDeclaration" &&
+            node.kind !== "ClassicForLoop" &&
+            node.kind !== "ForInOfLoop"
+        );
     },
     reason: "FunctionDeclaration and ForLoop nodes are not allowed",
 };
@@ -131,7 +135,7 @@ export function testFilterAstsRemovesSubNodes() {
 export function testFilterAstsFiltersForLoopBodyRecursively() {
     const input: Ast[] = [
         {
-            kind: "ForLoop",
+            kind: "ClassicForLoop",
             init: { kind: "LetStatement", name: "i", value: one },
             condition: {
                 kind: "LessThanExpression",
@@ -148,7 +152,7 @@ export function testFilterAstsFiltersForLoopBodyRecursively() {
 
     assert.deepStrictEqual(filterAsts(input, [keepAllNodes]), [
         {
-            kind: "ForLoop",
+            kind: "ClassicForLoop",
             init: { kind: "LetStatement", name: "i", value: one },
             condition: {
                 kind: "LessThanExpression",
@@ -168,7 +172,7 @@ export function testFilterAstsFiltersForLoopBodyRecursively() {
 
     assert.deepStrictEqual(filterAsts(input, [replaceOnesWithThrees]), [
         {
-            kind: "ForLoop",
+            kind: "ClassicForLoop",
             init: { kind: "LetStatement", name: "i", value: threes },
             condition: {
                 kind: "LessThanExpression",
@@ -334,7 +338,7 @@ export function testFilterAstsCanRemoveContainerNodes() {
             body: [{ kind: "ConstStatement", name: "x", value: one }],
         },
         {
-            kind: "ForLoop",
+            kind: "ClassicForLoop",
             init: { kind: "LetStatement", name: "i", value: one },
             condition: {
                 kind: "LessThanExpression",
@@ -362,7 +366,7 @@ export function testFilterAstsCanRemoveContainerNodes() {
             body: [{ kind: "ConstStatement", name: "x", value: threes }],
         },
         {
-            kind: "ForLoop",
+            kind: "ClassicForLoop",
             init: { kind: "LetStatement", name: "i", value: threes },
             condition: {
                 kind: "LessThanExpression",
@@ -386,7 +390,7 @@ export function testFilterAstsKeepsAllAstTypesWhenPredicateAlwaysTrue() {
             thenBranch: [{ kind: "ConstStatement", name: "c", value: one }],
         },
         {
-            kind: "ForLoop",
+            kind: "ClassicForLoop",
             init: { kind: "LetStatement", name: "i", value: one },
             condition: {
                 kind: "LessThanExpression",
@@ -414,7 +418,7 @@ export function testFilterAstsKeepsAllAstTypesWhenPredicateAlwaysTrue() {
             thenBranch: [{ kind: "ConstStatement", name: "c", value: one }],
         },
         {
-            kind: "ForLoop",
+            kind: "ClassicForLoop",
             init: { kind: "LetStatement", name: "i", value: one },
             condition: {
                 kind: "LessThanExpression",

@@ -262,13 +262,28 @@ export type IfStatement = {
     elseBranch?: Ast[];
 };
 
-export type ForLoop = {
-    kind: "ForLoop";
-    init: LetStatement;
+export type ForLoopBinding = {
+    declarationKind: "let" | "const";
+    name: string;
+};
+
+export type ClassicForLoop = {
+    kind: "ClassicForLoop";
+    init: LetStatement | ConstStatement;
     condition: Expression;
     increment: Expression;
     body: Ast[];
 };
+
+export type ForInOfLoop = {
+    kind: "ForInOfLoop";
+    init: ForLoopBinding;
+    operator: "in" | "of";
+    iterable: Expression;
+    body: Ast[];
+};
+
+export type ForLoop = ClassicForLoop | ForInOfLoop;
 
 export type DoWhileLoop = {
     kind: "DoWhileLoop";
@@ -327,7 +342,7 @@ export type ExportDeclarationStatement = {
     kind: "ExportDeclarationStatement";
     declaration:
         | LetStatement
-    | LetListStatement
+        | LetListStatement
         | ConstStatement
         | FunctionDeclaration
         | ClassDeclaration;
@@ -430,7 +445,8 @@ export function isAst(node: JsNode): node is Ast {
         kind === "LetListStatement" ||
         kind === "ConstStatement" ||
         kind === "IfStatement" ||
-        kind === "ForLoop" ||
+        kind === "ClassicForLoop" ||
+        kind === "ForInOfLoop" ||
         kind === "DoWhileLoop" ||
         kind === "FunctionDeclaration" ||
         kind === "ClassDeclaration" ||

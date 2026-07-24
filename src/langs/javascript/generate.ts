@@ -291,7 +291,13 @@ export function generateAST(ast: Ast, level: number): string {
                 `if (${generateExpression(ast.condition)}) ${generateBlock(ast.thenBranch, level)}`,
             );
         }
-        case "ForLoop": {
+        case "ForInOfLoop": {
+            return indent(
+                level,
+                `for (${ast.init.declarationKind} ${ast.init.name} ${ast.operator} ${generateExpression(ast.iterable)}) ${generateBlock(ast.body, level)}`,
+            );
+        }
+        case "ClassicForLoop": {
             return indent(
                 level,
                 `for (${generateForInit(ast.init)}; ${generateExpression(ast.condition)}; ${generateExpression(ast.increment)}) ${generateBlock(ast.body, level)}`,

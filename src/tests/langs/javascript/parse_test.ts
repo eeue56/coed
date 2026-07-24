@@ -567,7 +567,9 @@ export function testParseIfElseStatements() {
 
 export function testParseElseIfStatements() {
     assert.deepStrictEqual(
-        parse("if (a) { let x = 1; } else if (b) { let y = 2; } else { let z = 3; }"),
+        parse(
+            "if (a) { let x = 1; } else if (b) { let y = 2; } else { let z = 3; }",
+        ),
         {
             kind: "Ok",
             value: [
@@ -621,7 +623,7 @@ export function testParseForLoop() {
             kind: "Ok",
             value: [
                 {
-                    kind: "ForLoop",
+                    kind: "ClassicForLoop",
                     init: {
                         kind: "LetStatement",
                         name: "i",
@@ -650,6 +652,66 @@ export function testParseForLoop() {
             ],
         },
     );
+}
+
+export function testParseForOfLoop() {
+    assert.deepStrictEqual(parse("for (const x of y) { let z = x; }"), {
+        kind: "Ok",
+        value: [
+            {
+                kind: "ForInOfLoop",
+                init: {
+                    declarationKind: "const",
+                    name: "x",
+                },
+                operator: "of",
+                iterable: {
+                    kind: "NameLookupExpression",
+                    name: "y",
+                },
+                body: [
+                    {
+                        kind: "LetStatement",
+                        name: "z",
+                        value: {
+                            kind: "NameLookupExpression",
+                            name: "x",
+                        },
+                    },
+                ],
+            },
+        ],
+    });
+}
+
+export function testParseForInLoop() {
+    assert.deepStrictEqual(parse("for (let x in y) { let z = x; }"), {
+        kind: "Ok",
+        value: [
+            {
+                kind: "ForInOfLoop",
+                init: {
+                    declarationKind: "let",
+                    name: "x",
+                },
+                operator: "in",
+                iterable: {
+                    kind: "NameLookupExpression",
+                    name: "y",
+                },
+                body: [
+                    {
+                        kind: "LetStatement",
+                        name: "z",
+                        value: {
+                            kind: "NameLookupExpression",
+                            name: "x",
+                        },
+                    },
+                ],
+            },
+        ],
+    });
 }
 
 export function testParseFunctionDeclaration() {
@@ -728,23 +790,20 @@ export function testParseClassDeclarationWithMethods() {
 }
 
 export function testParseClassDeclarationWithSuperClass() {
-    assert.deepStrictEqual(
-        parse("class FishFrog extends Animal {}"),
-        {
-            kind: "Ok",
-            value: [
-                {
-                    kind: "ClassDeclaration",
-                    name: "FishFrog",
-                    superClass: {
-                        kind: "NameLookupExpression",
-                        name: "Animal",
-                    },
-                    body: [],
+    assert.deepStrictEqual(parse("class FishFrog extends Animal {}"), {
+        kind: "Ok",
+        value: [
+            {
+                kind: "ClassDeclaration",
+                name: "FishFrog",
+                superClass: {
+                    kind: "NameLookupExpression",
+                    name: "Animal",
                 },
-            ],
-        },
-    );
+                body: [],
+            },
+        ],
+    });
 }
 
 export function testParseStripsTypeAnnotations() {
@@ -839,7 +898,7 @@ export function testParseWhileAsForLoop() {
             kind: "Ok",
             value: [
                 {
-                    kind: "ForLoop",
+                    kind: "ClassicForLoop",
                     init: {
                         kind: "LetStatement",
                         name: "__while_0",
@@ -878,7 +937,7 @@ export function testParseWhileWithBreak() {
             kind: "Ok",
             value: [
                 {
-                    kind: "ForLoop",
+                    kind: "ClassicForLoop",
                     init: {
                         kind: "LetStatement",
                         name: "__while_0",
@@ -920,7 +979,7 @@ export function testParseWhileWithContinue() {
             kind: "Ok",
             value: [
                 {
-                    kind: "ForLoop",
+                    kind: "ClassicForLoop",
                     init: {
                         kind: "LetStatement",
                         name: "__while_0",
@@ -1147,7 +1206,7 @@ export function testParseBreakAndContinueStatements() {
             kind: "Ok",
             value: [
                 {
-                    kind: "ForLoop",
+                    kind: "ClassicForLoop",
                     init: {
                         kind: "LetStatement",
                         name: "i",

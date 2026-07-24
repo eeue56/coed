@@ -284,6 +284,8 @@ const keywordKinds = {
     throw: "ThrowToken",
     default: "DefaultToken",
     for: "ForToken",
+    in: "InToken",
+    of: "OfToken",
     while: "WhileToken",
     do: "DoToken",
     with: "WithToken",

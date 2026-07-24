@@ -1,6 +1,8 @@
 import type {
     Ast,
+    ConstStatement,
     Expression,
+    ForLoopBinding,
     IfStatement,
     IndexedResult,
     LetStatement,
@@ -46,6 +48,8 @@ type ConstToken = BaseToken & { kind: "ConstToken" };
 type IfToken = BaseToken & { kind: "IfToken" };
 type ElseToken = BaseToken & { kind: "ElseToken" };
 type ForToken = BaseToken & { kind: "ForToken" };
+type InToken = BaseToken & { kind: "InToken" };
+type OfToken = BaseToken & { kind: "OfToken" };
 type WhileToken = BaseToken & { kind: "WhileToken" };
 type DoToken = BaseToken & { kind: "DoToken" };
 type WithToken = BaseToken & { kind: "WithToken" };
@@ -112,6 +116,8 @@ export type Token =
     | IfToken
     | ElseToken
     | ForToken
+    | InToken
+    | OfToken
     | WhileToken
     | DoToken
     | WithToken
@@ -147,12 +153,23 @@ export type OperatorExpression = Extract<
     { left: Expression; right: Expression }
 >;
 
-export type ParsedForHeader = {
-    init: LetStatement;
+type ParsedClassicForHeader = {
+    kind: "ClassicForHeader";
+    init: LetStatement | ConstStatement;
     condition: Expression;
     increment: Expression;
     afterRightParenIndex: number;
 };
+
+type ParsedForInOfHeader = {
+    kind: "ForInOfHeader";
+    binding: ForLoopBinding;
+    operator: "in" | "of";
+    iterable: Expression;
+    afterRightParenIndex: number;
+};
+
+export type ParsedForHeader = ParsedClassicForHeader | ParsedForInOfHeader;
 
 export type LoopControlKind = "ContinueStatement" | "BreakStatement";
 

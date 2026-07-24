@@ -929,7 +929,7 @@ export const snapshotParsedJs = {
                     ]
                 },
                 {
-                    "kind": "ForLoop",
+                    "kind": "ClassicForLoop",
                     "init": {
                         "kind": "LetStatement",
                         "name": "i",
