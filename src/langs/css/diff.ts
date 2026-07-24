@@ -1,10 +1,5 @@
 import type { Diff } from "../types.ts";
-import {
-    type CssBlock,
-    type Declaration,
-    isCssBlock,
-    type Selector,
-} from "./types.ts";
+import { type CssBlock, type Declaration, type Selector } from "./types.ts";
 
 type SelectorOf<K extends Selector["kind"]> = Extract<Selector, { kind: K }>;
 
@@ -112,102 +107,281 @@ function isSameSelector(left: Selector, right: Selector): boolean {
     }
 }
 
-function isSameCssBlock(left: CssBlock, right: CssBlock): boolean {
-    if (!isSameSelector(left.selector, right.selector)) {
-        return false;
-    }
-
-    if (left.body.length !== right.body.length) {
-        return false;
-    }
-
-    for (let i = 0; i < left.body.length; i++) {
-        const subLeft = left.body[i];
-        const subRight = right.body[i];
-
-        if (subLeft.kind !== subRight.kind) {
-            return false;
-        }
-
-        if (isCssBlock(subLeft)) {
-            if (!isSameCssBlock(subLeft, subRight as CssBlock)) {
-                return false;
-            }
-        } else {
-            if (!isSameCssDeclaration(subLeft, subRight as Declaration)) {
-                return false;
-            }
-        }
-    }
-
-    return true;
+function areAllPropertyDeclarations(
+    declarations: Declaration[],
+): declarations is Extract<Declaration, { kind: "Property" }>[] {
+    return declarations.every((declaration) => declaration.kind === "Property");
 }
 
-function isSameCssDeclaration(left: Declaration, right: Declaration): boolean {
+function hasDuplicatePropertyNames(
+    declarations: Extract<Declaration, { kind: "Property" }>[],
+): boolean {
+    const seen = new Set<string>();
+
+    for (const declaration of declarations) {
+        if (seen.has(declaration.name)) {
+            return true;
+        }
+        seen.add(declaration.name);
+    }
+
+    return false;
+}
+
+function propertyMap(
+    declarations: Extract<Declaration, { kind: "Property" }>[],
+): Map<string, string> {
+    const properties = new Map<string, string>();
+
+    for (const declaration of declarations) {
+        properties.set(declaration.name, declaration.value);
+    }
+
+    return properties;
+}
+
+function getPropertyOnlyDiffPath(
+    leftBody: Declaration[],
+    rightBody: Declaration[],
+    path: string,
+): string | null {
+    if (
+        !areAllPropertyDeclarations(leftBody) ||
+        !areAllPropertyDeclarations(rightBody) ||
+        hasDuplicatePropertyNames(leftBody) ||
+        hasDuplicatePropertyNames(rightBody)
+    ) {
+        return null;
+    }
+
+    const leftProperties = propertyMap(leftBody);
+    const rightProperties = propertyMap(rightBody);
+
+    for (const declaration of rightBody) {
+        const leftValue = leftProperties.get(declaration.name);
+
+        if (typeof leftValue === "undefined") {
+            return `${path}->attributes{${declaration.name}}`;
+        }
+
+        if (leftValue !== declaration.value) {
+            return `${path}->attributes{${declaration.name}}`;
+        }
+    }
+
+    for (const declaration of leftBody) {
+        if (!rightProperties.has(declaration.name)) {
+            return `${path}->attributes{${declaration.name}}`;
+        }
+    }
+
+    return null;
+}
+
+function getPropertyName(left: Declaration, right: Declaration): string {
+    if (right.kind === "Property") {
+        return right.name;
+    }
+
+    if (left.kind === "Property") {
+        return left.name;
+    }
+
+    return "unknown";
+}
+
+function getDeclarationDiffPath(
+    left: Declaration,
+    right: Declaration,
+    path: string,
+): string | null {
     if (left.kind !== right.kind) {
-        return false;
+        return `${path}->attributes{${getPropertyName(left, right)}}`;
     }
 
     switch (left.kind) {
-        case "Nested": {
-            assumeKindDeclaration(right, left.kind);
-            if (!isSameSelector(left.selector, right.selector)) {
-                return false;
-            }
-            if (left.declarations.length !== right.declarations.length) {
-                return false;
-            }
-            for (let i = 0; i < left.declarations.length; i++) {
-                const subLeft = left.declarations[i];
-                const subRight = right.declarations[i];
-
-                if (!isSameCssDeclaration(subLeft, subRight)) {
-                    return false;
-                }
-            }
-            return true;
-        }
         case "Property": {
             assumeKindDeclaration(right, left.kind);
 
-            return left.name === right.name && left.value == right.value;
+            if (left.name === right.name && left.value === right.value) {
+                return null;
+            }
+
+            return `${path}->attributes{${right.name}}`;
+        }
+        case "Nested": {
+            assumeKindDeclaration(right, left.kind);
+
+            if (!isSameSelector(left.selector, right.selector)) {
+                return path;
+            }
+
+            const sharedLength = Math.min(
+                left.declarations.length,
+                right.declarations.length,
+            );
+
+            for (let i = 0; i < sharedLength; i++) {
+                const childPath = getDeclarationDiffPath(
+                    left.declarations[i],
+                    right.declarations[i],
+                    `${path}->${i}`,
+                );
+
+                if (childPath !== null) {
+                    return childPath;
+                }
+            }
+
+            if (left.declarations.length !== right.declarations.length) {
+                return `${path}->${sharedLength}`;
+            }
+
+            return null;
         }
     }
 }
 
-export function diff(left: CssBlock[], right: CssBlock[]): Diff<CssBlock[]> {
-    const added = [];
-    const removed = [];
+function getBlockDiffPath(
+    left: CssBlock,
+    right: CssBlock,
+    path: string,
+): string | null {
+    if (
+        left.kind !== right.kind ||
+        !isSameSelector(left.selector, right.selector)
+    ) {
+        return path;
+    }
 
-    for (let i = 0; i < left.length; i++) {
-        if (right.length <= i) {
-            break;
+    switch (left.kind) {
+        case "Regular": {
+            const rightRegular = right as typeof left;
+            const propertyOnlyDiffPath = getPropertyOnlyDiffPath(
+                left.body,
+                rightRegular.body,
+                path,
+            );
+
+            if (propertyOnlyDiffPath !== null) {
+                return propertyOnlyDiffPath;
+            }
+
+            if (
+                areAllPropertyDeclarations(left.body) &&
+                areAllPropertyDeclarations(rightRegular.body) &&
+                !hasDuplicatePropertyNames(left.body) &&
+                !hasDuplicatePropertyNames(rightRegular.body)
+            ) {
+                return null;
+            }
+
+            const sharedLength = Math.min(
+                left.body.length,
+                rightRegular.body.length,
+            );
+
+            for (let i = 0; i < sharedLength; i++) {
+                const declarationPath = getDeclarationDiffPath(
+                    left.body[i],
+                    rightRegular.body[i],
+                    path,
+                );
+
+                if (declarationPath !== null) {
+                    return declarationPath;
+                }
+            }
+
+            if (left.body.length !== rightRegular.body.length) {
+                return `${path}->${sharedLength}`;
+            }
+
+            return null;
         }
+        case "MediaQuery": {
+            const rightMedia = right as typeof left;
+            const sharedLength = Math.min(
+                left.body.length,
+                rightMedia.body.length,
+            );
 
+            for (let i = 0; i < sharedLength; i++) {
+                const childPath = getBlockDiffPath(
+                    left.body[i],
+                    rightMedia.body[i],
+                    `${path}->${i}`,
+                );
+
+                if (childPath !== null) {
+                    return childPath;
+                }
+            }
+
+            if (left.body.length !== rightMedia.body.length) {
+                return `${path}->${sharedLength}`;
+            }
+
+            return null;
+        }
+    }
+}
+
+/**
+ * the `path` is based on the location of the rule
+ *
+ * e.g given
+ *
+ * ```
+ * .hello {
+ *     width: 20px;
+ * }
+ *
+ * .world {
+ *     height: 100vw;
+ * }
+ * ```
+ *
+ * `0` is the first (`.hello` block)
+ * `1->attributes{height}` is the height of the `.world` block
+ *
+ * `0->1->attributes{height}` is the height of the second block of the root element (e.g in the case of media queries or nested queries)
+ */
+export function diff(left: CssBlock[], right: CssBlock[]): Diff<CssBlock[]> {
+    const diffs: Diff<CssBlock[]>["diffs"] = [];
+    const sharedLength = Math.min(left.length, right.length);
+
+    for (let i = 0; i < sharedLength; i++) {
         const leftBlock = left[i];
         const rightBlock = right[i];
+        const path = getBlockDiffPath(leftBlock, rightBlock, `${i}`);
 
-        if (!isSameCssBlock(leftBlock, rightBlock)) {
-            removed.push(leftBlock);
-            added.push(rightBlock);
+        if (path === null) {
+            continue;
         }
+
+        diffs.push({
+            path,
+            added: [rightBlock],
+            removed: [leftBlock],
+        });
     }
 
-    for (let i = left.length; i < right.length; i++) {
-        added.push(right[i]);
+    for (let i = sharedLength; i < right.length; i++) {
+        diffs.push({
+            path: `${i}`,
+            added: [right[i]],
+            removed: [],
+        });
     }
 
-    for (let i = right.length; i < left.length; i++) {
-        removed.push(left[i]);
+    for (let i = sharedLength; i < left.length; i++) {
+        diffs.push({
+            path: `${i}`,
+            added: [],
+            removed: [left[i]],
+        });
     }
 
-    return {
-        diffs: [
-            {
-                path: "0",
-                added,
-                removed,
-            },
-        ],
-    };
+    return { diffs };
 }

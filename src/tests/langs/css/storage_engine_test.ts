@@ -99,7 +99,7 @@ export function testInsertion() {
     deepStrictEqual(engine.diff(0, 1), {
         diffs: [
             {
-                path: "0",
+                path: "0->attributes{width}",
                 added: [
                     {
                         kind: "Regular",
