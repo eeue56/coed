@@ -311,7 +311,10 @@ export function testFilterKeepsSafePropertiesAlongsideFilteredArrayValues() {
 let diagnostics = { endpoints: [apiBaseUrl, fetch(healthUrl)], route: window.location, status: statusLabel };
         `.trim(),
         `
-let diagnostics = { "endpoints": [apiBaseUrl], "status": statusLabel };
+let diagnostics = {
+    "endpoints": [apiBaseUrl],
+    "status": statusLabel
+};
         `.trim(),
     );
 }

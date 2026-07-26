@@ -84,42 +84,114 @@ function additionExpressionTermCount(expression: Expression): number {
     );
 }
 
-export function generateExpression(expression: Expression): string {
+function formatMultilineValueAtLevel(
+    value: string,
+    level: number,
+    prefix: string,
+): string {
+    if (!value.includes("\n")) {
+        return indent(level, `${prefix}${value}`);
+    }
+
+    const [firstLine, ...restLines] = value.split("\n");
+    return `${indent(level, `${prefix}${firstLine}`)}\n${restLines.join("\n")}`;
+}
+
+function shouldMultilineObject(
+    expression: Extract<Expression, { kind: "ObjectExpression" }>,
+): boolean {
+    const entries = Object.entries(expression.properties);
+
+    if (entries.length <= 1) {
+        return false;
+    }
+
+    return true;
+}
+
+function shouldMultilineArray(
+    expression: Extract<Expression, { kind: "ArrayExpression" }>,
+): boolean {
+    if (expression.elements.length === 0) {
+        return false;
+    }
+
+    return expression.elements.some(
+        (element) =>
+            element.kind === "ObjectExpression" ||
+            element.kind === "ArrayExpression" ||
+            element.kind === "StringLiteralExpression",
+    );
+}
+
+export function generateExpression(expression: Expression, level = 0): string {
     switch (expression.kind) {
         case "NumberExpression":
             return `${expression.value}`;
         case "StringExpression":
             return `"${expression.value}"`;
-        case "ArrayExpression":
-            return `[${expression.elements.map(generateExpression).join(", ")}]`;
+        case "ArrayExpression": {
+            if (expression.elements.length === 0) {
+                return "[]";
+            }
+
+            const generatedElements = expression.elements.map((element) =>
+                generateExpression(element, level + 1),
+            );
+
+            if (!shouldMultilineArray(expression)) {
+                return `[${generatedElements.join(", ")}]`;
+            }
+
+            const lines = generatedElements.map((value) =>
+                formatMultilineValueAtLevel(value, level + 1, ""),
+            );
+
+            return `[\n${lines.join(",\n")}\n${indent(level, "]")}`;
+        }
         case "ObjectExpression": {
             const properties = Object.entries(expression.properties).map(
-                ([key, value]) => `"${key}": ${generateExpression(value)}`,
+                ([key, value]) => ({
+                    key,
+                    value: generateExpression(value, level + 1),
+                }),
             );
 
             if (properties.length === 0) {
                 return "{}";
             }
 
-            return `{ ${properties.join(", ")} }`;
+            if (!shouldMultilineObject(expression)) {
+                return `{ "${properties[0].key}": ${properties[0].value} }`;
+            }
+
+            const lines = properties.map((property) =>
+                formatMultilineValueAtLevel(
+                    property.value,
+                    level + 1,
+                    `"${property.key}": `,
+                ),
+            );
+
+            return `{\n${lines.join(",\n")}\n${indent(level, "}")}`;
         }
         case "EqualityExpression": {
-            return `${generateExpression(expression.left)} === ${generateExpression(expression.right)}`;
+            return `${generateExpression(expression.left, level)} === ${generateExpression(expression.right, level)}`;
         }
         case "InequalityExpression": {
-            return `${generateExpression(expression.left)} !== ${generateExpression(expression.right)}`;
+            return `${generateExpression(expression.left, level)} !== ${generateExpression(expression.right, level)}`;
         }
         case "LessThanExpression": {
-            return `${generateExpression(expression.left)} < ${generateExpression(expression.right)}`;
+            return `${generateExpression(expression.left, level)} < ${generateExpression(expression.right, level)}`;
         }
         case "MoreThanExpression": {
-            return `${generateExpression(expression.left)} > ${generateExpression(expression.right)}`;
+            return `${generateExpression(expression.left, level)} > ${generateExpression(expression.right, level)}`;
         }
         case "LessThanOrEqualExpression": {
-            return `${generateExpression(expression.left)} <= ${generateExpression(expression.right)}`;
+            return `${generateExpression(expression.left, level)} <= ${generateExpression(expression.right, level)}`;
         }
         case "MoreThanOrEqualExpression": {
-            return `${generateExpression(expression.left)} >= ${generateExpression(expression.right)}`;
+            return `${generateExpression(expression.left, level)} >= ${generateExpression(expression.right, level)}`;
         }
         case "IncrementExpression": {
             return `${expression.variable}++`;
@@ -128,16 +200,16 @@ export function generateExpression(expression: Expression): string {
             return `${expression.variable}--`;
         }
         case "IncreaseExpression": {
-            return `${expression.variable} += ${generateExpression(expression.amount)}`;
+            return `${expression.variable} += ${generateExpression(expression.amount, level)}`;
         }
         case "DecreaseExpression": {
-            return `${expression.variable} -= ${generateExpression(expression.amount)}`;
+            return `${expression.variable} -= ${generateExpression(expression.amount, level)}`;
         }
         case "NegationExpression": {
-            return `!${generateExpression(expression.value)}`;
+            return `!${generateExpression(expression.value, level)}`;
         }
         case "AssignmentExpression": {
-            return `${generateExpression(expression.target)} = ${generateExpression(expression.value)}`;
+            return `${generateExpression(expression.target, level)} = ${generateExpression(expression.value, level)}`;
         }
         case "ArrowFunctionExpression": {
             const parameters = expression.parameters.join(", ");
@@ -146,7 +218,7 @@ export function generateExpression(expression: Expression): string {
                 return `${asyncPrefix}(${parameters}) => ${generateBlock(expression.body, 0)}`;
             }
 
-            return `${asyncPrefix}(${parameters}) => ${generateExpression(expression.body)}`;
+            return `${asyncPrefix}(${parameters}) => ${generateExpression(expression.body, level)}`;
         }
         case "ThisExpression": {
             return `this`;
@@ -155,13 +227,13 @@ export function generateExpression(expression: Expression): string {
             return `super`;
         }
         case "AwaitExpression": {
-            return `await ${generateExpression(expression.value)}`;
+            return `await ${generateExpression(expression.value, level)}`;
         }
         case "NewExpression": {
-            return `new ${generateExpression(expression.callee)}(${expression.arguments.map(generateExpression).join(", ")})`;
+            return `new ${generateExpression(expression.callee, level)}(${expression.arguments.map((argument) => generateExpression(argument, level)).join(", ")})`;
         }
         case "ImportExpression": {
-            return `import(${generateExpression(expression.source)})`;
+            return `import(${generateExpression(expression.source, level)})`;
         }
         case "NullExpression": {
             return `null`;
@@ -176,66 +248,66 @@ export function generateExpression(expression: Expression): string {
                         return value.value;
                     }
 
-                    return `\${${generateExpression(value)}}`;
+                    return `\${${generateExpression(value, level)}}`;
                 })
                 .join("");
 
             return `\`${values}\``;
         }
         case "FunctionCallExpression": {
-            return `${expression.functionName}(${expression.arguments.map(generateExpression).join(", ")})`;
+            return `${expression.functionName}(${expression.arguments.map((argument) => generateExpression(argument, level)).join(", ")})`;
         }
         case "NameLookupExpression": {
             return expression.name;
         }
         case "ObjectPropertyExpression": {
-            const parent = generateExpression(expression.object);
+            const parent = generateExpression(expression.object, level);
             switch (expression.property.kind) {
                 case "NameLookupExpression": {
-                    return `${parent}.${generateExpression(expression.property)}`;
+                    return `${parent}.${generateExpression(expression.property, level)}`;
                 }
                 case "StringLiteralExpression": {
-                    return `${parent}[${generateExpression(expression.property)}]`;
+                    return `${parent}[${generateExpression(expression.property, level)}]`;
                 }
             }
             break;
         }
         case "ObjectMethodCallExpression": {
-            const parent = generateExpression(expression.object);
+            const parent = generateExpression(expression.object, level);
             const args = expression.arguments
-                .map(generateExpression)
+                .map((argument) => generateExpression(argument, level))
                 .join(", ");
 
             switch (expression.method.kind) {
                 case "NameLookupExpression": {
-                    return `${parent}.${generateExpression(expression.method)}(${args})`;
+                    return `${parent}.${generateExpression(expression.method, level)}(${args})`;
                 }
                 case "StringLiteralExpression": {
-                    return `${parent}[${generateExpression(expression.method)}](${args})`;
+                    return `${parent}[${generateExpression(expression.method, level)}](${args})`;
                 }
             }
             break;
         }
         case "ArrayAccessExpression": {
-            return `${generateExpression(expression.array)}[${generateExpression(expression.index)}]`;
+            return `${generateExpression(expression.array, level)}[${generateExpression(expression.index, level)}]`;
         }
         case "AdditionExpression": {
-            return `${generateExpression(expression.left)} + ${generateExpression(expression.right)}`;
+            return `${generateExpression(expression.left, level)} + ${generateExpression(expression.right, level)}`;
         }
         case "SubtractionExpression": {
-            return `${generateExpression(expression.left)} - ${generateExpression(expression.right)}`;
+            return `${generateExpression(expression.left, level)} - ${generateExpression(expression.right, level)}`;
         }
         case "MultiplicationExpression": {
-            return `${generateExpression(expression.left)} * ${generateExpression(expression.right)}`;
+            return `${generateExpression(expression.left, level)} * ${generateExpression(expression.right, level)}`;
         }
         case "DivisionExpression": {
-            return `${generateExpression(expression.left)} / ${generateExpression(expression.right)}`;
+            return `${generateExpression(expression.left, level)} / ${generateExpression(expression.right, level)}`;
         }
         case "AndExpression": {
-            return `${generateExpression(expression.left)} && ${generateExpression(expression.right)}`;
+            return `${generateExpression(expression.left, level)} && ${generateExpression(expression.right, level)}`;
         }
         case "OrExpression": {
-            return `${generateExpression(expression.left)} || ${generateExpression(expression.right)}`;
+            return `${generateExpression(expression.left, level)} || ${generateExpression(expression.right, level)}`;
         }
     }
 }

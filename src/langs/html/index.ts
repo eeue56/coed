@@ -1,5 +1,5 @@
 import {
-    flatRender,
+    render,
     type Attribute,
     type Event,
     type HtmlNode,
@@ -9,6 +9,7 @@ import type { FilterResult, FilterRule, Language } from "../types.ts";
 import { diff } from "./diff.ts";
 import { filter, filterAttributes, filterEvents } from "./filter.ts";
 import { parse } from "./parse.ts";
+import { viewDiff } from "./viewDiff.ts";
 
 type AttributeAndEventFilters<a> = {
     filterEvents: (
@@ -39,15 +40,17 @@ export type HtmlLanguage<a> = Language<HtmlNode<a>, HtmlNode<a>> &
  * @prop `generate`: generate HTML string from a `HtmlNode`
  * @prop `parse`: turn a string into a `HtmlNode` tree, or string if parsing failed (`Result` type)
  * @prop `diff`: diff two trees
+ * @prop `viewDiff`: visualize a diff
  * @prop `storage`: storage engine for the trees (diff aware)
  */
 export const html: HtmlLanguage<unknown> = {
     filter: filter,
     parse,
-    generate: flatRender,
+    generate: render,
     filterEvents,
     filterAttributes,
     diff,
+    viewDiff,
     storage: () => {
         const storage = Storage<HtmlNode<unknown>>();
         storage.registerDiffer(html.diff);

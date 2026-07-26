@@ -1,3 +1,4 @@
+import type { HtmlNode } from "../coed.ts";
 import type { Storage } from "./engine.ts";
 
 export type Ok<value> = {
@@ -52,6 +53,7 @@ export type Diff<tree> = {
  * @prop `filter`: remove elements from a tree
  * @prop `generate`: turn the tree into a string
  * @prop `diff`: diff two trees
+ * @prop `viewDiff`: visualize a diff
  * @prop `storage`: storage engine for the trees (diff aware)
  *
  * language dialects may be extended with additional filters
@@ -78,6 +80,11 @@ export type Language<tree, node> = {
      * diff two trees and get the response
      */
     diff: (left: tree, right: tree) => Diff<tree>;
+
+    /**
+     * semantic-aware visualization of a diff using coed
+     */
+    viewDiff: (diff: Diff<tree>) => HtmlNode<never>;
 
     /**
      * create a storage engine for the language

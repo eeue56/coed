@@ -433,34 +433,94 @@ export type OperatorRule = {
 
 export type TokenKinds = Token["kind"];
 
-export function isExpression(node: JsNode): node is Expression {
-    return !isAst(node);
+export function isExpression(node: unknown): node is Expression {
+    if (
+        !node ||
+        typeof node !== "object" ||
+        typeof (node as JsNode).kind === "undefined"
+    ) {
+        return false;
+    }
+
+    const kind = (node as JsNode).kind;
+
+    switch (kind as Expression["kind"]) {
+        case "NumberExpression":
+        case "StringExpression":
+        case "ArrayExpression":
+        case "ObjectExpression":
+        case "EqualityExpression":
+        case "InequalityExpression":
+        case "LessThanExpression":
+        case "MoreThanExpression":
+        case "LessThanOrEqualExpression":
+        case "MoreThanOrEqualExpression":
+        case "IncrementExpression":
+        case "DecrementExpression":
+        case "IncreaseExpression":
+        case "DecreaseExpression":
+        case "NegationExpression":
+        case "AssignmentExpression":
+        case "ArrowFunctionExpression":
+        case "ThisExpression":
+        case "SuperExpression":
+        case "AwaitExpression":
+        case "NewExpression":
+        case "ImportExpression":
+        case "NullExpression":
+        case "BooleanExpression":
+        case "StringLiteralExpression":
+        case "FunctionCallExpression":
+        case "NameLookupExpression":
+        case "ObjectPropertyExpression":
+        case "ObjectMethodCallExpression":
+        case "ArrayAccessExpression":
+        case "AdditionExpression":
+        case "SubtractionExpression":
+        case "MultiplicationExpression":
+        case "DivisionExpression":
+        case "AndExpression":
+        case "OrExpression":
+            return true;
+    }
+
+    return false;
 }
 
-export function isAst(node: JsNode): node is Ast {
-    const kind = node.kind;
+export function isAst(node: unknown): node is Ast {
+    if (
+        !node ||
+        typeof node !== "object" ||
+        typeof (node as JsNode).kind === "undefined"
+    ) {
+        return false;
+    }
+    const kind = (node as JsNode).kind;
 
-    return (
-        kind === "LetStatement" ||
-        kind === "LetListStatement" ||
-        kind === "ConstStatement" ||
-        kind === "IfStatement" ||
-        kind === "ClassicForLoop" ||
-        kind === "ForInOfLoop" ||
-        kind === "DoWhileLoop" ||
-        kind === "FunctionDeclaration" ||
-        kind === "ClassDeclaration" ||
-        kind === "ReturnStatement" ||
-        kind === "ContinueStatement" ||
-        kind === "BreakStatement" ||
-        kind === "ThrowStatement" ||
-        kind === "TryCatchStatement" ||
-        kind === "ImportStatement" ||
-        kind === "ExportDeclarationStatement" ||
-        kind === "ExportNamedStatement" ||
-        kind === "ExportDefaultStatement" ||
-        kind === "LineTerminatedExpression"
-    );
+    switch (kind as Ast["kind"]) {
+        case "LetStatement":
+        case "LetListStatement":
+        case "ConstStatement":
+        case "IfStatement":
+        case "ClassicForLoop":
+        case "ForInOfLoop":
+        case "DoWhileLoop":
+        case "FunctionDeclaration":
+        case "ClassDeclaration":
+        case "ReturnStatement":
+        case "ContinueStatement":
+        case "BreakStatement":
+        case "ThrowStatement":
+        case "TryCatchStatement":
+        case "ImportStatement":
+        case "ExportDeclarationStatement":
+        case "ExportNamedStatement":
+        case "ExportDefaultStatement":
+        case "LineTerminatedExpression":
+            return true;
+        default:
+            return false;
+    }
 }
 
 export function isDeclaration(
@@ -479,6 +539,10 @@ export function isDeclaration(
         kind === "ConstStatement" ||
         kind === "ClassDeclaration"
     );
+}
+
+export function isJsNode(node: unknown): node is JsNode {
+    return isAst(node) || isExpression(node);
 }
 
 export type JsNode = Ast | Expression;

@@ -26,7 +26,10 @@ function assertGeneratedFromSource(input: string, expected: string) {
 export function testGenerateObjectsAndArrays() {
     assertMatchingParsedAndGeneratedCode(
         `
-const settings = { "theme": "light", "retries": 3 };
+const settings = {
+    "theme": "light",
+    "retries": 3
+};
 
 let queue = [1, 2, 3];
         `.trim(),
@@ -44,7 +47,10 @@ let queue = [1, 2, 3];
     );
 
     const expected = `
-const settings = { "theme": "light", "retries": 3 };
+const settings = {
+    "theme": "light",
+    "retries": 3
+};
 
 let queue = [1, 2, 3];
         `.trim();
@@ -56,7 +62,10 @@ export function testGenerateIfAndForStatements() {
     assertMatchingParsedAndGeneratedCode(
         `
 if (ready) {
-    let current = { "count": 1, "values": [1, 2] };
+    let current = {
+        "count": 1,
+        "values": [1, 2]
+    };
 } else {
     const fallback = [0];
 }
@@ -148,7 +157,13 @@ let pendingJobs = [];
 export function testGenerateNestedCollections() {
     assertMatchingParsedAndGeneratedCode(
         `
-const dashboardState = { "widgets": [1, 2], "filters": { "active": true, "region": "eu" } };
+const dashboardState = {
+    "widgets": [1, 2],
+    "filters": {
+        "active": true,
+        "region": "eu"
+    }
+};
         `.trim(),
     );
 }
@@ -161,7 +176,13 @@ const dashboardState = { widgets: [1, 2], filters: { active: true, region: "eu" 
     const program = expectOk<Program>(javascript.parse(code));
 
     const expected = `
-const dashboardState = { "widgets": [1, 2], "filters": { "active": true, "region": "eu" } };
+const dashboardState = {
+    "widgets": [1, 2],
+    "filters": {
+        "active": true,
+        "region": "eu"
+    }
+};
         `.trim();
 
     assert.strictEqual(javascript.generate(program), expected);
@@ -170,7 +191,10 @@ const dashboardState = { "widgets": [1, 2], "filters": { "active": true, "region
 export function testGenerateArrayOfObjects() {
     assertMatchingParsedAndGeneratedCode(
         `
-const releasePlan = [{ "version": 1 }, { "version": 2 }];
+const releasePlan = [
+    { "version": 1 },
+    { "version": 2 }
+];
         `.trim(),
     );
 }
@@ -178,7 +202,10 @@ const releasePlan = [{ "version": 1 }, { "version": 2 }];
 export function testGenerateNestedArraysInsideObjects() {
     assertMatchingParsedAndGeneratedCode(
         `
-let analyticsSummary = { "weeklyTotals": [1, 2, 3], "monthlyTotals": [4, 5] };
+let analyticsSummary = {
+    "weeklyTotals": [1, 2, 3],
+    "monthlyTotals": [4, 5]
+};
         `.trim(),
     );
 }
@@ -396,7 +423,11 @@ export function testGenerateFunctionWithNestedCollections() {
     assertMatchingParsedAndGeneratedCode(
         `
 function loadWorkspace(teamId) {
-    let workspaceState = { "teamId": teamId, "members": [1, 2], "flags": { "active": true } };
+    let workspaceState = {
+        "teamId": teamId,
+        "members": [1, 2],
+        "flags": { "active": true }
+    };
 }
         `.trim(),
     );
@@ -686,7 +717,10 @@ let supportTicket = ticketBuilder.create(accountId, issueCounts[0]);
 export function testGenerateObjectWithArithmeticProperties() {
     assertMatchingParsedAndGeneratedCode(
         `
-const quotaSnapshot = { "used": usedSeats, "remaining": maxSeats - usedSeats };
+const quotaSnapshot = {
+    "used": usedSeats,
+    "remaining": maxSeats - usedSeats
+};
         `.trim(),
     );
 }

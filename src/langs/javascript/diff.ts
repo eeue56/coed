@@ -1,3 +1,4 @@
+import { appendInlineMapPath, appendPath } from "../diffs/diffPath.ts";
 import type { Diff } from "../types.ts";
 import type { JsNode } from "./types.ts";
 
@@ -32,21 +33,18 @@ function isSameValue(left: unknown, right: unknown): boolean {
         return false;
     }
 
-    if (typeof right !== "object") {
-        return false;
-    }
-
     const leftRecord = left as Record<string, unknown>;
     const rightRecord = right as Record<string, unknown>;
     const leftKeys = Object.keys(leftRecord);
     const rightKeys = Object.keys(rightRecord);
+    const rightKeySet = new Set(rightKeys);
 
     if (leftKeys.length !== rightKeys.length) {
         return false;
     }
 
     for (const key of leftKeys) {
-        if (!rightKeys.includes(key)) {
+        if (!rightKeySet.has(key)) {
             return false;
         }
 
@@ -66,12 +64,11 @@ function isPropertyMap(value: unknown): value is Record<string, unknown> {
     return isRecord(value) && !("kind" in value);
 }
 
-function appendPath(path: string, segment: string): string {
-    return `${path}->${segment}`;
-}
-
-function appendPropertyPath(path: string, property: string): string {
-    return `${path}{${property}}`;
+function keyUnion(
+    left: Record<string, unknown>,
+    right: Record<string, unknown>,
+): string[] {
+    return [...new Set([...Object.keys(left), ...Object.keys(right)])];
 }
 
 function diffPropertyMap(
@@ -80,16 +77,16 @@ function diffPropertyMap(
     path: string,
 ): string[] {
     const paths: string[] = [];
-    const keys = [...new Set([...Object.keys(left), ...Object.keys(right)])];
+    const keys = keyUnion(left, right);
 
     for (const key of keys) {
         if (!(key in left) || !(key in right)) {
-            paths.push(appendPropertyPath(path, key));
+            paths.push(appendInlineMapPath(path, key));
             continue;
         }
 
         paths.push(
-            ...diffValue(left[key], right[key], appendPropertyPath(path, key)),
+            ...diffValue(left[key], right[key], appendInlineMapPath(path, key)),
         );
     }
 
@@ -127,7 +124,7 @@ function diffObject(
     }
 
     const paths: string[] = [];
-    const keys = [...new Set([...Object.keys(left), ...Object.keys(right)])];
+    const keys = keyUnion(left, right);
 
     for (const key of keys) {
         if (!(key in left) || !(key in right)) {
@@ -173,6 +170,13 @@ function diffValue(left: unknown, right: unknown, path: string): string[] {
     return [path];
 }
 
+/**
+ * Path format is based on node position in the JavaScript AST.
+ *
+ * `0` is the first top-level node.
+ * `0->value->value` targets nested fields on that node.
+ * `0->value->properties{count}` targets the `count` entry in an object-expression properties map.
+ */
 export function diff(left: JsNode[], right: JsNode[]): Diff<JsNode[]> {
     const diffs: Diff<JsNode[]>["diffs"] = [];
     const sharedLength = Math.min(left.length, right.length);

@@ -1,4 +1,8 @@
 import type { Attribute, HtmlNode } from "../../coed.ts";
+import {
+    DIFF_PROPERTY_SEGMENT,
+    appendPropertyPath,
+} from "../diffs/diffPath.ts";
 import type { Diff, DiffNode } from "../types.ts";
 
 function isSameAttribute(a: Attribute, b: Attribute): boolean {
@@ -26,10 +30,6 @@ function getAttributeKey(attribute: Attribute): string {
     }
 }
 
-function getAttributeDiffPath(pathSoFar: string, key: string): string {
-    return `${pathSoFar}->attributes{${key}}`;
-}
-
 function groupAttributesByKey(
     attributes: Attribute[],
 ): Map<string, Attribute[]> {
@@ -50,7 +50,7 @@ function groupAttributesByKey(
     return grouped;
 }
 
-function attributeDiffsByKey(
+function diffAttributesByKey(
     pathSoFar: string,
     previousAttributes: Attribute[],
     nextAttributes: Attribute[],
@@ -79,7 +79,7 @@ function attributeDiffsByKey(
         }
 
         diffs.push({
-            path: getAttributeDiffPath(pathSoFar, key),
+            path: appendPropertyPath(pathSoFar, key, DIFF_PROPERTY_SEGMENT),
             removed,
             added,
         });
@@ -98,7 +98,7 @@ function nodeReplacementDiff(
     };
 }
 
-function mapAttributeDiffsToNodeDiffs(
+function mapAttributeDiffsToNodeDiff(
     facts: Diff<Attribute[]>,
     currentTree: HtmlNode<unknown>,
     nextTree: HtmlNode<unknown>,
@@ -112,13 +112,26 @@ function mapAttributeDiffsToNodeDiffs(
     };
 }
 
+function getNodeAttributeDiff(
+    currentTree: HtmlNode<unknown>,
+    nextTree: HtmlNode<unknown>,
+    pathSoFar: string,
+): Diff<HtmlNode<unknown>> | null {
+    const facts = diffAttributeFacts(currentTree, nextTree, pathSoFar);
+    if (facts.diffs.length === 0) {
+        return null;
+    }
+
+    return mapAttributeDiffsToNodeDiff(facts, currentTree, nextTree);
+}
+
 /**
  * diff attributes, gives the path with the name of the attribute at the end
  * e.g:
  * `->attributes{width}` if width changes
  * `->attributes{height}` if height changes
  */
-function diffFacts<Msg>(
+function diffAttributeFacts<Msg>(
     previousTree: HtmlNode<Msg>,
     nextTree: HtmlNode<Msg>,
     pathSoFar: string,
@@ -134,7 +147,7 @@ function diffFacts<Msg>(
             >;
 
             return {
-                diffs: attributeDiffsByKey(
+                diffs: diffAttributesByKey(
                     pathSoFar,
                     typedPreviousTree.attributes,
                     nextTree.attributes,
@@ -173,13 +186,13 @@ function diffNode(
                 return nodeReplacementDiff(pathSoFar, currentTree, nextTree);
             }
 
-            const facts = diffFacts(currentTree, nextTree, pathSoFar);
-            if (facts.diffs.length > 0) {
-                return mapAttributeDiffsToNodeDiffs(
-                    facts,
-                    currentTree,
-                    nextTree,
-                );
+            const attributeDiffs = getNodeAttributeDiff(
+                currentTree,
+                nextTree,
+                pathSoFar,
+            );
+            if (attributeDiffs !== null) {
+                return attributeDiffs;
             }
 
             return { diffs: [] };
@@ -192,14 +205,13 @@ function diffNode(
                 return nodeReplacementDiff(pathSoFar, currentTree, nextTree);
             }
 
-            const facts = diffFacts(currentTree, nextTree, pathSoFar);
-
-            if (facts.diffs.length > 0) {
-                return mapAttributeDiffsToNodeDiffs(
-                    facts,
-                    currentTree,
-                    nextTree,
-                );
+            const attributeDiffs = getNodeAttributeDiff(
+                currentTree,
+                nextTree,
+                pathSoFar,
+            );
+            if (attributeDiffs !== null) {
+                return attributeDiffs;
             }
 
             if (currentTree.children.length !== typedNextTree.children.length) {
@@ -237,13 +249,21 @@ function diffNode(
  *
  * e.g
  *
- * `0` is the first (root)
- * `0->attributes{width}` is the width of the first element
- * `0->1->attributes{height}` is the height of the second element of the root element
+ * `0` is the root node.
+ * `0->attributes{width}` targets the `width` attribute on the root node.
+ * `0->1->attributes{height}` targets the `height` attribute on the second child of the root node.
  */
 export function diff(
     left: HtmlNode<unknown>,
     right: HtmlNode<unknown>,
 ): Diff<HtmlNode<unknown>> {
-    return diffNode(left, right, "0");
+    const nodeDiff = diffNode(left, right, "0");
+
+    return {
+        diffs: nodeDiff.diffs.map((entry) => ({
+            path: entry.path,
+            added: right,
+            removed: left,
+        })),
+    };
 }

@@ -75,7 +75,10 @@
         "watch": "tsc -w -p tsconfig.json",
         "format": "npx prettier --write .",
         "test": "npx @eeue56/bach",
+        "test-playwright": "npx playwright test",
+        "test-playwright:update": "npx playwright test --update-snapshots",
         "test-js": "npm test -- --file src/tests/langs/javascript/*",
+        "test-all": "npm run test && npm run test-playwright",
         "lint": "npx eslint .",
         "docs": "npx @eeue56/geiriadur"
     },
@@ -98,13 +101,14 @@
     "devDependencies": {
         "@eeue56/bach": "^1.0.1",
         "@eeue56/geiriadur": "^0.0.3",
+        "@eslint/js": "^10.0.1",
+        "@playwright/test": "^1.61.1",
         "@types/jsdom": "^28.0.3",
         "@types/node": "^24.0.3",
-        "typescript": "^6.0.3",
         "eslint": "^10.6.0",
-        "typescript-eslint": "^8.63.0",
-        "@eslint/js": "^10.0.1",
-        "prettier": "^3.8.4"
+        "prettier": "^3.8.4",
+        "typescript": "^6.0.3",
+        "typescript-eslint": "^8.63.0"
     },
     "optionalDependencies": {
         "jsdom": "^29.1.1"

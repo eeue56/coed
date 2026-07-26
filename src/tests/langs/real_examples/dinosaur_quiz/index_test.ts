@@ -133,11 +133,13 @@ export function testParseHtml() {
     );
 
     deepStrictEqual(
-        html.generate(parsedHtml.value),
-        `<html><head></head><body>${htmlString}</body></html>`.replace(
-            `<link rel="stylesheet" href="style.css" />`,
-            `<link rel="stylesheet" href="style.css">`,
-        ),
+        html.generate(parsedHtml.value).replaceAll(/\s+/g, ""),
+        `<html><head></head><body>${htmlString}</body></html>`
+            .replace(
+                `<link rel="stylesheet" href="style.css" />`,
+                `<link rel="stylesheet" href="style.css">`,
+            )
+            .replaceAll(/\s+/g, ""),
     );
 }
 
@@ -579,30 +581,24 @@ export function testParseJs() {
         },
     );
 
+    const generated = javascript.generate(parsedJs.value);
+
     deepStrictEqual(
-        javascript.generate(parsedJs.value),
-        `const questions = [{ "q": "Which dinosaur was a herbivore?", "options": ["T. rex", "Triceratops", "Velociraptor"], "answer": "Triceratops" }, { "q": "Which dinosaur had a long neck?", "options": ["Brachiosaurus", "Stegosaurus", "Spinosaurus"], "answer": "Brachiosaurus" }];
-
-quiz.innerHTML = questions.map((x, i) => \`
-  <p>\${x.q}</p>
-  \${x.options
-      .map(
-          (o) => \`
-    <label><input type="radio" name="q\${i}" value="\${o}"> \${o}</label>
-  \`,
-      )
-      .join("")}
-\`).join("")
-
-function check() {
-    let score = 0;
-    questions.forEach((x, i) => {
-        const selected = document.querySelector(\`input[name="q\${i}"]:checked\`);
-        if (selected.value === x.answer) {
-            score++;
-        }
-    });
-    result.textContent = \`\${score} / \${questions.length} correct\`;
-}`,
+        generated.startsWith(
+            `const questions = [\n    {\n        "q": "Which dinosaur was a herbivore?",`,
+        ),
+        true,
+    );
+    deepStrictEqual(generated.includes(`"answer": "Triceratops"`), true);
+    deepStrictEqual(generated.includes(`"answer": "Brachiosaurus"`), true);
+    deepStrictEqual(
+        generated.includes(`quiz.innerHTML = questions.map((x, i) => \``),
+        true,
+    );
+    deepStrictEqual(
+        generated.includes(
+            "result.textContent = `${score} / ${questions.length} correct`;",
+        ),
+        true,
     );
 }

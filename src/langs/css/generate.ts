@@ -1,6 +1,6 @@
 import type { CssBlock, Declaration, Selector } from "./types.ts";
 
-function selectorToString(selector: Selector): string {
+export function selectorToString(selector: Selector): string {
     switch (selector.kind) {
         case "Class": {
             return `.${selector.class}`;

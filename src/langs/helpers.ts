@@ -1,5 +1,14 @@
 import type { FilterResult, FilterRule } from "./types.ts";
 
+export function escapeHtml(value: string): string {
+    return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+}
+
 /**
  * If a replacer exists, return that value
  * otherwise return nothing

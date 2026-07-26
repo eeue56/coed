@@ -1,3 +1,8 @@
+import {
+    DIFF_PROPERTY_SEGMENT,
+    appendPath,
+    appendPropertyPath,
+} from "../diffs/diffPath.ts";
 import type { Diff } from "../types.ts";
 import { type CssBlock, type Declaration, type Selector } from "./types.ts";
 
@@ -140,6 +145,10 @@ function propertyMap(
     return properties;
 }
 
+function propertyDiffPath(path: string, propertyName: string): string {
+    return appendPropertyPath(path, propertyName, DIFF_PROPERTY_SEGMENT);
+}
+
 function getPropertyOnlyDiffPath(
     leftBody: Declaration[],
     rightBody: Declaration[],
@@ -161,17 +170,17 @@ function getPropertyOnlyDiffPath(
         const leftValue = leftProperties.get(declaration.name);
 
         if (typeof leftValue === "undefined") {
-            return `${path}->attributes{${declaration.name}}`;
+            return propertyDiffPath(path, declaration.name);
         }
 
         if (leftValue !== declaration.value) {
-            return `${path}->attributes{${declaration.name}}`;
+            return propertyDiffPath(path, declaration.name);
         }
     }
 
     for (const declaration of leftBody) {
         if (!rightProperties.has(declaration.name)) {
-            return `${path}->attributes{${declaration.name}}`;
+            return propertyDiffPath(path, declaration.name);
         }
     }
 
@@ -196,7 +205,7 @@ function getDeclarationDiffPath(
     path: string,
 ): string | null {
     if (left.kind !== right.kind) {
-        return `${path}->attributes{${getPropertyName(left, right)}}`;
+        return propertyDiffPath(path, getPropertyName(left, right));
     }
 
     switch (left.kind) {
@@ -207,7 +216,7 @@ function getDeclarationDiffPath(
                 return null;
             }
 
-            return `${path}->attributes{${right.name}}`;
+            return propertyDiffPath(path, right.name);
         }
         case "Nested": {
             assumeKindDeclaration(right, left.kind);
@@ -225,7 +234,7 @@ function getDeclarationDiffPath(
                 const childPath = getDeclarationDiffPath(
                     left.declarations[i],
                     right.declarations[i],
-                    `${path}->${i}`,
+                    appendPath(path, String(i)),
                 );
 
                 if (childPath !== null) {
@@ -234,7 +243,7 @@ function getDeclarationDiffPath(
             }
 
             if (left.declarations.length !== right.declarations.length) {
-                return `${path}->${sharedLength}`;
+                return appendPath(path, String(sharedLength));
             }
 
             return null;
@@ -294,7 +303,7 @@ function getBlockDiffPath(
             }
 
             if (left.body.length !== rightRegular.body.length) {
-                return `${path}->${sharedLength}`;
+                return appendPath(path, String(sharedLength));
             }
 
             return null;
@@ -310,7 +319,7 @@ function getBlockDiffPath(
                 const childPath = getBlockDiffPath(
                     left.body[i],
                     rightMedia.body[i],
-                    `${path}->${i}`,
+                    appendPath(path, String(i)),
                 );
 
                 if (childPath !== null) {
@@ -319,7 +328,7 @@ function getBlockDiffPath(
             }
 
             if (left.body.length !== rightMedia.body.length) {
-                return `${path}->${sharedLength}`;
+                return appendPath(path, String(sharedLength));
             }
 
             return null;
@@ -342,10 +351,9 @@ function getBlockDiffPath(
  * }
  * ```
  *
- * `0` is the first (`.hello` block)
- * `1->attributes{height}` is the height of the `.world` block
- *
- * `0->1->attributes{height}` is the height of the second block of the root element (e.g in the case of media queries or nested queries)
+ * `0` is the first block (`.hello`).
+ * `1->attributes{height}` is `height` on `.world`.
+ * `0->1->attributes{height}` is the `height` of the 2nd (0 + 1) child
  */
 export function diff(left: CssBlock[], right: CssBlock[]): Diff<CssBlock[]> {
     const diffs: Diff<CssBlock[]>["diffs"] = [];
