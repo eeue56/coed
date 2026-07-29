@@ -1,4 +1,3 @@
-import * as jsdom from "jsdom";
 import {
     booleanAttribute,
     node,
@@ -12,8 +11,11 @@ import {
     type HtmlNode,
     type HtmlNodeKind,
     type Tag,
-} from "./coed.ts";
-import { type SvgTag } from "./svg.ts";
+} from "../../coed.ts";
+import { type SvgTag } from "../../coed/svg.ts";
+import type { Result } from "../types.ts";
+
+import { createDOMParser } from "#dom_parser";
 
 /**
  * Parse a fragment of html string into Coed.
@@ -21,8 +23,8 @@ import { type SvgTag } from "./svg.ts";
  * e.g `<div>hello world</div>`
  */
 export function parseFragment(string: string): HtmlNode<never>[] {
-    const parser = new jsdom.JSDOM();
-    const parsed = parser.window.document;
+    const parser = createDOMParser();
+    const parsed = parser.parseFromString("", "text/html");
     parsed.body.innerHTML = string;
     return [...parsed.body.childNodes].flatMap((child) => walk(child)).flat();
 }
@@ -32,14 +34,89 @@ export function parseFragment(string: string): HtmlNode<never>[] {
  *
  * e.g `<html><body><div>hello world</div></body></html>`
  */
-export function parse(string: string): HtmlNode<never> {
-    const parser = new jsdom.JSDOM(string, { contentType: "text/html" });
+export function parse(string: string): Result<HtmlNode<never>> {
+    const parser = createDOMParser();
 
-    return walk(parser.window.document.documentElement)[0] as HtmlNode<never>;
+    const documentElement = parser.parseFromString(string, "text/html");
+    const walked = walk(documentElement.documentElement);
+    const value = walked[0];
+
+    if (typeof value === "undefined") {
+        return {
+            kind: "Err",
+            error: `Unable to walk the string. Is it a html string?`,
+        };
+    }
+
+    return {
+        value,
+        kind: "Ok",
+    };
+}
+
+function svgTagNameToCorrectCase(tagName: string): SvgTag {
+    tagName = tagName.toLowerCase();
+    switch (tagName) {
+        case "svg":
+        case "symbol":
+        case "stop":
+        case "g":
+        case "a":
+        case "defs":
+        case "marker":
+        case "mask":
+        case "pattern":
+        case "switch":
+        case "text":
+        case "circle":
+        case "ellipse":
+        case "line":
+        case "path":
+        case "polygon":
+        case "polyline":
+        case "rect":
+        case "image":
+        case "tspan":
+        case "use":
+        case "filter":
+            return tagName;
+        case "textpath":
+            return "textPath";
+        case "clippath":
+            return "clipPath";
+        case "foreignobject":
+            return "foreignObject";
+        case "lineargradient":
+            return "linearGradient";
+        case "radialgradient":
+            return "radialGradient";
+        case "feblend":
+            return "feBlend";
+        case "fecolormatrix":
+            return "feColorMatrix";
+        case "fecomponenttransfer":
+            return "feComponentTransfer";
+        case "fecomposite":
+            return "feComposite";
+        case "feconvolvematrix":
+            return "feConvolveMatrix";
+        case "fediffuselighting":
+            return "feDiffuseLighting";
+        case "fedisplacementmap":
+            return "feDisplacementMap";
+        case "fedropshadow":
+            return "feDropShadow";
+        default: {
+            console.error(`Unknown SVG tag: ${tagName}`);
+            return "text";
+        }
+    }
 }
 
 function namespaceNodeKind(tagName: string, namespace: string): HtmlNodeKind {
     if (namespace !== "http://www.w3.org/2000/svg") return "regular";
+
+    // lower case the tag names, and add tests to ensure they are the right case
 
     switch (tagName as SvgTag) {
         case "svg":
@@ -79,6 +156,8 @@ function namespaceNodeKind(tagName: string, namespace: string): HtmlNodeKind {
         case "feDisplacementMap":
         case "feDropShadow":
             return "ns-void";
+        default:
+            return "ns-regular";
     }
 }
 
@@ -240,11 +319,19 @@ function attributeKind(name: string): AttributeKind {
     }
 }
 
-function walk(childNode: ChildNode): HtmlNode<never>[] {
+function getElementTagName(element: Element): string {
+    const namespace = element.namespaceURI;
+
+    if (namespace === null || !namespace.endsWith("svg")) {
+        return element.tagName.toLowerCase();
+    }
+
+    return svgTagNameToCorrectCase(element.tagName.toLowerCase());
+}
+
+function walk(childNode: ChildNode): [HtmlNode<never>] | [] {
     if (childNode.nodeType === childNode.TEXT_NODE) {
-        return [
-            text(childNode.textContent || ""),
-        ] as unknown as HtmlNode<never>[];
+        return [text(childNode.textContent || "")];
     }
 
     if (childNode.nodeType !== childNode.ELEMENT_NODE) {
@@ -261,19 +348,20 @@ function walk(childNode: ChildNode): HtmlNode<never>[] {
 
     const attributes: Attribute[] = [];
     for (const attribute of element.attributes) {
-        const kind: AttributeKind = attributeKind(attribute.name);
+        const kind = attributeKind(attribute.name);
 
         attribute.value = attribute.value.trim();
 
         switch (kind) {
-            case "string":
+            case "string": {
                 attributes.push({
                     kind: "string",
                     key: attribute.name,
                     value: attribute.value,
                 });
                 break;
-            case "style":
+            }
+            case "style": {
                 const [styleKey, styleValue] = attribute.value
                     .split(":")
                     .map((s) => s.trim());
@@ -281,20 +369,20 @@ function walk(childNode: ChildNode): HtmlNode<never>[] {
                     style_(styleKey, styleValue.replaceAll(";", "")),
                 );
                 break;
-            case "boolean":
+            }
+            case "boolean": {
                 attributes.push(booleanAttribute(attribute.name, true));
                 break;
+            }
         }
     }
 
-    const tagName = element.tagName.toLowerCase();
+    const tagName = getElementTagName(element);
     const kind = nodeKind(tagName, namespace || "");
 
     switch (kind) {
         case "text":
-            return [
-                text(element.textContent || ""),
-            ] as unknown as HtmlNode<never>[];
+            return [text(element.textContent || "")];
         case "regular":
             return [node(tagName as Tag, [], attributes, children)];
         case "void":
@@ -305,12 +393,20 @@ function walk(childNode: ChildNode): HtmlNode<never>[] {
                     kind: "html-string",
                     content: element.outerHTML,
                 },
-            ] as unknown as HtmlNode<never>[];
+            ];
         case "ns-regular":
+            if (namespace === null) {
+                return [node(tagName as Tag, [], attributes, children)];
+            }
             return [
-                nodeNS(tagName as Tag, namespace!, [], attributes, children),
+                nodeNS(tagName as Tag, namespace, [], attributes, children),
             ];
         case "ns-void":
-            return [voidNodeNS(tagName as Tag, namespace!, [], attributes)];
+            if (namespace === null) {
+                return [voidNode(tagName as Tag, [], attributes)];
+            }
+            return [voidNodeNS(tagName as Tag, namespace, [], attributes)];
     }
+
+    return [];
 }

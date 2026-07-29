@@ -1,6 +1,7 @@
 import { deepStrictEqual } from "assert";
-import { filterRules } from "../../../langs/css/filter.ts";
+import { css } from "../../../langs/css/index.ts";
 import type { CssBlock } from "../../../langs/css/types.ts";
+import type { FilterResult } from "../../../langs/types.ts";
 
 export function testTagFiltering() {
     const input: CssBlock = {
@@ -14,22 +15,35 @@ export function testTagFiltering() {
         ],
     };
 
-    const output: CssBlock = {
-        kind: "Regular",
-        selector: { kind: "Tag", tag: "h1" },
-        body: [
-            { kind: "Property", name: "border-color", value: "red" },
-            { kind: "Property", name: "padding", value: "1rem" },
-            { kind: "Property", name: "height", value: "20vh" },
+    const output: FilterResult<CssBlock[]> = {
+        value: [
+            {
+                kind: "Regular",
+                selector: { kind: "Tag", tag: "h1" },
+                body: [
+                    { kind: "Property", name: "border-color", value: "red" },
+                    { kind: "Property", name: "padding", value: "1rem" },
+                    { kind: "Property", name: "height", value: "20vh" },
+                ],
+            },
         ],
+        errors: ["Filtering out width properties"],
     };
 
-    const actualBlocks = filterRules((leaf) => {
-        if (leaf.kind === "Property" && leaf.name === "width") {
-            return false;
-        }
-        return true;
-    }, input);
+    const actualBlocks: FilterResult<CssBlock[]> = css.filterDeclarations(
+        [
+            {
+                shouldKeep: (leaf) => {
+                    if (leaf.kind === "Property" && leaf.name === "width") {
+                        return false;
+                    }
+                    return true;
+                },
+                reason: "Filtering out width properties",
+            },
+        ],
+        [input],
+    );
 
     deepStrictEqual(actualBlocks, output);
 }
@@ -74,44 +88,133 @@ export function testMediaFiltering() {
         ],
     };
 
-    const actualBlocks = filterRules((leaf) => {
-        if (leaf.kind === "Property") {
-            if (leaf.name !== "width") {
-                return false;
-            }
-        }
-        return true;
-    }, input);
-
-    const output: CssBlock = {
-        kind: "MediaQuery",
-        selector: {
-            kind: "Media",
-            query: "(min-width: 1100px)",
-        },
-        body: [
+    const actualBlocks: FilterResult<CssBlock[]> = css.filterDeclarations(
+        [
             {
-                kind: "Regular",
-                selector: {
-                    kind: "Multiple",
-                    selectors: [
-                        { kind: "Class", class: "hello" },
-                        {
-                            kind: "Psuedo",
-                            psuedo: "hover",
-                            selector: { kind: "Tag", tag: "h1" },
-                        },
-                        {
-                            kind: "Child",
-                            parent: { kind: "Id", id: "world" },
-                            child: { kind: "Tag", tag: "div" },
-                        },
-                    ],
+                shouldKeep: (leaf) => {
+                    if (leaf.kind === "Property") {
+                        if (leaf.name !== "width") {
+                            return false;
+                        }
+                    }
+                    return true;
                 },
-                body: [{ kind: "Property", name: "width", value: "20px" }],
+                reason: "Filtering out non-width properties",
+            },
+        ],
+        [input],
+    );
+
+    const output: FilterResult<CssBlock[]> = {
+        value: [
+            {
+                kind: "MediaQuery",
+                selector: {
+                    kind: "Media",
+                    query: "(min-width: 1100px)",
+                },
+                body: [
+                    {
+                        kind: "Regular",
+                        selector: {
+                            kind: "Multiple",
+                            selectors: [
+                                { kind: "Class", class: "hello" },
+                                {
+                                    kind: "Psuedo",
+                                    psuedo: "hover",
+                                    selector: { kind: "Tag", tag: "h1" },
+                                },
+                                {
+                                    kind: "Child",
+                                    parent: { kind: "Id", id: "world" },
+                                    child: { kind: "Tag", tag: "div" },
+                                },
+                            ],
+                        },
+                        body: [
+                            { kind: "Property", name: "width", value: "20px" },
+                        ],
+                    },
+                ],
+            },
+        ],
+        errors: [
+            "Filtering out non-width properties",
+            "Filtering out non-width properties",
+            "Filtering out non-width properties",
+        ],
+    };
+
+    deepStrictEqual(actualBlocks, output);
+}
+
+export function testTagFilteringNested() {
+    const input: CssBlock = {
+        kind: "Regular",
+        selector: { kind: "Tag", tag: "h1" },
+        body: [
+            { kind: "Property", name: "border-color", value: "red" },
+            {
+                kind: "Nested",
+                declarations: [
+                    { kind: "Property", name: "width", value: "20px" },
+                ],
+                selector: { kind: "Class", class: "nested" },
+            },
+            { kind: "Property", name: "padding", value: "1rem" },
+            { kind: "Property", name: "height", value: "20vh" },
+            {
+                kind: "Nested",
+                declarations: [
+                    { kind: "Property", name: "height", value: "30vh" },
+                ],
+                selector: { kind: "Class", class: "nested" },
             },
         ],
     };
+
+    const output: FilterResult<CssBlock[]> = {
+        value: [
+            {
+                kind: "Regular",
+                selector: { kind: "Tag", tag: "h1" },
+                body: [
+                    { kind: "Property", name: "border-color", value: "red" },
+                    {
+                        kind: "Nested",
+                        declarations: [],
+                        selector: { kind: "Class", class: "nested" },
+                    },
+                    { kind: "Property", name: "padding", value: "1rem" },
+                    { kind: "Property", name: "height", value: "20vh" },
+                    {
+                        kind: "Nested",
+                        declarations: [
+                            { kind: "Property", name: "height", value: "30vh" },
+                        ],
+                        selector: { kind: "Class", class: "nested" },
+                    },
+                ],
+            },
+        ],
+        errors: ["Filtering out width properties"],
+    };
+
+    const actualBlocks: FilterResult<CssBlock[]> = css.filterDeclarations(
+        [
+            {
+                shouldKeep: (leaf) => {
+                    if (leaf.kind === "Property" && leaf.name === "width") {
+                        return false;
+                    }
+                    return true;
+                },
+                reason: "Filtering out width properties",
+            },
+        ],
+        [input],
+    );
 
     deepStrictEqual(actualBlocks, output);
 }

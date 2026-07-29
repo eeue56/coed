@@ -1,0 +1,252 @@
+import type {
+    Ast,
+    ConstStatement,
+    Expression,
+    ForLoopBinding,
+    IfStatement,
+    IndexedResult,
+    LetStatement,
+    OperatorRule,
+    ParserState,
+} from "../types.ts";
+
+type BaseToken = { startIndex: number; endIndex: number };
+type NumberToken = BaseToken & { kind: "NumberToken"; value: number };
+type StringToken = BaseToken & { kind: "StringToken"; value: string };
+type IdentifierToken = BaseToken & { kind: "IdentifierToken"; name: string };
+type AdditionToken = BaseToken & { kind: "AdditionToken" };
+type SubtractionToken = BaseToken & { kind: "SubtractionToken" };
+type MultiplicationToken = BaseToken & { kind: "MultiplicationToken" };
+type DivisionToken = BaseToken & { kind: "DivisionToken" };
+type AndToken = BaseToken & { kind: "AndToken" };
+type OrToken = BaseToken & { kind: "OrToken" };
+type EqualityToken = BaseToken & { kind: "EqualityToken" };
+type InequalityToken = BaseToken & { kind: "InequalityToken" };
+type LessThanToken = BaseToken & { kind: "LessThanToken" };
+type MoreThanToken = BaseToken & { kind: "MoreThanToken" };
+type NegationToken = BaseToken & { kind: "NegationToken" };
+type LessThanOrEqualToken = BaseToken & { kind: "LessThanOrEqualToken" };
+type MoreThanOrEqualToken = BaseToken & { kind: "MoreThanOrEqualToken" };
+type IncrementToken = BaseToken & { kind: "IncrementToken" };
+type DecrementToken = BaseToken & { kind: "DecrementToken" };
+type LeftParenToken = BaseToken & { kind: "LeftParenToken" };
+type RightParenToken = BaseToken & { kind: "RightParenToken" };
+type LeftBracketToken = BaseToken & { kind: "LeftBracketToken" };
+type RightBracketToken = BaseToken & { kind: "RightBracketToken" };
+type LeftBraceToken = BaseToken & { kind: "LeftBraceToken" };
+type RightBraceToken = BaseToken & { kind: "RightBraceToken" };
+type CommaToken = BaseToken & { kind: "CommaToken" };
+type ColonToken = BaseToken & { kind: "ColonToken" };
+type SemicolonToken = BaseToken & { kind: "SemicolonToken" };
+type DotToken = BaseToken & { kind: "DotToken" };
+type AssignToken = BaseToken & { kind: "AssignToken" };
+type ArrowToken = BaseToken & { kind: "ArrowToken" };
+type WhitespaceToken = BaseToken & { kind: "WhitespaceToken"; value: string };
+type LetToken = BaseToken & { kind: "LetToken" };
+type VarToken = BaseToken & { kind: "VarToken" };
+type ConstToken = BaseToken & { kind: "ConstToken" };
+type IfToken = BaseToken & { kind: "IfToken" };
+type ElseToken = BaseToken & { kind: "ElseToken" };
+type ForToken = BaseToken & { kind: "ForToken" };
+type InToken = BaseToken & { kind: "InToken" };
+type OfToken = BaseToken & { kind: "OfToken" };
+type WhileToken = BaseToken & { kind: "WhileToken" };
+type DoToken = BaseToken & { kind: "DoToken" };
+type WithToken = BaseToken & { kind: "WithToken" };
+type FunctionToken = BaseToken & { kind: "FunctionToken" };
+type ReturnToken = BaseToken & { kind: "ReturnToken" };
+type ContinueToken = BaseToken & { kind: "ContinueToken" };
+type BreakToken = BaseToken & { kind: "BreakToken" };
+type NullToken = BaseToken & { kind: "NullToken" };
+type TrueToken = BaseToken & { kind: "TrueToken" };
+type FalseToken = BaseToken & { kind: "FalseToken" };
+type TypeofToken = BaseToken & { kind: "TypeofToken" };
+type AsToken = BaseToken & { kind: "AsToken" };
+type UndefinedToken = BaseToken & { kind: "UndefinedToken" };
+type ImportToken = BaseToken & { kind: "ImportToken" };
+type ExportToken = BaseToken & { kind: "ExportToken" };
+type AsyncToken = BaseToken & { kind: "AsyncToken" };
+type AwaitToken = BaseToken & { kind: "AwaitToken" };
+type ThisToken = BaseToken & { kind: "ThisToken" };
+type NewToken = BaseToken & { kind: "NewToken" };
+type SuperToken = BaseToken & { kind: "SuperToken" };
+type TryToken = BaseToken & { kind: "TryToken" };
+type CatchToken = BaseToken & { kind: "CatchToken" };
+type ThrowToken = BaseToken & { kind: "ThrowToken" };
+type DefaultToken = BaseToken & { kind: "DefaultToken" };
+type ClassToken = BaseToken & { kind: "ClassToken" };
+type ExtendsToken = BaseToken & { kind: "ExtendsToken" };
+type ConstructorToken = BaseToken & { kind: "ConstructorToken" };
+
+export type Token =
+    | NumberToken
+    | StringToken
+    | IdentifierToken
+    | AdditionToken
+    | SubtractionToken
+    | MultiplicationToken
+    | DivisionToken
+    | AndToken
+    | OrToken
+    | EqualityToken
+    | InequalityToken
+    | LessThanToken
+    | MoreThanToken
+    | NegationToken
+    | LessThanOrEqualToken
+    | MoreThanOrEqualToken
+    | IncrementToken
+    | DecrementToken
+    | LeftParenToken
+    | RightParenToken
+    | LeftBracketToken
+    | RightBracketToken
+    | LeftBraceToken
+    | RightBraceToken
+    | CommaToken
+    | ColonToken
+    | SemicolonToken
+    | DotToken
+    | AssignToken
+    | ArrowToken
+    | WhitespaceToken
+    | LetToken
+    | VarToken
+    | ConstToken
+    | IfToken
+    | ElseToken
+    | ForToken
+    | InToken
+    | OfToken
+    | WhileToken
+    | DoToken
+    | WithToken
+    | FunctionToken
+    | ReturnToken
+    | ContinueToken
+    | BreakToken
+    | NullToken
+    | TrueToken
+    | FalseToken
+    | TypeofToken
+    | AsToken
+    | UndefinedToken
+    | ImportToken
+    | ExportToken
+    | AsyncToken
+    | AwaitToken
+    | ThisToken
+    | NewToken
+    | SuperToken
+    | TryToken
+    | CatchToken
+    | ThrowToken
+    | DefaultToken
+    | ClassToken
+    | ExtendsToken
+    | ConstructorToken;
+
+export type StatementParser = (state: ParserState) => IndexedResult<Ast>;
+
+export type OperatorExpression = Extract<
+    Expression,
+    { left: Expression; right: Expression }
+>;
+
+type ParsedClassicForHeader = {
+    kind: "ClassicForHeader";
+    init: LetStatement | ConstStatement;
+    condition: Expression;
+    increment: Expression;
+    afterRightParenIndex: number;
+};
+
+type ParsedForInOfHeader = {
+    kind: "ForInOfHeader";
+    binding: ForLoopBinding;
+    operator: "in" | "of";
+    iterable: Expression;
+    afterRightParenIndex: number;
+};
+
+export type ParsedForHeader = ParsedClassicForHeader | ParsedForInOfHeader;
+
+export type LoopControlKind = "ContinueStatement" | "BreakStatement";
+
+export type ParsedConditionBlock = {
+    condition: Expression;
+    body: Ast[];
+    nextIndex: number;
+};
+
+export type ParsedOptionalElse = {
+    elseIf?: IfStatement;
+    elseBranch?: Ast[];
+    nextIndex: number;
+};
+
+export type ClosingTokenKind = "RightParenToken" | "RightBracketToken";
+
+export type StatementListParseResult = {
+    statements: Ast[] | null;
+    index: number;
+    noProgressToken?: Token;
+};
+
+type ChainableExpression = Extract<
+    Expression,
+    {
+        kind:
+            | "NameLookupExpression"
+            | "ThisExpression"
+            | "SuperExpression"
+            | "NewExpression"
+            | "FunctionCallExpression"
+            | "ObjectPropertyExpression"
+            | "ObjectMethodCallExpression"
+            | "ArrayAccessExpression";
+    }
+>;
+
+export function isChainableExpression(
+    expression: Expression,
+): expression is ChainableExpression {
+    return (
+        expression.kind === "NameLookupExpression" ||
+        expression.kind === "ThisExpression" ||
+        expression.kind === "SuperExpression" ||
+        expression.kind === "NewExpression" ||
+        expression.kind === "FunctionCallExpression" ||
+        expression.kind === "ObjectPropertyExpression" ||
+        expression.kind === "ObjectMethodCallExpression" ||
+        expression.kind === "ArrayAccessExpression"
+    );
+}
+
+export function isAssignmentTarget(
+    expression: Expression,
+): expression is Extract<
+    Expression,
+    {
+        kind:
+            | "NameLookupExpression"
+            | "ObjectPropertyExpression"
+            | "ArrayAccessExpression";
+    }
+> {
+    return (
+        expression.kind === "NameLookupExpression" ||
+        expression.kind === "ObjectPropertyExpression" ||
+        expression.kind === "ArrayAccessExpression"
+    );
+}
+
+export function operatorRule(
+    tokenKind: OperatorRule["tokenKind"],
+    kind: OperatorExpression["kind"],
+): OperatorRule {
+    return {
+        tokenKind,
+        build: (left, right) => ({ kind, left, right }),
+    };
+}
