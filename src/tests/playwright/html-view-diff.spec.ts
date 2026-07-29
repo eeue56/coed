@@ -64,6 +64,7 @@ async function expectDiffScreenshot(
         animations: "disabled",
         caret: "hide",
         scale: "css",
+        threshold: 0.2,
     });
 }
 
