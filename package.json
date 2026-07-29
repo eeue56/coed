@@ -36,6 +36,11 @@
             "import": "./build/langs/index.js",
             "default": "./build/langs/index.js"
         },
+        "./langs/view-diff-css": {
+            "types": "./build/langs/diffs/viewDiffCss.d.ts",
+            "import": "./build/langs/diffs/viewDiffCss.js",
+            "default": "./build/langs/diffs/viewDiffCss.js"
+        },
         "./langs/types": {
             "types": "./build/langs/types.d.ts",
             "import": "./build/langs/types.js",
