@@ -25,8 +25,11 @@ jobs:
             - name: Install ts-node
               run: npm install -g ts-node
 
-            - name: Run all tests
+            - name: Run unit tests
               run: npm test
+
+            - name: Run playwright tests
+              run: npm run test-playwright
 
             - name: Run eslint
               run: npm run lint
