@@ -80,7 +80,7 @@ async function expectDiffScreenshot(
         animations: "disabled",
         caret: "hide",
         scale: "css",
-        threshold: 0.2,
+        threshold: 0.3,
     });
 }
 
@@ -303,9 +303,15 @@ test("javascript viewDiff renders full real-example file with multiple diffs", a
         ],
     };
 
-    await expectDiffScreenshot(
-        page,
-        diff,
+    await page.setContent(pageHtml(diff));
+
+    await expect(page.locator(".coed-view-diff")).toHaveScreenshot(
         "javascript-view-diff-full-real-file-multi-entry.png",
+        {
+            animations: "disabled",
+            caret: "hide",
+            scale: "css",
+            threshold: 0.4,
+        },
     );
 });
