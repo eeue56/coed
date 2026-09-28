@@ -14,11 +14,17 @@ import {
     parsePropertySegment,
 } from "../diffs/diffPath.ts";
 import {
+    compactedSummaryNode,
+    compactedValueHighlight,
+    compactDiffEntries,
     formatComparedPathLine,
     formatPathLine,
+    groupedDiffEntryCounts,
+    groupedDiffPathItems,
     renderCodeWithHighlight,
     renderDiffEntrySections,
     type HighlightSpec,
+    type ValueSnippetSpec,
 } from "../diffs/viewDiffShared.ts";
 import { escapeHtml } from "../helpers.ts";
 import type { Diff } from "../types.ts";
@@ -167,6 +173,20 @@ function parsePath(path: string): ParsedPath {
     };
 }
 
+function nodePath(path: string): string {
+    const parsedPath = parsePath(path);
+
+    if (typeof parsedPath.attribute === "undefined") {
+        return path;
+    }
+
+    if (parsedPath.nodeIndexes.length === 0) {
+        return path;
+    }
+
+    return parsedPath.nodeIndexes.join(".");
+}
+
 function getNodeAtPath(
     root: HtmlNode<unknown>,
     nodeIndexes: number[],
@@ -241,6 +261,37 @@ function attributeValueString(attribute: Attribute): string {
     }
 }
 
+function attributeValueOffset(
+    snippet: string,
+    attribute: Attribute,
+): number | null {
+    const value = attributeValueString(attribute);
+    if (value.length === 0) {
+        return null;
+    }
+
+    if (attribute.kind === "string" || attribute.kind === "boolean") {
+        const doubleQuoted = `="${value}"`;
+        const doubleQuotedStart = snippet.indexOf(doubleQuoted);
+        if (doubleQuotedStart !== -1) {
+            return doubleQuotedStart + 2;
+        }
+
+        const singleQuoted = `='${value}'`;
+        const singleQuotedStart = snippet.indexOf(singleQuoted);
+        if (singleQuotedStart !== -1) {
+            return singleQuotedStart + 2;
+        }
+    }
+
+    const lastMatch = snippet.lastIndexOf(value);
+    if (lastMatch !== -1) {
+        return lastMatch;
+    }
+
+    return null;
+}
+
 function isSameAttribute(left: Attribute, right: Attribute): boolean {
     switch (left.kind) {
         case "none":
@@ -297,10 +348,22 @@ function getHighlight(
     root: HtmlNode<unknown>,
     parsedPath: ParsedPath,
     oppositeRoot: HtmlNode<unknown>,
+    compactedAttributes: string[] = [],
 ): HighlightSpec {
     const node = getNodeAtPath(root, parsedPath.nodeIndexes) ?? root;
     const oppositeNode =
         getNodeAtPath(oppositeRoot, parsedPath.nodeIndexes) ?? oppositeRoot;
+
+    if (typeof parsedPath.attribute === "undefined") {
+        const compactedHighlight = compactedAttributeHighlight(
+            node,
+            oppositeNode,
+            compactedAttributes,
+        );
+        if (compactedHighlight !== null) {
+            return compactedHighlight;
+        }
+    }
 
     if (typeof parsedPath.attribute !== "undefined") {
         const attributes = getAttributesByKey(node, parsedPath.attribute);
@@ -350,15 +413,62 @@ function getHighlight(
     return { mode: "block", snippet: flatRender(node) };
 }
 
+function compactedAttributeHighlight(
+    node: HtmlNode<unknown>,
+    oppositeNode: HtmlNode<unknown>,
+    compactedAttributes: string[],
+): HighlightSpec | null {
+    if (compactedAttributes.length === 0) {
+        return null;
+    }
+
+    const snippetSpecs: ValueSnippetSpec[] = [];
+
+    for (const key of compactedAttributes) {
+        const attributes = getAttributesByKey(node, key);
+        const oppositeAttributes = getAttributesByKey(oppositeNode, key);
+
+        for (const attribute of attributes) {
+            const snippet = attributeToString(attribute);
+            if (snippet.length === 0) {
+                continue;
+            }
+
+            const snippetSpec: ValueSnippetSpec = { snippet };
+
+            if (
+                oppositeAttributes.length === 1 &&
+                attributes.length === 1 &&
+                attributeValueString(attribute) !==
+                    attributeValueString(oppositeAttributes[0])
+            ) {
+                snippetSpec.valueSnippet = attributeValueString(attribute);
+                const valueOffset = attributeValueOffset(snippet, attribute);
+                snippetSpec.valueOffset = valueOffset ?? undefined;
+            }
+
+            snippetSpecs.push(snippetSpec);
+        }
+    }
+
+    return compactedValueHighlight(snippetSpecs);
+}
+
 function renderCode(
     root: HtmlNode<unknown>,
     parsedPath: ParsedPath,
     oppositeRoot: HtmlNode<unknown>,
+    compactedAttributes: string[],
     codeClass: string,
     highlightClass: string,
 ): HtmlNode<never> {
     const code = render(root);
-    const highlight = getHighlight(root, parsedPath, oppositeRoot);
+    const highlight = getHighlight(
+        root,
+        parsedPath,
+        oppositeRoot,
+        compactedAttributes,
+    );
 
     return renderCodeWithHighlight(
         code,
@@ -369,13 +479,30 @@ function renderCode(
     );
 }
 
+function attributeNameForPath(path: string): string | null {
+    const parsedPath = parsePath(path);
+    return parsedPath.attribute ?? null;
+}
+
 export function viewDiff(diff: Diff<HtmlNode<unknown>>): HtmlNode<never> {
+    const groupedCounts = groupedDiffEntryCounts(diff.diffs, nodePath);
+    const groupedAttributes = groupedDiffPathItems(
+        diff.diffs,
+        nodePath,
+        attributeNameForPath,
+    );
+    const entries = compactDiffEntries(diff.diffs, nodePath);
+
     return div(
         [],
         [class_("coed-view-diff")],
         [
-            ...diff.diffs.map((entry) => {
+            ...entries.map((entry) => {
                 const parsedPath = parsePath(entry.path);
+                const compactedCount = groupedCounts.get(entry.path) ?? 1;
+                const compactedAttributes =
+                    groupedAttributes.get(entry.path) ?? [];
+                const summaryNode = compactedSummaryNode(compactedCount);
 
                 return renderDiffEntrySections(
                     "coed-view-diff",
@@ -396,6 +523,7 @@ export function viewDiff(diff: Diff<HtmlNode<unknown>>): HtmlNode<never> {
                         entry.added,
                         parsedPath,
                         entry.removed,
+                        compactedAttributes,
                         "coed-view-diff-added-code",
                         "coed-view-diff-added-highlight",
                     ),
@@ -403,9 +531,11 @@ export function viewDiff(diff: Diff<HtmlNode<unknown>>): HtmlNode<never> {
                         entry.removed,
                         parsedPath,
                         entry.added,
+                        compactedAttributes,
                         "coed-view-diff-removed-code",
                         "coed-view-diff-removed-highlight",
                     ),
+                    summaryNode,
                 );
             }),
         ],

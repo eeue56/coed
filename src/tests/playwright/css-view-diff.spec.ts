@@ -237,3 +237,44 @@ test("css viewDiff renders multi-entry mixed diffs", async ({ page }) => {
 
     await expectDiffScreenshot(page, diff, "css-view-diff-mixed-entries.png");
 });
+
+test("css viewDiff compacts sibling property diffs into one entry", async ({
+    page,
+}) => {
+    const diff: Diff<CssBlock[]> = {
+        diffs: [
+            makeEntry(
+                "0->attributes{width}",
+                `
+.hello {
+    width: 20px;
+    height: 10px;
+}
+                `,
+                `
+.hello {
+    width: 30px;
+    height: 12px;
+}
+                `,
+            ),
+            makeEntry(
+                "0->attributes{height}",
+                `
+.hello {
+    width: 20px;
+    height: 10px;
+}
+                `,
+                `
+.hello {
+    width: 30px;
+    height: 12px;
+}
+                `,
+            ),
+        ],
+    };
+
+    await expectDiffScreenshot(page, diff, "css-view-diff-compacted-entry.png");
+});

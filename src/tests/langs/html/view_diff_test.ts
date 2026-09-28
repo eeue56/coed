@@ -1,5 +1,13 @@
 import { deepStrictEqual } from "assert/strict";
-import { attribute, class_, div, pre, span, text } from "../../../coed.ts";
+import {
+    attribute,
+    class_,
+    div,
+    flatRender,
+    pre,
+    span,
+    text,
+} from "../../../coed.ts";
 import { html } from "../../../langs/html/index.ts";
 import type { Diff } from "../../../langs/types.ts";
 
@@ -550,5 +558,96 @@ export function testViewDiffShowsFullHtmlForNestedAttributeDiff() {
                 ),
             ],
         ),
+    );
+}
+
+export function testViewDiffCompactsMultipleAttributeDiffsIntoSingleNodeEntry() {
+    const removed = div([], [attribute("id", "left"), class_("a")], []);
+    const added = div([], [attribute("id", "right"), class_("b")], []);
+
+    const rendered = flatRender(
+        html.viewDiff({
+            diffs: [
+                {
+                    path: "0->attributes{id}",
+                    added,
+                    removed,
+                },
+                {
+                    path: "0->attributes{class}",
+                    added,
+                    removed,
+                },
+            ],
+        }),
+    );
+
+    deepStrictEqual(
+        rendered.split('class="coed-view-diff-entry"').length - 1,
+        1,
+    );
+    deepStrictEqual(rendered.includes("0: <div>"), true);
+    deepStrictEqual(rendered.includes("2 child changes compacted"), true);
+    deepStrictEqual(
+        rendered.includes('coed-view-diff-added-highlight">right</span>'),
+        true,
+    );
+    deepStrictEqual(
+        rendered.includes('coed-view-diff-added-highlight">b</span>'),
+        true,
+    );
+    deepStrictEqual(
+        rendered.includes('coed-view-diff-removed-highlight">left</span>'),
+        true,
+    );
+    deepStrictEqual(
+        rendered.includes('coed-view-diff-removed-highlight">a</span>'),
+        true,
+    );
+    deepStrictEqual(
+        rendered.includes(
+            'class=&quot;<span class="coed-view-diff-added-highlight">b</span>&quot;',
+        ),
+        true,
+    );
+    deepStrictEqual(
+        rendered.includes(
+            'class=&quot;<span class="coed-view-diff-removed-highlight">a</span>&quot;',
+        ),
+        true,
+    );
+    deepStrictEqual(
+        rendered.includes(
+            'cl<span class="coed-view-diff-removed-highlight">a</span>ss',
+        ),
+        false,
+    );
+    deepStrictEqual(
+        rendered.includes('coed-view-diff-added-highlight">&lt;div'),
+        false,
+    );
+    deepStrictEqual(rendered.includes("attribute: id"), false);
+    deepStrictEqual(rendered.includes("attribute: class"), false);
+}
+
+export async function snapshotViewDiffCompactedHtmlEntry() {
+    const removed = div([], [attribute("id", "left"), class_("a")], []);
+    const added = div([], [attribute("id", "right"), class_("b")], []);
+
+    return flatRender(
+        html.viewDiff({
+            diffs: [
+                {
+                    path: "0->attributes{id}",
+                    added,
+                    removed,
+                },
+                {
+                    path: "0->attributes{class}",
+                    added,
+                    removed,
+                },
+            ],
+        }),
     );
 }

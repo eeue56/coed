@@ -1,10 +1,16 @@
 import { class_, div, pre, text, type HtmlNode } from "../../coed.ts";
 import { DIFF_PATH_SEPARATOR } from "../diffs/diffPath.ts";
 import {
+    compactDiffEntries,
+    compactedSummaryNode,
+    compactedValueHighlight,
     formatComparedPathLine,
+    groupedDiffEntryCounts,
+    groupedDiffPathItems,
     renderCodeWithHighlight,
     renderDiffEntrySections,
     type HighlightSpec,
+    type ValueSnippetSpec,
 } from "../diffs/viewDiffShared.ts";
 import type { Diff, DiffNode } from "../types.ts";
 import { generateExpression, generateProgram } from "./generate.ts";
@@ -150,6 +156,22 @@ function parsePath(path: string): PathSegment[] {
                 field: segment,
             };
         });
+}
+
+function objectNodePath(path: string): string {
+    const segments = parsePath(path);
+    const propertyIndex = segments.findIndex(
+        (segment) => segment.kind === "PropertyMapPathSegment",
+    );
+
+    if (propertyIndex <= 0) {
+        return path;
+    }
+
+    return segments
+        .slice(0, propertyIndex)
+        .map((segment) => segment.raw)
+        .join(DIFF_PATH_SEPARATOR);
 }
 
 function resolveSegment(
@@ -355,6 +377,7 @@ function getHighlight(
     oppositeProgram: Program,
     segments: PathSegment[],
     side: DiffSide,
+    compactedPropertyKeys: string[] = [],
 ): HighlightSpec | null {
     if (code.length === 0) {
         return null;
@@ -363,6 +386,16 @@ function getHighlight(
     const pathValues = getValuesAlongPath(program, segments);
     const leaf = pathValues[pathValues.length - 1];
     const oppositeLeaf = getValueAtPath(oppositeProgram, segments);
+
+    const compactedHighlight = compactedObjectPropertyHighlight(
+        leaf,
+        oppositeLeaf,
+        compactedPropertyKeys,
+    );
+    if (compactedHighlight !== null) {
+        return compactedHighlight;
+    }
+
     if (segments.length === 0) {
         return {
             mode: "block",
@@ -457,11 +490,66 @@ function getHighlight(
     };
 }
 
+function compactedObjectPropertyHighlight(
+    leaf: PathValue,
+    oppositeLeaf: PathValue,
+    compactedPropertyKeys: string[],
+): HighlightSpec | null {
+    if (
+        compactedPropertyKeys.length === 0 ||
+        !isJsNode(leaf) ||
+        leaf.kind !== "ObjectExpression"
+    ) {
+        return null;
+    }
+
+    const snippetSpecs: ValueSnippetSpec[] = [];
+
+    for (const key of compactedPropertyKeys) {
+        const expression = leaf.properties[key];
+        const oppositeExpression =
+            isJsNode(oppositeLeaf) && oppositeLeaf.kind === "ObjectExpression"
+                ? oppositeLeaf.properties[key]
+                : undefined;
+
+        if (!isExpression(expression)) {
+            continue;
+        }
+
+        const expressionCode = generateExpression(expression);
+        const snippet = `"${key}": ${expressionCode}`;
+        const snippetSpec: ValueSnippetSpec = { snippet };
+
+        const primitiveValue = expressionPrimitiveValue(expression);
+        const oppositePrimitiveValue = isExpression(oppositeExpression)
+            ? expressionPrimitiveValue(oppositeExpression)
+            : undefined;
+
+        if (
+            typeof primitiveValue !== "undefined" &&
+            typeof oppositePrimitiveValue !== "undefined" &&
+            primitiveValue !== oppositePrimitiveValue
+        ) {
+            const valueSnippet = codeLiteral(primitiveValue);
+            const marker = `: ${valueSnippet}`;
+            const markerOffset = snippet.indexOf(marker);
+            snippetSpec.valueSnippet = valueSnippet;
+            snippetSpec.valueOffset =
+                markerOffset === -1 ? undefined : markerOffset + 2;
+        }
+
+        snippetSpecs.push(snippetSpec);
+    }
+
+    return compactedValueHighlight(snippetSpecs);
+}
+
 function renderCode(
     program: Program,
     oppositeProgram: Program,
     segments: PathSegment[],
     side: DiffSide,
+    compactedPropertyKeys: string[],
     codeClass: string,
     highlightClass: string,
 ): HtmlNode<never> {
@@ -472,12 +560,21 @@ function renderCode(
         oppositeProgram,
         segments,
         side,
+        compactedPropertyKeys,
     );
 
     return renderCodeWithHighlight(code, highlight, codeClass, highlightClass);
 }
 
 export function viewDiffNode(entry: DiffNode<JsNode[]>): HtmlNode<never> {
+    return viewDiffNodeWithSummary(entry, null, []);
+}
+
+function viewDiffNodeWithSummary(
+    entry: DiffNode<JsNode[]>,
+    summaryNode: HtmlNode<never> | null,
+    compactedPropertyKeys: string[],
+): HtmlNode<never> {
     const segments = parsePath(entry.path);
 
     return renderDiffEntrySections(
@@ -500,6 +597,7 @@ export function viewDiffNode(entry: DiffNode<JsNode[]>): HtmlNode<never> {
             entry.removed,
             segments,
             "added",
+            compactedPropertyKeys,
             "coed-view-diff-added-code",
             "coed-view-diff-added-highlight",
         ),
@@ -508,16 +606,51 @@ export function viewDiffNode(entry: DiffNode<JsNode[]>): HtmlNode<never> {
             entry.added,
             segments,
             "removed",
+            compactedPropertyKeys,
             "coed-view-diff-removed-code",
             "coed-view-diff-removed-highlight",
         ),
+        summaryNode,
     );
 }
 
+function propertyKeyForPath(path: string): string | null {
+    const segments = parsePath(path);
+    const propertySegment = segments.find(
+        (segment) => segment.kind === "PropertyMapPathSegment",
+    );
+
+    if (typeof propertySegment === "undefined") {
+        return null;
+    }
+
+    return propertySegment.key;
+}
+
 export function viewDiff(diff: Diff<JsNode[]>): HtmlNode<never> {
+    const groupedCounts = groupedDiffEntryCounts(diff.diffs, objectNodePath);
+    const groupedKeys = groupedDiffPathItems(
+        diff.diffs,
+        objectNodePath,
+        propertyKeyForPath,
+    );
+    const entries = compactDiffEntries(diff.diffs, objectNodePath);
+
     return div(
         [],
         [class_("coed-view-diff")],
-        [...diff.diffs.map((entry) => viewDiffNode(entry))],
+        [
+            ...entries.map((entry) => {
+                const compactedCount = groupedCounts.get(entry.path) ?? 1;
+                const compactedPropertyKeys = groupedKeys.get(entry.path) ?? [];
+                const summaryNode = compactedSummaryNode(compactedCount);
+
+                return viewDiffNodeWithSummary(
+                    entry,
+                    summaryNode,
+                    compactedPropertyKeys,
+                );
+            }),
+        ],
     );
 }

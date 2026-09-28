@@ -1,5 +1,5 @@
 import { deepStrictEqual } from "assert/strict";
-import { class_, div, pre, span, text } from "../../../coed.ts";
+import { class_, div, flatRender, pre, span, text } from "../../../coed.ts";
 import { css } from "../../../langs/css/index.ts";
 import { defaultViewDiffCss } from "../../../langs/diffs/viewDiffCss.ts";
 import type { Diff } from "../../../langs/types.ts";
@@ -750,5 +750,92 @@ export function testViewDiffHighlightsNestedValueInsideMediaBlock() {
                 ),
             ],
         ),
+    );
+}
+
+export function testViewDiffCompactsMultiplePropertyDiffsIntoSingleBlockEntry() {
+    const removed = parseCss(`
+.hello {
+    width: 20px;
+    height: 10px;
+}`);
+    const added = parseCss(`
+.hello {
+    width: 30px;
+    height: 12px;
+}`);
+
+    const rendered = flatRender(
+        css.viewDiff({
+            diffs: [
+                {
+                    path: "0->attributes{width}",
+                    added,
+                    removed,
+                },
+                {
+                    path: "0->attributes{height}",
+                    added,
+                    removed,
+                },
+            ],
+        }),
+    );
+
+    deepStrictEqual(
+        rendered.split('class="coed-view-diff-entry"').length - 1,
+        1,
+    );
+    deepStrictEqual(rendered.includes("0: .hello"), true);
+    deepStrictEqual(rendered.includes("2 child changes compacted"), true);
+    deepStrictEqual(
+        rendered.includes('coed-view-diff-added-highlight">30px</span>'),
+        true,
+    );
+    deepStrictEqual(
+        rendered.includes('coed-view-diff-added-highlight">12px</span>'),
+        true,
+    );
+    deepStrictEqual(
+        rendered.includes('coed-view-diff-removed-highlight">20px</span>'),
+        true,
+    );
+    deepStrictEqual(
+        rendered.includes('coed-view-diff-removed-highlight">10px</span>'),
+        true,
+    );
+    deepStrictEqual(rendered.includes("width: "), true);
+    deepStrictEqual(rendered.includes("height: "), true);
+    deepStrictEqual(rendered.includes("property: width"), false);
+    deepStrictEqual(rendered.includes("property: height"), false);
+}
+
+export async function snapshotViewDiffCompactedCssEntry() {
+    const removed = parseCss(`
+.hello {
+    width: 20px;
+    height: 10px;
+}`);
+    const added = parseCss(`
+.hello {
+    width: 30px;
+    height: 12px;
+}`);
+
+    return flatRender(
+        css.viewDiff({
+            diffs: [
+                {
+                    path: "0->attributes{width}",
+                    added,
+                    removed,
+                },
+                {
+                    path: "0->attributes{height}",
+                    added,
+                    removed,
+                },
+            ],
+        }),
     );
 }

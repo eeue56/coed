@@ -33,6 +33,25 @@ export const defaultViewDiffCss = `
     align-items: start;
 }
 
+.coed-view-diff-summary {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.coed-view-diff-summary-text {
+    margin: 0;
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--coed-view-diff-border);
+    background: #eef4ff;
+    color: #25436f;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
 .coed-view-diff-path,
 .coed-view-diff-added,
 .coed-view-diff-removed {
@@ -62,8 +81,15 @@ export const defaultViewDiffCss = `
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     word-break: break-word;
-    line-height: 1.4;
+    line-height: 1.5;
     font-size: 13px;
+    font-family: "Iosevka", "Cascadia Code", "Fira Code", monospace;
+    padding: 8px 10px;
+    background:
+        linear-gradient(to right, #d8dee9 0, #d8dee9 2px, transparent 2px);
+    background-repeat: no-repeat;
+    background-size: 2px 100%;
+    background-position: 0 0;
 }
 
 .coed-view-diff-added-code,

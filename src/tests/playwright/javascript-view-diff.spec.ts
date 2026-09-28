@@ -43,12 +43,17 @@ function pageHtml(diff: Diff<Program>): string {
                 --bg: #f4f7fb;
             }
 
+            html {
+                overflow-y: scroll;
+            }
+
             * {
                 box-sizing: border-box;
             }
 
             body {
                 margin: 0;
+                overflow-y: scroll;
                 background: linear-gradient(180deg, #ffffff 0%, var(--bg) 80%);
                 color: var(--text);
                 font-family: "Iosevka", "Cascadia Code", "Fira Code", monospace;
@@ -313,5 +318,33 @@ test("javascript viewDiff renders full real-example file with multiple diffs", a
             scale: "css",
             threshold: 0.4,
         },
+    );
+});
+
+test("javascript viewDiff compacts sibling object-property diffs into one entry", async ({
+    page,
+}) => {
+    const removed = parseProgram('const data = { "a": 1, "b": 2 };');
+    const added = parseProgram('const data = { "a": 3, "b": 4 };');
+
+    const diff: Diff<Program> = {
+        diffs: [
+            {
+                path: "0->value->properties{a}->value",
+                removed,
+                added,
+            },
+            {
+                path: "0->value->properties{b}->value",
+                removed,
+                added,
+            },
+        ],
+    };
+
+    await expectDiffScreenshot(
+        page,
+        diff,
+        "javascript-view-diff-compacted-entry.png",
     );
 });

@@ -314,8 +314,79 @@ export function testViewDiffUsesFullRealExampleFileWithMultipleEntries() {
         rendered.includes("Which dinosaur had large back plates?"),
         true,
     );
+    assert.strictEqual(rendered.includes("Diplodocus"), true);
     assert.strictEqual(
-        rendered.includes('coed-view-diff-added-highlight">Diplodocus</span>'),
+        rendered.split('class="coed-view-diff-entry"').length - 1,
+        2,
+    );
+}
+
+export function testViewDiffCompactsMultipleObjectPropertyDiffsIntoSingleEntry() {
+    const removed = parseProgram('const data = { "a": 1, "b": 2 };');
+    const added = parseProgram('const data = { "a": 3, "b": 4 };');
+
+    const rendered = renderDiff({
+        diffs: [
+            {
+                path: "0->value->properties{a}->value",
+                removed,
+                added,
+            },
+            {
+                path: "0->value->properties{b}->value",
+                removed,
+                added,
+            },
+        ],
+    });
+
+    assert.strictEqual(
+        rendered.split('class="coed-view-diff-entry"').length - 1,
+        1,
+    );
+    assert.strictEqual(rendered.includes("0: const"), true);
+    assert.strictEqual(rendered.includes("value: object"), true);
+    assert.strictEqual(rendered.includes("2 child changes compacted"), true);
+    assert.strictEqual(
+        rendered.includes('coed-view-diff-added-highlight">3</span>'),
         true,
     );
+    assert.strictEqual(
+        rendered.includes('coed-view-diff-added-highlight">4</span>'),
+        true,
+    );
+    assert.strictEqual(
+        rendered.includes('coed-view-diff-removed-highlight">1</span>'),
+        true,
+    );
+    assert.strictEqual(
+        rendered.includes('coed-view-diff-removed-highlight">2</span>'),
+        true,
+    );
+    assert.strictEqual(
+        rendered.includes('coed-view-diff-added-highlight">const data = {'),
+        false,
+    );
+    assert.strictEqual(rendered.includes("properties{a}"), false);
+    assert.strictEqual(rendered.includes("properties{b}"), false);
+}
+
+export async function snapshotViewDiffCompactedJavascriptEntry() {
+    const removed = parseProgram('const data = { "a": 1, "b": 2 };');
+    const added = parseProgram('const data = { "a": 3, "b": 4 };');
+
+    return renderDiff({
+        diffs: [
+            {
+                path: "0->value->properties{a}->value",
+                removed,
+                added,
+            },
+            {
+                path: "0->value->properties{b}->value",
+                removed,
+                added,
+            },
+        ],
+    });
 }

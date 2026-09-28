@@ -27,12 +27,17 @@ function pageHtml(diff: Diff<HtmlNode<unknown>>): string {
                 --bg: #f4f7fb;
             }
 
+            html {
+                overflow-y: scroll;
+            }
+
             * {
                 box-sizing: border-box;
             }
 
             body {
                 margin: 0;
+                overflow-y: scroll;
                 background: linear-gradient(180deg, #ffffff 0%, var(--bg) 80%);
                 color: var(--text);
                 font-family: "Iosevka", "Cascadia Code", "Fira Code", monospace;
@@ -266,5 +271,33 @@ test("html viewDiff renders mixed sibling and nested changes", async ({
         page,
         diff,
         "html-view-diff-mixed-nested-sibling.png",
+    );
+});
+
+test("html viewDiff compacts sibling attribute diffs into one entry", async ({
+    page,
+}) => {
+    const removed = div([], [attribute("id", "left"), class_("a")], []);
+    const added = div([], [attribute("id", "right"), class_("b")], []);
+
+    const diff: Diff<HtmlNode<unknown>> = {
+        diffs: [
+            {
+                path: "0->attributes{id}",
+                removed,
+                added,
+            },
+            {
+                path: "0->attributes{class}",
+                removed,
+                added,
+            },
+        ],
+    };
+
+    await expectDiffScreenshot(
+        page,
+        diff,
+        "html-view-diff-compacted-entry.png",
     );
 });
