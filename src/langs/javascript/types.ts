@@ -550,3 +550,5 @@ export type JsNode = Ast | Expression;
 export type Program = JsNode[];
 
 export type IndexedResult<a> = Result<a> & { index: number };
+
+export type Purity = "Pure" | "ModifiesInputs" | "HasSideEffects";
