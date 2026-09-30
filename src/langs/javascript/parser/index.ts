@@ -1,1 +1,1 @@
-export { parse } from "./parse.ts";
+export { parse, parseTypeScript } from "./tsConverter.ts";

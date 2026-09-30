@@ -4,7 +4,7 @@ coed supports a subset of JavaScript to convert into a tree.
 
 When a JavaScript feature is not supported in the subset, it will either be converted to an approved feature, or a specific error will be given detailing what to do instead.
 
-Parser is based on Tegan, Derw and Mojie's parsers.
+Parsing uses the TypeScript compiler frontend, then converts supported syntax into Coed's smaller AST. `javascript.parse(source)` uses TypeScript syntax; `javascript.parseTypeScript(source, fileName)` selects `.ts`, `.tsx`, `.js`, or `.jsx` grammar from the filename. Compiler syntax errors and unsupported Coed constructs include source locations.
 
 ### Transformations
 
@@ -15,8 +15,9 @@ Some accepted input is normalized into canonical subset nodes:
 - `while (condition) { ... }` becomes a synthetic `for` loop
 - `const name = (args) => expr;` becomes a named `function` declaration
 - `let name = () => { ... };` becomes a named `function` declaration
-- Type annotations on `let`/`const`, function parameters, and function return types are stripped
-- `expr as Type` assertions
+- Type annotations, generic parameter declarations, and type assertions are erased from executable nodes
+- `interface`, `type`, and `enum` declarations are retained as TypeScript-specific Coed nodes
+- Class members not represented by the JavaScript AST, such as fields and decorated methods, retain their TypeScript source text
 
 ### Supported statements
 
@@ -31,6 +32,13 @@ Some accepted input is normalized into canonical subset nodes:
     - `for (let i = init; condition; increment) { ... }`
 - Function declarations:
     - `function name(a, b) { ... }`
+- Classes and methods:
+    - `class Name extends Base { method() { ... } }`
+- TypeScript declarations:
+    - `interface Name { ... }`
+    - `type Name = ...`
+    - `enum Name { ... }`
+- Decorators on classes and class members
 - Control flow statements:
     - `return expression;` (only inside function bodies)
     - `return;` (only inside function bodies)
@@ -72,11 +80,8 @@ Some accepted input is normalized into canonical subset nodes:
 ### Current subset limitations
 
 - Explicitly rejected:
-    - `with`
-- Not currently parsed as expressions:
-    - Assignment expressions like `x = 1` or `obj.key = 1`
-    - Exponent/scientific number forms like `1e10`, `1.2e-3`, `.5`
-    - Optional chaining, nullish coalescing, destructuring, classes, and other general ESNext syntax
-- Prefix `!` and `typeof` tokens are accepted but currently lowered away (the parser keeps only the operand expression)
-- Postfix call/member/index/update forms are limited to name lookups on the left side (for example: `fn()`, `obj.key`, `obj["key"]`, `arr[0]`, `name++`)
-- Bracket access is limited to numeric or string literal keys (`arr[0]`, `obj["key"]`)
+    - `with`, optional chaining, destructuring, JSX expressions, and syntax without a corresponding Coed AST shape
+    - Namespace imports, aliased imports/exports, and re-exports
+- Interfaces, type aliases, and enum initializer/type fragments are retained as source text where Coed has no dedicated type-expression AST
+- Decorated classes are represented by a wrapper node; decorated class members are retained as source text
+- A successful parse does not perform TypeScript type checking or module resolution

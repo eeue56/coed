@@ -5,8 +5,7 @@ import { javascript } from "../../../langs/javascript/index.ts";
 import {
     parse,
     parseExpression,
-} from "../../../langs/javascript/parser/parse.ts";
-import { tokenize } from "../../../langs/javascript/parser/tokenize.ts";
+} from "../../../langs/javascript/parser/tsConverter.ts";
 import type { Result } from "../../../langs/types.ts";
 
 function expectOk<T>(result: Result<T>): T {
@@ -18,12 +17,12 @@ function expectOk<T>(result: Result<T>): T {
 }
 
 export function testParseNumberExpression() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("42"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("42")), {
         kind: "NumberExpression",
         value: 42,
     });
 
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("-1"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("-1")), {
         kind: "NumberExpression",
         value: -1,
     });
@@ -86,7 +85,7 @@ export function testParseAsyncKeywordExpression() {
 }
 
 export function testParseAwaitKeywordExpression() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("await data"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("await data")), {
         kind: "AwaitExpression",
         value: {
             kind: "NameLookupExpression",
@@ -96,7 +95,7 @@ export function testParseAwaitKeywordExpression() {
 }
 
 export function testParseNegationExpression() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("!inBattle"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("!inBattle")), {
         kind: "NegationExpression",
         value: {
             kind: "NameLookupExpression",
@@ -106,13 +105,13 @@ export function testParseNegationExpression() {
 }
 
 export function testParseThisKeywordExpression() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("this"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("this")), {
         kind: "ThisExpression",
     });
 }
 
 export function testParseNewKeywordExpression() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("new Date()"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("new Date()")), {
         kind: "NewExpression",
         callee: {
             kind: "NameLookupExpression",
@@ -123,7 +122,7 @@ export function testParseNewKeywordExpression() {
 }
 
 export function testParseSuperKeywordExpression() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("super"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("super")), {
         kind: "SuperExpression",
     });
 }
@@ -197,29 +196,29 @@ export function testParseDefaultKeywordExpression() {
 }
 
 export function testParseStringExpression() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize('"hello"'))), {
+    assert.deepStrictEqual(expectOk(parseExpression('"hello"')), {
         kind: "StringExpression",
         value: "hello",
     });
 }
 
 export function testParseStringLiteralExpression() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("`hello`"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("`hello`")), {
         kind: "StringLiteralExpression",
         values: [{ kind: "StringExpression", value: "hello" }],
     });
 }
 
 export function testParseBooleanAndNullExpressions() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("true"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("true")), {
         kind: "BooleanExpression",
         value: true,
     });
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("false"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("false")), {
         kind: "BooleanExpression",
         value: false,
     });
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("null"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("null")), {
         kind: "NullExpression",
     });
 }
@@ -318,13 +317,13 @@ export function testParseProgramWithMultipleExpressions() {
 }
 
 export function testParseComparisonExpressions() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("a <= b"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("a <= b")), {
         kind: "LessThanOrEqualExpression",
         left: { kind: "NameLookupExpression", name: "a" },
         right: { kind: "NameLookupExpression", name: "b" },
     });
 
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("a !== b"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("a !== b")), {
         kind: "InequalityExpression",
         left: { kind: "NameLookupExpression", name: "a" },
         right: { kind: "NameLookupExpression", name: "b" },
@@ -332,19 +331,19 @@ export function testParseComparisonExpressions() {
 }
 
 export function testParseLogicalExpressionsWithPrecedence() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("a && b"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("a && b")), {
         kind: "AndExpression",
         left: { kind: "NameLookupExpression", name: "a" },
         right: { kind: "NameLookupExpression", name: "b" },
     });
 
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("a || b"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("a || b")), {
         kind: "OrExpression",
         left: { kind: "NameLookupExpression", name: "a" },
         right: { kind: "NameLookupExpression", name: "b" },
     });
 
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("a || b && c"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("a || b && c")), {
         kind: "OrExpression",
         left: { kind: "NameLookupExpression", name: "a" },
         right: {
@@ -356,7 +355,7 @@ export function testParseLogicalExpressionsWithPrecedence() {
 }
 
 export function testParseArrayAndObjectExpressions() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("[1, 2]"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("[1, 2]")), {
         kind: "ArrayExpression",
         elements: [
             { kind: "NumberExpression", value: 1 },
@@ -364,27 +363,24 @@ export function testParseArrayAndObjectExpressions() {
         ],
     });
 
-    assert.deepStrictEqual(
-        expectOk(parseExpression(tokenize('{ a: 1, "b": 2 }'))),
-        {
-            kind: "ObjectExpression",
-            properties: {
-                a: { kind: "NumberExpression", value: 1 },
-                b: { kind: "NumberExpression", value: 2 },
-            },
+    assert.deepStrictEqual(expectOk(parseExpression('{ a: 1, "b": 2 }')), {
+        kind: "ObjectExpression",
+        properties: {
+            a: { kind: "NumberExpression", value: 1 },
+            b: { kind: "NumberExpression", value: 2 },
         },
-    );
+    });
 }
 
 export function testParseArrayExpressionWithTrailingComma() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("[1,]"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("[1,]")), {
         kind: "ArrayExpression",
         elements: [{ kind: "NumberExpression", value: 1 }],
     });
 }
 
 export function testParseFunctionAndMemberExpressions() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("sum(1, 2)"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("sum(1, 2)")), {
         kind: "FunctionCallExpression",
         functionName: "sum",
         arguments: [
@@ -393,29 +389,26 @@ export function testParseFunctionAndMemberExpressions() {
         ],
     });
 
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("obj.key"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("obj.key")), {
         kind: "ObjectPropertyExpression",
         object: { kind: "NameLookupExpression", name: "obj" },
         property: { kind: "NameLookupExpression", name: "key" },
     });
 
-    assert.deepStrictEqual(
-        expectOk(parseExpression(tokenize("obj.callMe(1)"))),
-        {
-            kind: "ObjectMethodCallExpression",
-            object: { kind: "NameLookupExpression", name: "obj" },
-            method: { kind: "NameLookupExpression", name: "callMe" },
-            arguments: [{ kind: "NumberExpression", value: 1 }],
-        },
-    );
+    assert.deepStrictEqual(expectOk(parseExpression("obj.callMe(1)")), {
+        kind: "ObjectMethodCallExpression",
+        object: { kind: "NameLookupExpression", name: "obj" },
+        method: { kind: "NameLookupExpression", name: "callMe" },
+        arguments: [{ kind: "NumberExpression", value: 1 }],
+    });
 
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("arr[0]"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("arr[0]")), {
         kind: "ArrayAccessExpression",
         array: { kind: "NameLookupExpression", name: "arr" },
         index: { kind: "NumberExpression", value: 0 },
     });
 
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize('obj["key"]'))), {
+    assert.deepStrictEqual(expectOk(parseExpression('obj["key"]')), {
         kind: "ObjectPropertyExpression",
         object: { kind: "NameLookupExpression", name: "obj" },
         property: {
@@ -425,7 +418,7 @@ export function testParseFunctionAndMemberExpressions() {
     });
 
     assert.deepStrictEqual(
-        expectOk(parseExpression(tokenize("quiz.innerHTML = questions"))),
+        expectOk(parseExpression("quiz.innerHTML = questions")),
         {
             kind: "AssignmentExpression",
             target: {
@@ -441,7 +434,7 @@ export function testParseFunctionAndMemberExpressions() {
     );
 
     assert.deepStrictEqual(
-        expectOk(parseExpression(tokenize("battleLog.innerHTML += damage"))),
+        expectOk(parseExpression("battleLog.innerHTML += damage")),
         {
             kind: "IncreaseExpression",
             variable: "battleLog.innerHTML",
@@ -460,50 +453,40 @@ export function testParseTopLevelObjectMethodCallWithFunctionCallbacks() {
 }
 
 export function testParseIncrementAndDecrementExpressions() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("count++"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("count++")), {
         kind: "IncrementExpression",
         variable: "count",
     });
 
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("count--"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("count--")), {
         kind: "DecrementExpression",
         variable: "count",
     });
 }
 
 export function testParseArrowFunctionExpressions() {
-    assert.deepStrictEqual(expectOk(parseExpression(tokenize("(x) => x"))), {
+    assert.deepStrictEqual(expectOk(parseExpression("(x) => x")), {
         kind: "ArrowFunctionExpression",
         isAsync: false,
         parameters: ["x"],
         body: { kind: "NameLookupExpression", name: "x" },
     });
 
-    assert.deepStrictEqual(
-        expectOk(parseExpression(tokenize("(x) => { return x; }"))),
-        {
-            kind: "ArrowFunctionExpression",
-            isAsync: false,
-            parameters: ["x"],
-            body: [
-                {
-                    kind: "ReturnStatement",
-                    value: { kind: "NameLookupExpression", name: "x" },
-                },
-            ],
-        },
-    );
+    assert.deepStrictEqual(expectOk(parseExpression("(x) => { return x; }")), {
+        kind: "ArrowFunctionExpression",
+        isAsync: false,
+        parameters: ["x"],
+        body: [
+            {
+                kind: "ReturnStatement",
+                value: { kind: "NameLookupExpression", name: "x" },
+            },
+        ],
+    });
 }
 
 export function testParseExpressionReturnsErrForTrailingTokens() {
-    const result = parseExpression(tokenize("1 2"));
-    assert.strictEqual(result.kind, "Err");
-    if (result.kind === "Err") {
-        assert.match(
-            result.error,
-            /I expected the expression to end here, but found number \(2\)\./,
-        );
-    }
+    expectSyntaxError(parseExpression("1 2"), "')' expected.", 4);
 }
 
 export function testParseLetAndConstStatements() {
@@ -652,6 +635,23 @@ export function testParseForLoop() {
             ],
         },
     );
+}
+
+export function testParseInOperator() {
+    assert.deepStrictEqual(parse('"value" in event.target'), {
+        kind: "Ok",
+        value: [
+            {
+                kind: "InExpression",
+                left: { kind: "StringExpression", value: "value" },
+                right: {
+                    kind: "ObjectPropertyExpression",
+                    object: { kind: "NameLookupExpression", name: "event" },
+                    property: { kind: "NameLookupExpression", name: "target" },
+                },
+            },
+        ],
+    });
 }
 
 export function testParseForOfLoop() {
@@ -869,13 +869,10 @@ export function testParseStripsTypeAnnotations() {
 }
 
 export function testParseStripsAsTypeAssertionsInExpressions() {
-    assert.deepStrictEqual(
-        expectOk(parseExpression(tokenize("(value as string)"))),
-        {
-            kind: "NameLookupExpression",
-            name: "value",
-        },
-    );
+    assert.deepStrictEqual(expectOk(parseExpression("(value as string)")), {
+        kind: "NameLookupExpression",
+        name: "value",
+    });
 }
 
 export function testParseVarUndefinedAsLetAndNull() {
@@ -1258,59 +1255,39 @@ export function testParseBreakAndContinueInsideFunctionWithoutForLoopReturnErr()
     assert.strictEqual(continueResult.kind, "Err");
 }
 
+function expectSyntaxError(
+    result: Result<unknown>,
+    problem: string,
+    column: number,
+) {
+    assert.strictEqual(result.kind, "Err");
+    if (result.kind === "Err") {
+        assert.match(result.error, /I could not parse this TypeScript/);
+        assert.ok(result.error.includes(`Problem: ${problem}`));
+        assert.ok(result.error.includes(`At line 1, column ${column}:`));
+    }
+}
+
 export function testParseReturnsErrForMalformedStatements() {
-    const result = parse("let = 1; let x = 2;");
-    assert.strictEqual(result.kind, "Err");
-    if (result.kind === "Err") {
-        assert.match(result.error, /I got stuck while parsing your JavaScript/);
-    }
+    expectSyntaxError(parse("let x = ; let y = 2;"), "Expression expected.", 9);
 }
 
-export function testParseErrorIsSpecificForMissingLetName() {
-    const result = parse("let = 1;");
-    assert.strictEqual(result.kind, "Err");
-    if (result.kind === "Err") {
-        assert.match(result.error, /After 'let', I expected a variable name/);
-    }
+export function testParseErrorReportsMissingIfParen() {
+    expectSyntaxError(parse("if x) { let a = 1; }"), "'(' expected.", 4);
 }
 
-export function testParseErrorIsSpecificForMissingIfParen() {
-    const result = parse("if x) { let a = 1; }");
-    assert.strictEqual(result.kind, "Err");
-    if (result.kind === "Err") {
-        assert.match(result.error, /After 'if', I expected '\('/);
-    }
+export function testParseErrorReportsMissingExpressionAfterAssign() {
+    expectSyntaxError(parse("let x = ;"), "Expression expected.", 9);
 }
 
-export function testParseErrorIsSpecificForMissingExpressionAfterAssign() {
-    const result = parse("let x = ;");
-    assert.strictEqual(result.kind, "Err");
-    if (result.kind === "Err") {
-        assert.match(
-            result.error,
-            /I expected a value after '=' in this let statement[\s\S]*Suggestion: I think you meant:/,
-        );
-    }
+export function testParseErrorReportsMissingClosingParenInExpression() {
+    expectSyntaxError(parse("let x = (1 + 2;"), "')' expected.", 15);
 }
 
-export function testParseErrorIsSpecificForMissingClosingParenInExpression() {
-    const result = parse("let x = (1 + 2;");
-    assert.strictEqual(result.kind, "Err");
-    if (result.kind === "Err") {
-        assert.match(
-            result.error,
-            /I expected '\)' to close this expression[\s\S]*Suggestion: I think you meant: `\(1 \+ 2\)`/,
-        );
-    }
-}
-
-export function testParseErrorIsSpecificForInvalidIndexExpression() {
-    const result = parse("let x = arr[];");
-    assert.strictEqual(result.kind, "Err");
-    if (result.kind === "Err") {
-        assert.match(
-            result.error,
-            /Inside '\[\.\.\.\]', I expected a number or string index[\s\S]*Suggestion: I think you meant: `arr\[0\]`/,
-        );
-    }
+export function testParseErrorReportsInvalidIndexExpression() {
+    expectSyntaxError(
+        parse("let x = arr[];"),
+        "An element access expression should take an argument.",
+        13,
+    );
 }

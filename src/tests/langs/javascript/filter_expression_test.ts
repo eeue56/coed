@@ -3,8 +3,7 @@ import {
     filterExpression as filterExpressionWithResults,
     getRootObjectName,
 } from "../../../langs/javascript/filter.ts";
-import { parseExpression } from "../../../langs/javascript/parser/parse.ts";
-import { tokenize } from "../../../langs/javascript/parser/tokenize.ts";
+import { parseExpression } from "../../../langs/javascript/parser/tsConverter.ts";
 import type {
     Expression,
     JsNode,
@@ -109,7 +108,7 @@ function expectOk<T>(result: Result<T>): T {
 }
 
 function parseFromCode(input: string): Expression {
-    return expectOk(parseExpression(tokenize(input)));
+    return expectOk(parseExpression(input));
 }
 
 function filterExpression(

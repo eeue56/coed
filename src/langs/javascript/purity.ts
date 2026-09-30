@@ -1,12 +1,11 @@
-import { isJsNode } from "./types.ts";
 import type {
-    Ast,
     Expression,
     FunctionDeclaration,
     JsNode,
     Program,
     Purity,
 } from "./types.ts";
+import { isJsNode } from "./types.ts";
 
 const mutatingMethods = new Set([
     "add",
@@ -39,7 +38,7 @@ function localNames(
     parameters: string[],
 ): Set<string> {
     const names = new Set(parameters);
-    const visited = new WeakSet<object>();
+    const visited = new WeakSet();
 
     function visit(value: unknown): void {
         if (Array.isArray(value)) {
@@ -148,6 +147,7 @@ function inspectNodeMembers(
         case "NumberExpression":
         case "StringExpression":
         case "NullExpression":
+        case "RegexExpression":
         case "BooleanExpression":
         case "ThisExpression":
         case "SuperExpression":
@@ -156,7 +156,14 @@ function inspectNodeMembers(
         case "ContinueStatement":
         case "BreakStatement":
         case "ExportNamedStatement":
+        case "ExportFromStatement":
+        case "InterfaceDeclaration":
+        case "TypeAliasDeclaration":
             return "Pure";
+        case "EnumDeclaration":
+        case "TypeScriptClassMember":
+        case "DecoratedDeclaration":
+            return "HasSideEffects";
         case "FunctionDeclaration":
             return functions.get(node.name) ?? "HasSideEffects";
         case "ArrowFunctionExpression": {
@@ -175,6 +182,18 @@ function inspectNodeMembers(
             return inspectNode(
                 node.body,
                 arrowBindings,
+                functions,
+                activeNodes,
+            );
+        }
+        case "ObjectMemberExpression": {
+            const memberBindings = new Set([...bindings, ...node.parameters]);
+            for (const name of localNames(node.body, [])) {
+                memberBindings.add(name);
+            }
+            return inspectNodes(
+                node.body,
+                memberBindings,
                 functions,
                 activeNodes,
             );
@@ -210,12 +229,27 @@ function inspectNodeMembers(
         }
         case "IncrementExpression":
         case "DecrementExpression":
+        case "PrefixIncrementExpression":
+        case "PrefixDecrementExpression":
             return bindings.has(node.variable) ? "Pure" : "ModifiesInputs";
         case "IncreaseExpression":
         case "DecreaseExpression":
             return combinePurity(
                 bindings.has(node.variable) ? "Pure" : "ModifiesInputs",
                 inspectNode(node.amount, bindings, functions, activeNodes),
+            );
+        case "CallExpression":
+            return combinePurity(
+                "HasSideEffects",
+                combinePurity(
+                    inspectNode(node.callee, bindings, functions, activeNodes),
+                    inspectExpressions(
+                        node.arguments,
+                        bindings,
+                        functions,
+                        activeNodes,
+                    ),
+                ),
             );
         case "FunctionCallExpression":
             return combinePurity(
@@ -272,6 +306,29 @@ function inspectNodeMembers(
                 "HasSideEffects",
                 inspectNode(node.source, bindings, functions, activeNodes),
             );
+        case "ComputedPropertyExpression":
+            return combinePurity(
+                inspectNode(node.key, bindings, functions, activeNodes),
+                inspectNode(node.value, bindings, functions, activeNodes),
+            );
+        case "ConditionalExpression":
+            return combinePurity(
+                inspectNode(node.condition, bindings, functions, activeNodes),
+                combinePurity(
+                    inspectNode(
+                        node.whenTrue,
+                        bindings,
+                        functions,
+                        activeNodes,
+                    ),
+                    inspectNode(
+                        node.whenFalse,
+                        bindings,
+                        functions,
+                        activeNodes,
+                    ),
+                ),
+            );
         case "AwaitExpression":
             return combinePurity(
                 "HasSideEffects",
@@ -303,6 +360,14 @@ function inspectNodeMembers(
         case "EqualityExpression":
         case "InequalityExpression":
         case "LessThanExpression":
+        case "InExpression":
+        case "NullishCoalescingExpression":
+        case "ModuloExpression":
+        case "InstanceOfExpression":
+        case "CommaExpression":
+        case "LooseEqualityExpression":
+        case "LooseInequalityExpression":
+        case "BitwiseExpression":
         case "MoreThanExpression":
         case "LessThanOrEqualExpression":
         case "MoreThanOrEqualExpression":
@@ -317,6 +382,9 @@ function inspectNodeMembers(
                 inspectNode(node.right, bindings, functions, activeNodes),
             );
         case "NegationExpression":
+        case "UnaryExpression":
+        case "ParenthesizedExpression":
+        case "SpreadExpression":
             return inspectNode(node.value, bindings, functions, activeNodes);
         case "ObjectPropertyExpression":
             return combinePurity(
@@ -417,6 +485,28 @@ function inspectNodeMembers(
                 inspectNodes(node.tryBlock, bindings, functions, activeNodes),
                 inspectNodes(node.catchBlock, bindings, functions, activeNodes),
             );
+        case "TryFinallyStatement":
+            return combinePurity(
+                inspectNodes(node.tryBlock, bindings, functions, activeNodes),
+                combinePurity(
+                    node.catchBlock
+                        ? inspectNodes(
+                              node.catchBlock,
+                              bindings,
+                              functions,
+                              activeNodes,
+                          )
+                        : "Pure",
+                    inspectNodes(
+                        node.finallyBlock,
+                        bindings,
+                        functions,
+                        activeNodes,
+                    ),
+                ),
+            );
+        case "ImportNamespaceStatement":
+            return "HasSideEffects";
         case "ExportDeclarationStatement":
             return inspectNode(
                 node.declaration,

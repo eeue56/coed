@@ -43,6 +43,14 @@ function generateClassBody(statements: Ast[], level: number): string {
     }
 
     const methods = statements.map((statement) => {
+        if (statement.kind === "TypeScriptClassMember") {
+            return indent(level + 1, statement.source);
+        }
+
+        if (statement.kind === "DecoratedDeclaration") {
+            return generateAST(statement, level + 1);
+        }
+
         if (statement.kind !== "FunctionDeclaration") {
             return generateAST(statement, level + 1);
         }
@@ -152,7 +160,12 @@ export function generateExpression(expression: Expression, level = 0): string {
         case "ObjectExpression": {
             const properties = Object.entries(expression.properties).map(
                 ([key, value]) => ({
-                    key,
+                    prefix:
+                        value.kind === "SpreadExpression" ||
+                        value.kind === "ComputedPropertyExpression" ||
+                        value.kind === "ObjectMemberExpression"
+                            ? ""
+                            : `"${key}": `,
                     value: generateExpression(value, level + 1),
                 }),
             );
@@ -162,14 +175,14 @@ export function generateExpression(expression: Expression, level = 0): string {
             }
 
             if (!shouldMultilineObject(expression)) {
-                return `{ "${properties[0].key}": ${properties[0].value} }`;
+                return `{ ${properties[0].prefix}${properties[0].value} }`;
             }
 
             const lines = properties.map((property) =>
                 formatMultilineValueAtLevel(
                     property.value,
                     level + 1,
-                    `"${property.key}": `,
+                    property.prefix,
                 ),
             );
 
@@ -183,6 +196,30 @@ export function generateExpression(expression: Expression, level = 0): string {
         }
         case "LessThanExpression": {
             return `${generateExpression(expression.left, level)} < ${generateExpression(expression.right, level)}`;
+        }
+        case "InExpression": {
+            return `${generateExpression(expression.left, level)} in ${generateExpression(expression.right, level)}`;
+        }
+        case "BitwiseExpression": {
+            return `${generateExpression(expression.left, level)} ${expression.operator} ${generateExpression(expression.right, level)}`;
+        }
+        case "InstanceOfExpression": {
+            return `${generateExpression(expression.left, level)} instanceof ${generateExpression(expression.right, level)}`;
+        }
+        case "UnaryExpression": {
+            return `${expression.operator}${/^[a-z]/.test(expression.operator) ? " " : ""}${generateExpression(expression.value, level)}`;
+        }
+        case "ComputedPropertyExpression": {
+            return `[${generateExpression(expression.key, level)}]: ${generateExpression(expression.value, level)}`;
+        }
+        case "ParenthesizedExpression": {
+            return `(${generateExpression(expression.value, level)})`;
+        }
+        case "ModuloExpression": {
+            return `${generateExpression(expression.left, level)} % ${generateExpression(expression.right, level)}`;
+        }
+        case "NullishCoalescingExpression": {
+            return `${generateExpression(expression.left, level)} ?? ${generateExpression(expression.right, level)}`;
         }
         case "MoreThanExpression": {
             return `${generateExpression(expression.left, level)} > ${generateExpression(expression.right, level)}`;
@@ -205,8 +242,31 @@ export function generateExpression(expression: Expression, level = 0): string {
         case "DecreaseExpression": {
             return `${expression.variable} -= ${generateExpression(expression.amount, level)}`;
         }
+        case "PrefixIncrementExpression": {
+            return `++${expression.variable}`;
+        }
+        case "PrefixDecrementExpression": {
+            return `--${expression.variable}`;
+        }
+        case "LooseEqualityExpression": {
+            return `${generateExpression(expression.left, level)} == ${generateExpression(expression.right, level)}`;
+        }
+        case "LooseInequalityExpression": {
+            return `${generateExpression(expression.left, level)} != ${generateExpression(expression.right, level)}`;
+        }
+        case "ObjectMemberExpression": {
+            const asyncPrefix = expression.isAsync ? "async " : "";
+            const accessor =
+                expression.memberKind === "method"
+                    ? ""
+                    : `${expression.memberKind} `;
+            return `${asyncPrefix}${accessor}${expression.name}(${expression.parameters.join(", ")}) ${generateBlock(expression.body, level)}`;
+        }
         case "NegationExpression": {
             return `!${generateExpression(expression.value, level)}`;
+        }
+        case "SpreadExpression": {
+            return `...${generateExpression(expression.value, level)}`;
         }
         case "AssignmentExpression": {
             return `${generateExpression(expression.target, level)} = ${generateExpression(expression.value, level)}`;
@@ -226,6 +286,9 @@ export function generateExpression(expression: Expression, level = 0): string {
         case "SuperExpression": {
             return `super`;
         }
+        case "ConditionalExpression": {
+            return `${generateExpression(expression.condition, level)} ? ${generateExpression(expression.whenTrue, level)} : ${generateExpression(expression.whenFalse, level)}`;
+        }
         case "AwaitExpression": {
             return `await ${generateExpression(expression.value, level)}`;
         }
@@ -234,6 +297,9 @@ export function generateExpression(expression: Expression, level = 0): string {
         }
         case "ImportExpression": {
             return `import(${generateExpression(expression.source, level)})`;
+        }
+        case "RegexExpression": {
+            return expression.source;
         }
         case "NullExpression": {
             return `null`;
@@ -253,6 +319,12 @@ export function generateExpression(expression: Expression, level = 0): string {
                 .join("");
 
             return `\`${values}\``;
+        }
+        case "CallExpression": {
+            return `${generateExpression(expression.callee, level)}(${expression.arguments.map((argument) => generateExpression(argument, level)).join(", ")})`;
+        }
+        case "CommaExpression": {
+            return `${generateExpression(expression.left, level)}, ${generateExpression(expression.right, level)}`;
         }
         case "FunctionCallExpression": {
             return `${expression.functionName}(${expression.arguments.map((argument) => generateExpression(argument, level)).join(", ")})`;
@@ -397,6 +469,52 @@ export function generateAST(ast: Ast, level: number): string {
                 `class ${ast.name}${superClassPart} ${generateClassBody(ast.body, level)}`,
             );
         }
+        case "InterfaceDeclaration": {
+            const typeParameters = ast.typeParameters
+                ? `<${ast.typeParameters}>`
+                : "";
+            const extendsPart =
+                ast.extends.length > 0
+                    ? ` extends ${ast.extends.join(", ")}`
+                    : "";
+            const members = ast.members
+                .map((member) => indent(level + 1, member))
+                .join("\n");
+            return indent(
+                level,
+                `interface ${ast.name}${typeParameters}${extendsPart} {${members ? `\n${members}\n${indent(level, "}")}` : "}"}`,
+            );
+        }
+        case "TypeAliasDeclaration": {
+            const typeParameters = ast.typeParameters
+                ? `<${ast.typeParameters}>`
+                : "";
+            return indent(
+                level,
+                `type ${ast.name}${typeParameters} = ${ast.type};`,
+            );
+        }
+        case "EnumDeclaration": {
+            const constPrefix = ast.isConst ? "const " : "";
+            const members = ast.members.map((member) =>
+                member.initializer === null
+                    ? member.name
+                    : `${member.name} = ${member.initializer}`,
+            );
+            return indent(
+                level,
+                `${constPrefix}enum ${ast.name} { ${members.join(", ")} }`,
+            );
+        }
+        case "TypeScriptClassMember": {
+            return indent(level, ast.source);
+        }
+        case "DecoratedDeclaration": {
+            const decorators = ast.decorators
+                .map((decorator) => indent(level, decorator))
+                .join("\n");
+            return `${decorators}\n${generateAST(ast.declaration, level)}`;
+        }
         case "ConstStatement": {
             return indent(
                 level,
@@ -425,6 +543,21 @@ export function generateAST(ast: Ast, level: number): string {
                 `try ${generateBlock(ast.tryBlock, level)} catch (${ast.catchParameter}) ${generateBlock(ast.catchBlock, level)}`,
             );
         }
+        case "TryFinallyStatement": {
+            const catchPart = ast.catchBlock
+                ? ` catch${ast.catchParameter === null ? "" : ` (${ast.catchParameter})`} ${generateBlock(ast.catchBlock, level)}`
+                : "";
+            return indent(
+                level,
+                `try ${generateBlock(ast.tryBlock, level)}${catchPart} finally ${generateBlock(ast.finallyBlock, level)}`,
+            );
+        }
+        case "ImportNamespaceStatement": {
+            return indent(
+                level,
+                `import * as ${ast.name} from "${ast.source}";`,
+            );
+        }
         case "ImportStatement": {
             if (ast.defaultImport === null && ast.namedImports.length === 0) {
                 return indent(level, `import "${ast.source}";`);
@@ -448,6 +581,10 @@ export function generateAST(ast: Ast, level: number): string {
         }
         case "ExportNamedStatement": {
             return indent(level, `export { ${ast.names.join(", ")} };`);
+        }
+        case "ExportFromStatement": {
+            const names = ast.names ? `{ ${ast.names.join(", ")} }` : "*";
+            return indent(level, `export ${names} from "${ast.source}";`);
         }
         case "ExportDefaultStatement": {
             if (isExpression(ast.value)) {

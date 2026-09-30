@@ -1,6 +1,3 @@
-import type { Result } from "../types.ts";
-import type { OperatorExpression, Token } from "./parser/types.ts";
-
 export type NumberExpression = { kind: "NumberExpression"; value: number };
 
 export type StringExpression = { kind: "StringExpression"; value: string };
@@ -29,6 +26,12 @@ export type InequalityExpression = {
 
 export type LessThanExpression = {
     kind: "LessThanExpression";
+    left: Expression;
+    right: Expression;
+};
+
+export type InExpression = {
+    kind: "InExpression";
     left: Expression;
     right: Expression;
 };
@@ -78,6 +81,38 @@ export type NegationExpression = {
     value: Expression;
 };
 
+export type PrefixIncrementExpression = {
+    kind: "PrefixIncrementExpression";
+    variable: string;
+};
+
+export type PrefixDecrementExpression = {
+    kind: "PrefixDecrementExpression";
+    variable: string;
+};
+
+export type LooseEqualityExpression = {
+    kind: "LooseEqualityExpression";
+    left: Expression;
+    right: Expression;
+};
+
+export type LooseInequalityExpression = {
+    kind: "LooseInequalityExpression";
+    left: Expression;
+    right: Expression;
+};
+
+// A method, getter or setter inside an object literal, stored under `name`, `get name` or `set name`.
+export type ObjectMemberExpression = {
+    kind: "ObjectMemberExpression";
+    memberKind: "method" | "get" | "set";
+    name: string;
+    isAsync: boolean;
+    parameters: string[];
+    body: Ast[];
+};
+
 export type AssignmentTarget =
     | NameLookupExpression
     | ObjectPropertyExpression
@@ -109,6 +144,71 @@ export type AwaitExpression = {
     value: Expression;
 };
 
+export type ConditionalExpression = {
+    kind: "ConditionalExpression";
+    condition: Expression;
+    whenTrue: Expression;
+    whenFalse: Expression;
+};
+
+export type ModuloExpression = {
+    kind: "ModuloExpression";
+    left: Expression;
+    right: Expression;
+};
+
+export type BitwiseOperator = "&" | "|" | "^" | "<<" | ">>" | ">>>" | "**";
+
+// Bitwise and exponent operators, which share one node shape.
+export type BitwiseExpression = {
+    kind: "BitwiseExpression";
+    operator: BitwiseOperator;
+    left: Expression;
+    right: Expression;
+};
+
+export type InstanceOfExpression = {
+    kind: "InstanceOfExpression";
+    left: Expression;
+    right: Expression;
+};
+
+export type UnaryExpression = {
+    kind: "UnaryExpression";
+    operator: "-" | "+" | "~" | "typeof" | "void" | "delete";
+    value: Expression;
+};
+
+// Keeps source parentheses where an expression is used as a member/call target.
+// `[key]: value` inside an object literal, stored under a synthetic `[N]` property name.
+export type ComputedPropertyExpression = {
+    kind: "ComputedPropertyExpression";
+    key: Expression;
+    value: Expression;
+};
+
+export type ParenthesizedExpression = {
+    kind: "ParenthesizedExpression";
+    value: Expression;
+};
+
+export type NullishCoalescingExpression = {
+    kind: "NullishCoalescingExpression";
+    left: Expression;
+    right: Expression;
+};
+
+export type RegexExpression = {
+    kind: "RegexExpression";
+    // Raw literal text including slashes and flags, e.g. `/a+/gi`.
+    source: string;
+};
+
+export type SpreadExpression = {
+    kind: "SpreadExpression";
+    value: Expression;
+};
+
 export type NewExpression = {
     kind: "NewExpression";
     callee: Expression;
@@ -118,6 +218,19 @@ export type NewExpression = {
 export type ImportExpression = {
     kind: "ImportExpression";
     source: Expression;
+};
+
+// A call whose target is not a plain name, e.g. `(() => {})()` or `fn()()`.
+export type CallExpression = {
+    kind: "CallExpression";
+    callee: ChainableExpression;
+    arguments: Expression[];
+};
+
+export type CommaExpression = {
+    kind: "CommaExpression";
+    left: Expression;
+    right: Expression;
 };
 
 export type FunctionCallExpression = {
@@ -133,13 +246,19 @@ export type NameLookupExpression = {
 
 export type ChainableExpression =
     | NameLookupExpression
+    | CallExpression
     | ThisExpression
     | SuperExpression
     | NewExpression
     | FunctionCallExpression
     | ObjectPropertyExpression
     | ObjectMethodCallExpression
-    | ArrayAccessExpression;
+    | ArrayAccessExpression
+    | StringExpression
+    | StringLiteralExpression
+    | RegexExpression
+    | ParenthesizedExpression
+    | ArrayExpression;
 
 export type ObjectPropertyExpression = {
     kind: "ObjectPropertyExpression";
@@ -207,6 +326,7 @@ export type Expression =
     | EqualityExpression
     | InequalityExpression
     | LessThanExpression
+    | InExpression
     | MoreThanExpression
     | LessThanOrEqualExpression
     | MoreThanOrEqualExpression
@@ -215,17 +335,34 @@ export type Expression =
     | IncreaseExpression
     | DecreaseExpression
     | NegationExpression
+    | PrefixIncrementExpression
+    | PrefixDecrementExpression
+    | LooseEqualityExpression
+    | LooseInequalityExpression
+    | ObjectMemberExpression
     | AssignmentExpression
     | ArrowFunctionExpression
     | ThisExpression
     | SuperExpression
     | AwaitExpression
+    | ConditionalExpression
+    | RegexExpression
+    | NullishCoalescingExpression
+    | ModuloExpression
+    | InstanceOfExpression
+    | BitwiseExpression
+    | UnaryExpression
+    | ParenthesizedExpression
+    | ComputedPropertyExpression
+    | SpreadExpression
     | NewExpression
     | ImportExpression
     | NullExpression
     | BooleanExpression
     | StringLiteralExpression
     | FunctionCallExpression
+    | CallExpression
+    | CommaExpression
     | NameLookupExpression
     | ObjectPropertyExpression
     | ObjectMethodCallExpression
@@ -306,6 +443,44 @@ export type ClassDeclaration = {
     body: Ast[];
 };
 
+export type InterfaceDeclaration = {
+    kind: "InterfaceDeclaration";
+    name: string;
+    typeParameters: string;
+    extends: string[];
+    members: string[];
+};
+
+export type TypeAliasDeclaration = {
+    kind: "TypeAliasDeclaration";
+    name: string;
+    typeParameters: string;
+    type: string;
+};
+
+export type EnumMember = {
+    name: string;
+    initializer: string | null;
+};
+
+export type EnumDeclaration = {
+    kind: "EnumDeclaration";
+    name: string;
+    isConst: boolean;
+    members: EnumMember[];
+};
+
+export type TypeScriptClassMember = {
+    kind: "TypeScriptClassMember";
+    source: string;
+};
+
+export type DecoratedDeclaration = {
+    kind: "DecoratedDeclaration";
+    decorators: string[];
+    declaration: Ast;
+};
+
 export type ReturnStatement = {
     kind: "ReturnStatement";
     value: Expression | null;
@@ -331,6 +506,20 @@ export type TryCatchStatement = {
     catchBlock: Ast[];
 };
 
+export type TryFinallyStatement = {
+    kind: "TryFinallyStatement";
+    tryBlock: Ast[];
+    catchParameter: string | null;
+    catchBlock: Ast[] | null;
+    finallyBlock: Ast[];
+};
+
+export type ImportNamespaceStatement = {
+    kind: "ImportNamespaceStatement";
+    name: string;
+    source: string;
+};
+
 export type ImportStatement = {
     kind: "ImportStatement";
     defaultImport: string | null;
@@ -345,7 +534,11 @@ export type ExportDeclarationStatement = {
         | LetListStatement
         | ConstStatement
         | FunctionDeclaration
-        | ClassDeclaration;
+        | ClassDeclaration
+        | InterfaceDeclaration
+        | TypeAliasDeclaration
+        | EnumDeclaration
+        | DecoratedDeclaration;
 };
 
 export type ExportNamedStatement = {
@@ -353,9 +546,16 @@ export type ExportNamedStatement = {
     names: string[];
 };
 
+// `names` is null for `export * from`.
+export type ExportFromStatement = {
+    kind: "ExportFromStatement";
+    names: string[] | null;
+    source: string;
+};
+
 export type ExportDefaultStatement = {
     kind: "ExportDefaultStatement";
-    value: Expression | FunctionDeclaration;
+    value: Expression | FunctionDeclaration | ClassDeclaration;
 };
 
 /**
@@ -378,60 +578,25 @@ export type Ast =
     | DoWhileLoop
     | FunctionDeclaration
     | ClassDeclaration
+    | InterfaceDeclaration
+    | TypeAliasDeclaration
+    | EnumDeclaration
+    | TypeScriptClassMember
+    | DecoratedDeclaration
     | ConstStatement
     | ReturnStatement
     | ContinueStatement
     | BreakStatement
     | ThrowStatement
     | TryCatchStatement
+    | TryFinallyStatement
     | ImportStatement
+    | ImportNamespaceStatement
     | ExportDeclarationStatement
     | ExportNamedStatement
+    | ExportFromStatement
     | ExportDefaultStatement
     | LineTerminatedExpression;
-
-export type ParserState = {
-    tokens: Token[];
-    index: number;
-    insideFunction: boolean;
-    insideForLoop: boolean;
-};
-
-export type SourceLocation = {
-    line: number;
-    column: number;
-    lineText: string;
-};
-
-export type DetailedParseError = {
-    problem: string;
-    hint: string;
-    suggestion: string | null;
-    focusToken: Token | null;
-};
-
-export type ParseExpressionFunction = (
-    state: ParserState,
-) => IndexedResult<Expression>;
-
-export type OperatorRule = {
-    tokenKind:
-        | "EqualityToken"
-        | "InequalityToken"
-        | "LessThanToken"
-        | "MoreThanToken"
-        | "LessThanOrEqualToken"
-        | "MoreThanOrEqualToken"
-        | "AdditionToken"
-        | "SubtractionToken"
-        | "MultiplicationToken"
-        | "DivisionToken"
-        | "AndToken"
-        | "OrToken";
-    build: (left: Expression, right: Expression) => OperatorExpression;
-};
-
-export type TokenKinds = Token["kind"];
 
 export function isExpression(node: unknown): node is Expression {
     if (
@@ -452,6 +617,7 @@ export function isExpression(node: unknown): node is Expression {
         case "EqualityExpression":
         case "InequalityExpression":
         case "LessThanExpression":
+        case "InExpression":
         case "MoreThanExpression":
         case "LessThanOrEqualExpression":
         case "MoreThanOrEqualExpression":
@@ -460,17 +626,34 @@ export function isExpression(node: unknown): node is Expression {
         case "IncreaseExpression":
         case "DecreaseExpression":
         case "NegationExpression":
+        case "PrefixIncrementExpression":
+        case "PrefixDecrementExpression":
+        case "LooseEqualityExpression":
+        case "LooseInequalityExpression":
+        case "ObjectMemberExpression":
         case "AssignmentExpression":
         case "ArrowFunctionExpression":
         case "ThisExpression":
         case "SuperExpression":
         case "AwaitExpression":
+        case "ConditionalExpression":
+        case "RegexExpression":
+        case "NullishCoalescingExpression":
+        case "ModuloExpression":
+        case "InstanceOfExpression":
+        case "BitwiseExpression":
+        case "UnaryExpression":
+        case "ParenthesizedExpression":
+        case "ComputedPropertyExpression":
+        case "SpreadExpression":
         case "NewExpression":
         case "ImportExpression":
         case "NullExpression":
         case "BooleanExpression":
         case "StringLiteralExpression":
         case "FunctionCallExpression":
+        case "CallExpression":
+        case "CommaExpression":
         case "NameLookupExpression":
         case "ObjectPropertyExpression":
         case "ObjectMethodCallExpression":
@@ -507,14 +690,22 @@ export function isAst(node: unknown): node is Ast {
         case "DoWhileLoop":
         case "FunctionDeclaration":
         case "ClassDeclaration":
+        case "InterfaceDeclaration":
+        case "TypeAliasDeclaration":
+        case "EnumDeclaration":
+        case "TypeScriptClassMember":
+        case "DecoratedDeclaration":
         case "ReturnStatement":
         case "ContinueStatement":
         case "BreakStatement":
         case "ThrowStatement":
         case "TryCatchStatement":
+        case "TryFinallyStatement":
         case "ImportStatement":
+        case "ImportNamespaceStatement":
         case "ExportDeclarationStatement":
         case "ExportNamedStatement":
+        case "ExportFromStatement":
         case "ExportDefaultStatement":
         case "LineTerminatedExpression":
             return true;
@@ -530,14 +721,22 @@ export function isDeclaration(
     | LetStatement
     | LetListStatement
     | ConstStatement
-    | ClassDeclaration {
+    | ClassDeclaration
+    | InterfaceDeclaration
+    | TypeAliasDeclaration
+    | EnumDeclaration
+    | DecoratedDeclaration {
     const kind = node.kind;
     return (
         kind === "FunctionDeclaration" ||
         kind === "LetStatement" ||
         kind === "LetListStatement" ||
         kind === "ConstStatement" ||
-        kind === "ClassDeclaration"
+        kind === "ClassDeclaration" ||
+        kind === "InterfaceDeclaration" ||
+        kind === "TypeAliasDeclaration" ||
+        kind === "EnumDeclaration" ||
+        kind === "DecoratedDeclaration"
     );
 }
 
@@ -548,7 +747,5 @@ export function isJsNode(node: unknown): node is JsNode {
 export type JsNode = Ast | Expression;
 
 export type Program = JsNode[];
-
-export type IndexedResult<a> = Result<a> & { index: number };
 
 export type Purity = "Pure" | "ModifiesInputs" | "HasSideEffects";

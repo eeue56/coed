@@ -1,15 +1,16 @@
 import { Storage } from "../engine.ts";
-import type { Language } from "../types.ts";
+import type { Language, Result } from "../types.ts";
 import { diff } from "./diff.ts";
 import { filterProgram } from "./filter.ts";
 import { generateProgram } from "./generate.ts";
-import { parse } from "./parser/index.ts";
+import { parse, parseTypeScript } from "./parser/index.ts";
 import { checkPurity } from "./purity.ts";
 import type { JsNode, Program, Purity } from "./types.ts";
 import { viewDiff } from "./viewDiff.ts";
 
 type JsLanguage = Language<Program, JsNode> & {
     checkPurity: (program: Program) => Purity;
+    parseTypeScript: (input: string, fileName: string) => Result<Program>;
 };
 
 /**
@@ -26,6 +27,7 @@ type JsLanguage = Language<Program, JsNode> & {
 export const javascript: JsLanguage = {
     filter: (filterRules, program) => filterProgram(program, filterRules),
     parse,
+    parseTypeScript,
     generate: generateProgram,
     diff,
     viewDiff,

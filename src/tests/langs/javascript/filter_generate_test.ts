@@ -158,10 +158,35 @@ function sanitizeAst(ast: Ast, filterRule: FilterRule<JsNode>): JsNode | null {
                 catchBlock: sanitizeProgram(ast.catchBlock, filterRule),
             };
         }
+        case "TryFinallyStatement": {
+            return {
+                ...ast,
+                tryBlock: sanitizeProgram(ast.tryBlock, filterRule),
+                catchBlock: ast.catchBlock
+                    ? sanitizeProgram(ast.catchBlock, filterRule)
+                    : null,
+                finallyBlock: sanitizeProgram(ast.finallyBlock, filterRule),
+            };
+        }
+        case "ImportNamespaceStatement":
         case "ImportStatement": {
             return ast;
         }
-        case "ExportNamedStatement": {
+        case "InterfaceDeclaration":
+        case "TypeAliasDeclaration":
+        case "EnumDeclaration":
+        case "TypeScriptClassMember": {
+            return ast;
+        }
+        case "DecoratedDeclaration": {
+            const declaration = sanitizeAst(ast.declaration, filterRule);
+            if (declaration === null || !isAst(declaration)) {
+                return null;
+            }
+            return { ...ast, declaration };
+        }
+        case "ExportNamedStatement":
+        case "ExportFromStatement": {
             return ast;
         }
         case "ExportDeclarationStatement": {
@@ -185,7 +210,8 @@ function sanitizeAst(ast: Ast, filterRule: FilterRule<JsNode>): JsNode | null {
                 if (
                     declaration === null ||
                     !isAst(declaration) ||
-                    declaration.kind !== "FunctionDeclaration"
+                    (declaration.kind !== "FunctionDeclaration" &&
+                        declaration.kind !== "ClassDeclaration")
                 ) {
                     return null;
                 }

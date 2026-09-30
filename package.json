@@ -78,6 +78,7 @@
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "watch": "tsc -w -p tsconfig.json",
+        "typecheck": "tsc --noEmit -p tsconfig.json && tsc -p scripts/tsconfig.json",
         "format": "npx prettier --write .",
         "test": "npx @eeue56/bach",
         "test-playwright": "xvfb-run -a npx playwright test",
@@ -103,6 +104,9 @@
         "url": "https://github.com/eeue56/coed/issues"
     },
     "homepage": "https://github.com/eeue56/coed#readme",
+    "dependencies": {
+        "typescript": "^6.0.3"
+    },
     "devDependencies": {
         "@eeue56/bach": "^1.0.1",
         "@eeue56/geiriadur": "^0.0.3",
@@ -112,7 +116,6 @@
         "@types/node": "^24.0.3",
         "eslint": "^10.6.0",
         "prettier": "^3.8.4",
-        "typescript": "^6.0.3",
         "typescript-eslint": "^8.63.0"
     },
     "optionalDependencies": {

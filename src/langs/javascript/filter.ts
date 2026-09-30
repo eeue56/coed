@@ -266,10 +266,51 @@ function filterAst(
                 errors: [...tryBlock.errors, ...catchBlock.errors],
             };
         }
-        case "ImportStatement": {
+        case "TryFinallyStatement": {
+            const tryBlock = filterAsts(ast.tryBlock, filterRules);
+            const catchBlock = ast.catchBlock
+                ? filterAsts(ast.catchBlock, filterRules)
+                : null;
+            const finallyBlock = filterAsts(ast.finallyBlock, filterRules);
+
+            return {
+                value: [
+                    {
+                        ...ast,
+                        tryBlock: tryBlock.value,
+                        catchBlock: catchBlock ? catchBlock.value : null,
+                        finallyBlock: finallyBlock.value,
+                    },
+                ],
+                errors: [
+                    ...tryBlock.errors,
+                    ...(catchBlock ? catchBlock.errors : []),
+                    ...finallyBlock.errors,
+                ],
+            };
+        }
+        case "ImportStatement":
+        case "ImportNamespaceStatement": {
             return { value: [ast], errors: [] };
         }
-        case "ExportNamedStatement": {
+        case "InterfaceDeclaration":
+        case "TypeAliasDeclaration":
+        case "EnumDeclaration":
+        case "TypeScriptClassMember": {
+            return { value: [ast], errors: [] };
+        }
+        case "DecoratedDeclaration": {
+            const declaration = filterAst(ast.declaration, filterRules);
+            if (declaration.value.length !== 1) {
+                return { value: [], errors: declaration.errors };
+            }
+            return {
+                value: [{ ...ast, declaration: declaration.value[0] }],
+                errors: declaration.errors,
+            };
+        }
+        case "ExportNamedStatement":
+        case "ExportFromStatement": {
             return { value: [ast], errors: [] };
         }
         case "ExportDeclarationStatement": {
@@ -305,7 +346,8 @@ function filterAst(
             const declaration = filterAst(ast.value, filterRules);
             if (
                 declaration.value.length !== 1 ||
-                declaration.value[0].kind !== "FunctionDeclaration"
+                (declaration.value[0].kind !== "FunctionDeclaration" &&
+                    declaration.value[0].kind !== "ClassDeclaration")
             ) {
                 return { value: [], errors: declaration.errors };
             }
@@ -413,6 +455,14 @@ export function filterExpression(
         case "EqualityExpression":
         case "InequalityExpression":
         case "LessThanExpression":
+        case "InExpression":
+        case "NullishCoalescingExpression":
+        case "ModuloExpression":
+        case "InstanceOfExpression":
+        case "CommaExpression":
+        case "LooseEqualityExpression":
+        case "LooseInequalityExpression":
+        case "BitwiseExpression":
         case "MoreThanExpression":
         case "LessThanOrEqualExpression":
         case "MoreThanOrEqualExpression": {
@@ -432,7 +482,9 @@ export function filterExpression(
             return { value: [exp], errors: [...left.errors, ...right.errors] };
         }
         case "IncrementExpression":
-        case "DecrementExpression": {
+        case "DecrementExpression":
+        case "PrefixIncrementExpression":
+        case "PrefixDecrementExpression": {
             return { value: [expression], errors: [] };
         }
         case "IncreaseExpression":
@@ -446,7 +498,10 @@ export function filterExpression(
                 errors: [...amount.errors],
             };
         }
-        case "NegationExpression": {
+        case "NegationExpression":
+        case "UnaryExpression":
+        case "ParenthesizedExpression":
+        case "SpreadExpression": {
             const value = filterExpression(expression.value, filterRules);
             if (value.value.length === 0) {
                 return { value: [], errors: [...value.errors] };
@@ -497,7 +552,15 @@ export function filterExpression(
                 errors: body.errors,
             };
         }
-        case "NullExpression": {
+        case "ObjectMemberExpression": {
+            const body = filterAsts(expression.body, filterRules);
+            return {
+                value: [{ ...expression, body: body.value }],
+                errors: body.errors,
+            };
+        }
+        case "NullExpression":
+        case "RegexExpression": {
             return { value: [expression], errors: [] };
         }
         case "ThisExpression": {
@@ -505,6 +568,60 @@ export function filterExpression(
         }
         case "SuperExpression": {
             return { value: [expression], errors: [] };
+        }
+        case "ComputedPropertyExpression": {
+            const key = filterExpression(expression.key, filterRules);
+            const value = filterExpression(expression.value, filterRules);
+            const errors = [...key.errors, ...value.errors];
+            if (key.value.length === 0 || value.value.length === 0) {
+                return { value: [], errors };
+            }
+
+            return {
+                value: [
+                    {
+                        ...expression,
+                        key: key.value[0],
+                        value: value.value[0],
+                    },
+                ],
+                errors,
+            };
+        }
+        case "ConditionalExpression": {
+            const condition = filterExpression(
+                expression.condition,
+                filterRules,
+            );
+            const whenTrue = filterExpression(expression.whenTrue, filterRules);
+            const whenFalse = filterExpression(
+                expression.whenFalse,
+                filterRules,
+            );
+            const errors = [
+                ...condition.errors,
+                ...whenTrue.errors,
+                ...whenFalse.errors,
+            ];
+            if (
+                condition.value.length === 0 ||
+                whenTrue.value.length === 0 ||
+                whenFalse.value.length === 0
+            ) {
+                return { value: [], errors };
+            }
+
+            return {
+                value: [
+                    {
+                        ...expression,
+                        condition: condition.value[0],
+                        whenTrue: whenTrue.value[0],
+                        whenFalse: whenFalse.value[0],
+                    },
+                ],
+                errors,
+            };
         }
         case "AwaitExpression": {
             const value = filterExpression(expression.value, filterRules);
@@ -572,6 +689,35 @@ export function filterExpression(
             }
             return {
                 value: [{ ...expression, values }],
+                errors,
+            };
+        }
+        case "CallExpression": {
+            const callee = filterExpression(expression.callee, filterRules);
+            if (callee.value.length === 0) {
+                return { value: [], errors: callee.errors };
+            }
+            const args = [];
+            const errors = [...callee.errors];
+            for (const arg of expression.arguments) {
+                const filtered = filterExpression(arg, filterRules);
+                if (filtered.value.length === 0) {
+                    return {
+                        value: [],
+                        errors: [...errors, ...filtered.errors],
+                    };
+                }
+                args.push(filtered.value[0]);
+                errors.push(...filtered.errors);
+            }
+            return {
+                value: [
+                    {
+                        ...expression,
+                        callee: callee.value[0] as typeof expression.callee,
+                        arguments: args,
+                    },
+                ],
                 errors,
             };
         }
