@@ -5,9 +5,9 @@ import {
     parsePropertySegment,
 } from "../diffs/diffPath.ts";
 import {
+    compactDiffEntries,
     compactedSummaryNode,
     compactedValueHighlight,
-    compactDiffEntries,
     formatComparedPathLine,
     formatPathLine,
     groupedDiffEntryCounts,
@@ -17,6 +17,7 @@ import {
     type HighlightSpec,
     type ValueSnippetSpec,
 } from "../diffs/viewDiffShared.ts";
+import { escapeHtml } from "../helpers.ts";
 import type { Diff } from "../types.ts";
 import { selectorToString } from "./generate.ts";
 import { css } from "./index.ts";
@@ -359,7 +360,10 @@ function compactedPropertyHighlight(
 
     for (const property of compactedProperties) {
         const declarations = getPropertyDeclarations(targetBlock, property);
-        const oppositeDeclarations = getPropertyDeclarations(oppositeBlock, property);
+        const oppositeDeclarations = getPropertyDeclarations(
+            oppositeBlock,
+            property,
+        );
 
         for (const declaration of declarations) {
             const snippet = declarationToString(declaration);
@@ -397,7 +401,13 @@ function renderCode(
         compactedProperties,
     );
 
-    return renderCodeWithHighlight(code, highlight, codeClass, highlightClass);
+    return renderCodeWithHighlight(
+        code,
+        highlight,
+        codeClass,
+        highlightClass,
+        escapeHtml,
+    );
 }
 
 function propertyNameForPath(path: string): string | null {
@@ -439,7 +449,8 @@ export function viewDiff(diff: Diff<CssBlock[]>): HtmlNode<never> {
             ...entries.map((entry) => {
                 const parsedPath = parsePath(entry.path);
                 const compactedCount = groupedCounts.get(entry.path) ?? 1;
-                const compactedProperties = groupedProperties.get(entry.path) ?? [];
+                const compactedProperties =
+                    groupedProperties.get(entry.path) ?? [];
                 const summaryNode = compactedSummaryNode(compactedCount);
 
                 return renderDiffEntrySections(
