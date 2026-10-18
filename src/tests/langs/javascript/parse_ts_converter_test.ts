@@ -301,10 +301,10 @@ export function testTsParseSwitchAsIfChain() {
     assert.strictEqual(result.length, 1);
     const first = result[0];
     assert.strictEqual(first.kind, "IfStatement");
-    if (first.kind !== "IfStatement") return;
     assert.strictEqual(first.condition.kind, "OrExpression");
-    assert.strictEqual(first.elseIf?.condition.kind, "EqualityExpression");
-    assert.strictEqual(first.elseIf?.elseBranch?.length, 1);
+    assert.ok(first.elseIf);
+    assert.strictEqual(first.elseIf.condition.kind, "EqualityExpression");
+    assert.strictEqual(first.elseIf.elseBranch?.length, 1);
 }
 
 export function testTsParseSwitchFallthroughRepeatsFollowingBodies() {
@@ -312,10 +312,8 @@ export function testTsParseSwitchFallthroughRepeatsFollowingBodies() {
         parse("switch (x) { case 1: f(); case 2: g(); break; }"),
     );
     assert.strictEqual(node.kind, "IfStatement");
-    if (node.kind === "IfStatement") {
-        assert.strictEqual(node.thenBranch.length, 2);
-        assert.strictEqual(node.elseIf?.thenBranch.length, 1);
-    }
+    assert.strictEqual(node.thenBranch.length, 2);
+    assert.strictEqual(node.elseIf?.thenBranch.length, 1);
 }
 
 export function testTsParseDestructuringDesugars() {
@@ -469,9 +467,7 @@ export function testTsParseDestructuringDefaultsRestAndForOf() {
     assert.strictEqual(declaration.kind, "ConstStatement");
     const loop = expectOk(parse("for (const [k, v] of xs) { f(k, v); }"))[0];
     assert.strictEqual(loop.kind, "ForInOfLoop");
-    if (loop.kind === "ForInOfLoop") {
-        assert.strictEqual(loop.body.length, 3);
-    }
+    assert.strictEqual(loop.body.length, 3);
     expectOk(parse("function f(a = 1, { b } = c) { return a; }"));
     expectOk(parse("const o = { [k]: 1 };"));
 }
@@ -498,9 +494,7 @@ export function testTsParseLooseEqualityTypeofAndObjectMembers() {
         parseExpression("{ m(a) { return a; }, get v() { return 1; } }"),
     );
     assert.strictEqual(object.kind, "ObjectExpression");
-    if (object.kind === "ObjectExpression") {
-        assert.deepStrictEqual(Object.keys(object.properties), ["m", "get v"]);
-    }
+    assert.deepStrictEqual(Object.keys(object.properties), ["m", "get v"]);
 }
 
 export function testTsGenerateKeepsNeededParentheses() {

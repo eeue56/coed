@@ -200,9 +200,7 @@ export function testCyclicAstTerminatesConservatively(): void {
         kind: "NegationExpression",
         value: cyclicExpression,
     };
-    if (cyclicExpression.kind === "NegationExpression") {
-        cyclicExpression.value = cyclicExpression;
-    }
+    cyclicExpression.value = cyclicExpression;
 
     const declaration: FunctionDeclaration = {
         kind: "FunctionDeclaration",

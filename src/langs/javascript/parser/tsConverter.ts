@@ -786,8 +786,8 @@ function endsWithJump(
     statements: readonly ts.Statement[],
     breakCounts: boolean,
 ): boolean {
+    if (statements.length === 0) return false;
     const last = statements[statements.length - 1];
-    if (!last) return false;
     if (ts.isBlock(last)) return endsWithJump(last.statements, breakCounts);
     if (ts.isIfStatement(last)) {
         return (
