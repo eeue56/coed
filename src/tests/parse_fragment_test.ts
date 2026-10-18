@@ -29,8 +29,8 @@ import {
     title,
     u,
 } from "../coed.ts";
-import { parseFragment } from "../parse.ts";
-import { circle, svg } from "../svg.ts";
+import { circle, svg } from "../coed/svg.ts";
+import { parseFragment } from "../langs/html/parse.ts";
 
 export function testParseText() {
     const html = `Hello world!`;
@@ -216,6 +216,20 @@ export function testParseWithNamespace() {
             ],
         ),
     ]);
+}
+
+export function testParseSvgPreservesFilterPrimitiveNames() {
+    const parsed = parseFragment(
+        `<svg><feGaussianBlur stdDeviation="2" /><feFlood /></svg>`,
+    );
+    const svgNode = parsed[0];
+    assert.strictEqual(svgNode.kind, "ns-regular");
+    assert.deepStrictEqual(
+        (svgNode as { children: { tag: string }[] }).children.map(
+            (child) => child.tag,
+        ),
+        ["feGaussianBlur", "feFlood"],
+    );
 }
 
 export function testParseSvg() {

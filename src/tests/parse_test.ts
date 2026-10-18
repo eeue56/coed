@@ -13,6 +13,7 @@ import {
     em,
     head,
     html,
+    type HtmlNode,
     i,
     iframe,
     input,
@@ -32,211 +33,228 @@ import {
     title,
     u,
 } from "../coed.ts";
-import { parse } from "../parse.ts";
-import { circle, svg } from "../svg.ts";
+import { circle, radialGradient, svg } from "../coed/svg.ts";
+import { parse } from "../langs/html/parse.ts";
+import type { Result } from "../langs/types.ts";
 
 export function testParseText() {
     const rawHtml = `<!doctype html><html><body>Hello world!</body></html>`;
 
-    const coedEquvilient = html(
-        [],
-        [],
-        [head([], [], []), body([], [], [text("Hello world!")])],
-    );
+    const expectedCoed: Result<HtmlNode<never>> = {
+        kind: "Ok",
+        value: html(
+            [],
+            [],
+            [head([], [], []), body([], [], [text("Hello world!")])],
+        ),
+    };
 
     const parsed = parse(rawHtml);
 
-    assert.deepStrictEqual(parsed, coedEquvilient);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseSingleElement() {
     const rawHtml = `<!doctype html><html><body><p>Hello world!</p></body></html>`;
 
-    const coedEquvilient = html(
-        [],
-        [],
-        [head([], [], []), body([], [], [p([], [], [text("Hello world!")])])],
-    );
+    const expectedCoed: Result<HtmlNode<never>> = {
+        kind: "Ok",
+        value: html(
+            [],
+            [],
+            [
+                head([], [], []),
+                body([], [], [p([], [], [text("Hello world!")])]),
+            ],
+        ),
+    };
 
     const parsed = parse(rawHtml);
 
-    assert.deepStrictEqual(parsed, coedEquvilient);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseDeeplyNestedElements() {
     const rawHtml = `<!doctype html><html><body><div><p><span><a><b><i><u><em><strong><mark><small><sub><sup><code><s><del><ins>Deeply nested elements</ins></del></s></code></sup></sub></small></mark></strong></em></u></i></b></a></span></p></div></body></html>`;
 
-    const coedEquvilient = html(
-        [],
-        [],
-        [
-            head([], [], []),
-            body(
-                [],
-                [],
-                [
-                    div(
-                        [],
-                        [],
-                        [
-                            p(
-                                [],
-                                [],
-                                [
-                                    span(
-                                        [],
-                                        [],
-                                        [
-                                            a(
-                                                [],
-                                                [],
-                                                [
-                                                    b(
-                                                        [],
-                                                        [],
-                                                        [
-                                                            i(
-                                                                [],
-                                                                [],
-                                                                [
-                                                                    u(
-                                                                        [],
-                                                                        [],
-                                                                        [
-                                                                            em(
-                                                                                [],
-                                                                                [],
-                                                                                [
-                                                                                    strong(
-                                                                                        [],
-                                                                                        [],
-                                                                                        [
-                                                                                            mark(
-                                                                                                [],
-                                                                                                [],
-                                                                                                [
-                                                                                                    small(
-                                                                                                        [],
-                                                                                                        [],
-                                                                                                        [
-                                                                                                            sub(
-                                                                                                                [],
-                                                                                                                [],
-                                                                                                                [
-                                                                                                                    sup(
-                                                                                                                        [],
-                                                                                                                        [],
-                                                                                                                        [
-                                                                                                                            code(
-                                                                                                                                [],
-                                                                                                                                [],
-                                                                                                                                [
-                                                                                                                                    s(
-                                                                                                                                        [],
-                                                                                                                                        [],
-                                                                                                                                        [
-                                                                                                                                            del(
-                                                                                                                                                [],
-                                                                                                                                                [],
-                                                                                                                                                [
-                                                                                                                                                    ins(
-                                                                                                                                                        [],
-                                                                                                                                                        [],
-                                                                                                                                                        [
-                                                                                                                                                            text(
-                                                                                                                                                                "Deeply nested elements",
-                                                                                                                                                            ),
-                                                                                                                                                        ],
-                                                                                                                                                    ),
-                                                                                                                                                ],
-                                                                                                                                            ),
-                                                                                                                                        ],
-                                                                                                                                    ),
-                                                                                                                                ],
-                                                                                                                            ),
-                                                                                                                        ],
-                                                                                                                    ),
-                                                                                                                ],
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                    ),
-                                                                                                ],
-                                                                                            ),
-                                                                                        ],
-                                                                                    ),
-                                                                                ],
-                                                                            ),
-                                                                        ],
-                                                                    ),
-                                                                ],
-                                                            ),
-                                                        ],
-                                                    ),
-                                                ],
-                                            ),
-                                        ],
-                                    ),
-                                ],
-                            ),
-                        ],
-                    ),
-                ],
-            ),
-        ],
-    );
+    const expectedCoed: Result<HtmlNode<never>> = {
+        kind: "Ok",
+        value: html(
+            [],
+            [],
+            [
+                head([], [], []),
+                body(
+                    [],
+                    [],
+                    [
+                        div(
+                            [],
+                            [],
+                            [
+                                p(
+                                    [],
+                                    [],
+                                    [
+                                        span(
+                                            [],
+                                            [],
+                                            [
+                                                a(
+                                                    [],
+                                                    [],
+                                                    [
+                                                        b(
+                                                            [],
+                                                            [],
+                                                            [
+                                                                i(
+                                                                    [],
+                                                                    [],
+                                                                    [
+                                                                        u(
+                                                                            [],
+                                                                            [],
+                                                                            [
+                                                                                em(
+                                                                                    [],
+                                                                                    [],
+                                                                                    [
+                                                                                        strong(
+                                                                                            [],
+                                                                                            [],
+                                                                                            [
+                                                                                                mark(
+                                                                                                    [],
+                                                                                                    [],
+                                                                                                    [
+                                                                                                        small(
+                                                                                                            [],
+                                                                                                            [],
+                                                                                                            [
+                                                                                                                sub(
+                                                                                                                    [],
+                                                                                                                    [],
+                                                                                                                    [
+                                                                                                                        sup(
+                                                                                                                            [],
+                                                                                                                            [],
+                                                                                                                            [
+                                                                                                                                code(
+                                                                                                                                    [],
+                                                                                                                                    [],
+                                                                                                                                    [
+                                                                                                                                        s(
+                                                                                                                                            [],
+                                                                                                                                            [],
+                                                                                                                                            [
+                                                                                                                                                del(
+                                                                                                                                                    [],
+                                                                                                                                                    [],
+                                                                                                                                                    [
+                                                                                                                                                        ins(
+                                                                                                                                                            [],
+                                                                                                                                                            [],
+                                                                                                                                                            [
+                                                                                                                                                                text(
+                                                                                                                                                                    "Deeply nested elements",
+                                                                                                                                                                ),
+                                                                                                                                                            ],
+                                                                                                                                                        ),
+                                                                                                                                                    ],
+                                                                                                                                                ),
+                                                                                                                                            ],
+                                                                                                                                        ),
+                                                                                                                                    ],
+                                                                                                                                ),
+                                                                                                                            ],
+                                                                                                                        ),
+                                                                                                                    ],
+                                                                                                                ),
+                                                                                                            ],
+                                                                                                        ),
+                                                                                                    ],
+                                                                                                ),
+                                                                                            ],
+                                                                                        ),
+                                                                                    ],
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            ],
+        ),
+    };
 
     const parsed = parse(rawHtml);
 
-    assert.deepStrictEqual(parsed, coedEquvilient);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithStyles() {
     const rawHtml = `<!doctype html><html><body><div class="test"><p>Hello <span style="color: red;">world</span>!</p></div></body></html>`;
 
-    const coedEquvilient = html(
-        [],
-        [],
-        [
-            head([], [], []),
-            body(
-                [],
-                [],
-                [
-                    div(
-                        [],
-                        [class_("test")],
-                        [
-                            p(
-                                [],
-                                [],
-                                [
-                                    text("Hello "),
-                                    span(
-                                        [],
-                                        [style_("color", "red")],
-                                        [text("world")],
-                                    ),
-                                    text("!"),
-                                ],
-                            ),
-                        ],
-                    ),
-                ],
-            ),
-        ],
-    );
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
+            [],
+            [],
+            [
+                head([], [], []),
+                body(
+                    [],
+                    [],
+                    [
+                        div(
+                            [],
+                            [class_("test")],
+                            [
+                                p(
+                                    [],
+                                    [],
+                                    [
+                                        text("Hello "),
+                                        span(
+                                            [],
+                                            [style_("color", "red")],
+                                            [text("world")],
+                                        ),
+                                        text("!"),
+                                    ],
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+            ],
+        ),
+    };
 
     const parsed = parse(rawHtml);
 
-    assert.deepStrictEqual(parsed, coedEquvilient);
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithNamespace() {
     const rawHtml = `<!doctype html><html><body><svg xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" stroke="green" stroke-width="4" fill="yellow" /></svg></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -266,15 +284,18 @@ export function testParseWithNamespace() {
                 ),
             ],
         ),
-    );
+    };
+
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseSvg() {
     const rawHtml = `<!doctype html><html><body><svg><circle cx="50" cy="50" r="40" stroke="green" stroke-width="4" fill="yellow" /></svg></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -304,15 +325,17 @@ export function testParseSvg() {
                 ),
             ],
         ),
-    );
+    };
+
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithMultipleRootElements() {
     const rawHtml = `<!doctype html><html><body><p>Hello</p><p>world!</p></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -324,15 +347,18 @@ export function testParseWithMultipleRootElements() {
                 ),
             ],
         ),
-    );
+    };
+
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithWhitespace() {
     const rawHtml = `<!doctype html><html><body>   <p>Hello</p>   <p>world!</p>   </body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -350,15 +376,18 @@ export function testParseWithWhitespace() {
                 ),
             ],
         ),
-    );
+    };
+
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithComments() {
     const rawHtml = `<!doctype html><html><body><p>Hello<!-- This is a comment --> world!</p></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -366,15 +395,18 @@ export function testParseWithComments() {
                 body([], [], [p([], [], [text("Hello"), text(" world!")])]),
             ],
         ),
-    );
+    };
+
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithDoctype() {
     const rawHtml = `<!DOCTYPE html><html><body><p>Hello world!</p></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -382,15 +414,18 @@ export function testParseWithDoctype() {
                 body([], [], [p([], [], [text("Hello world!")])]),
             ],
         ),
-    );
+    };
+
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithSelfClosingTags() {
     const rawHtml = `<!doctype html><html><body><p>Hello<br>world!</p></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -402,15 +437,16 @@ export function testParseWithSelfClosingTags() {
                 ),
             ],
         ),
-    );
+    };
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithDeeplyNestedElementsAndWhitespace() {
     const rawHtml = `<!doctype html><html><body><div><p><span><a><b><i><u><em><strong><mark><small><sub><sup><code><s><del><ins>   Deeply nested elements   </ins></del></s></code></sup></sub></small></mark></strong></em></u></i></b></a></span></p></div></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -528,15 +564,17 @@ export function testParseWithDeeplyNestedElementsAndWhitespace() {
                 ),
             ],
         ),
-    );
+    };
+
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseScriptTag() {
     const rawHtml = `<!DOCTYPE html><html><body><script>console.log("Hello world!");</script></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+    const expectedCoed: Result<HtmlNode<never>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -548,15 +586,16 @@ export function testParseScriptTag() {
                 ),
             ],
         ),
-    );
+    };
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseStyleTag() {
     const rawHtml = `<!DOCTYPE html><html><body><style>body { background-color: red; }</style></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -568,15 +607,16 @@ export function testParseStyleTag() {
                 ),
             ],
         ),
-    );
+    };
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseAttributes() {
     const rawHtml = `<!DOCTYPE html><html><body><p class="test" id="test-id" data-test="test-data">Hello world!</p></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -598,15 +638,17 @@ export function testParseAttributes() {
                 ),
             ],
         ),
-    );
+    };
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseBooleanAttributes() {
     const rawHtml = `<!DOCTYPE html><html><body><input type="checkbox" checked disabled></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -627,15 +669,17 @@ export function testParseBooleanAttributes() {
                 ),
             ],
         ),
-    );
+    };
+
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithInvalidHtml() {
     const rawHtml = `<!DOCTYPE html><html><body><p>Hello world!</p></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -643,15 +687,18 @@ export function testParseWithInvalidHtml() {
                 body([], [], [p([], [], [text("Hello world!")])]),
             ],
         ),
-    );
+    };
+
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithInvalidHtml2() {
     const rawHtml = `<!DOCTYPE html><html><body><p>Hello <span>world!</span></p></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -669,15 +716,18 @@ export function testParseWithInvalidHtml2() {
                 ),
             ],
         ),
-    );
+    };
+
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithInvalidHtml3() {
     const rawHtml = `<!DOCTYPE html><html><body><p>Hello <span>world!</span></p></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -695,15 +745,17 @@ export function testParseWithInvalidHtml3() {
                 ),
             ],
         ),
-    );
+    };
+
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseWithIframes() {
     const rawHtml = `<!DOCTYPE html><html><body><iframe src="https://www.example.com"></iframe></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -721,24 +773,27 @@ export function testParseWithIframes() {
                 ),
             ],
         ),
-    );
+    };
+
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseEmptyString() {
     const rawHtml = ``;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html([], [], [head([], [], []), body([], [], [])]),
-    );
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html([], [], [head([], [], []), body([], [], [])]),
+    };
+    assert.deepStrictEqual(parsed, expectedCoed);
 }
 
 export function testParseHtml() {
     const rawHtml = `<!DOCTYPE html><html><head><title>Test</title></head><body><p>Hello world!</p></body></html>`;
     const parsed = parse(rawHtml);
-    assert.deepStrictEqual(
-        parsed,
-        html(
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
             [],
             [],
             [
@@ -746,5 +801,45 @@ export function testParseHtml() {
                 body([], [], [p([], [], [text("Hello world!")])]),
             ],
         ),
-    );
+    };
+    assert.deepStrictEqual(parsed, expectedCoed);
+}
+
+export function testParseSvgCaseInsensitive() {
+    const rawHtml = `<!DOCTYPE html><html><body><svg><circle cx="50" cy="50" r="40" /><radialGradient></radialGradient></svg></body></html>`;
+    const parsed = parse(rawHtml);
+
+    const expectedCoed: Result<HtmlNode<unknown>> = {
+        kind: "Ok",
+        value: html(
+            [],
+            [],
+            [
+                head([], [], []),
+                body(
+                    [],
+                    [],
+                    [
+                        svg(
+                            [],
+                            [],
+                            [
+                                circle(
+                                    [],
+                                    [
+                                        attribute("cx", "50"),
+                                        attribute("cy", "50"),
+                                        attribute("r", "40"),
+                                    ],
+                                ),
+                                radialGradient([], []),
+                            ],
+                        ),
+                    ],
+                ),
+            ],
+        ),
+    };
+
+    assert.deepStrictEqual(parsed, expectedCoed);
 }

@@ -1,19 +1,19 @@
 {
     "name": "@eeue56/coed",
-    "version": "1.0.0-1",
+    "version": "1.0.0-11",
     "description": "Write HTML in pure TS",
     "main": "build/coed.js",
     "type": "module",
     "files": [
         "./build/coed.js",
         "./build/coed.d.ts",
-        "./build/svg.js",
-        "./build/svg.d.ts",
+        "./build/coed/svg.js",
+        "./build/coed/svg.d.ts",
         "./build/parse.js",
         "./build/parse.d.ts",
         "./build/types.d.ts",
         "./build/types.js",
-        "./build/langs/css"
+        "./build/langs/**/*"
     ],
     "exports": {
         ".": {
@@ -22,33 +22,70 @@
             "default": "./build/coed.js"
         },
         "./svg": {
-            "types": "./build/svg.d.ts",
-            "import": "./build/svg.js",
-            "default": "./build/svg.js"
-        },
-        "./parse": {
-            "types": "./build/parse.d.ts",
-            "import": "./build/parse.js",
-            "default": "./build/parse.js"
+            "types": "./build/coed/svg.d.ts",
+            "import": "./build/coed/svg.js",
+            "default": "./build/coed/svg.js"
         },
         "./types": {
             "types": "./build/types.d.ts",
             "import": "./build/types.js",
             "default": "./build/types.js"
         },
-        "./css": {
+        "./langs": {
+            "types": "./build/langs/index.d.ts",
+            "import": "./build/langs/index.js",
+            "default": "./build/langs/index.js"
+        },
+        "./langs/view-diff-css": {
+            "types": "./build/langs/diffs/viewDiffCss.d.ts",
+            "import": "./build/langs/diffs/viewDiffCss.js",
+            "default": "./build/langs/diffs/viewDiffCss.js"
+        },
+        "./langs/types": {
+            "types": "./build/langs/types.d.ts",
+            "import": "./build/langs/types.js",
+            "default": "./build/langs/types.js"
+        },
+        "./langs/css": {
             "types": "./build/langs/css/index.d.ts",
             "import": "./build/langs/css/index.js",
             "default": "./build/langs/css/index.js"
+        },
+        "./langs/html": {
+            "types": "./build/langs/html/index.d.ts",
+            "import": "./build/langs/html/index.js",
+            "default": "./build/langs/html/index.js"
+        },
+        "./langs/javascript": {
+            "types": "./build/langs/javascript/index.d.ts",
+            "import": "./build/langs/javascript/index.js",
+            "default": "./build/langs/javascript/index.js"
+        },
+        "./langs/engine": {
+            "types": "./build/langs/engine.d.ts",
+            "import": "./build/langs/engine.js",
+            "default": "./build/langs/engine.js"
+        }
+    },
+    "imports": {
+        "#dom_parser": {
+            "browser": "./build/langs/html/dom_parser/browser.js",
+            "node": "./build/langs/html/dom_parser/node.js",
+            "default": "./build/langs/html/dom_parser/browser.js"
         }
     },
     "typings": "build/coed.d.ts",
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "watch": "tsc -w -p tsconfig.json",
+        "typecheck": "tsc --noEmit -p tsconfig.json && tsc -p scripts/tsconfig.json",
         "format": "npx prettier --write .",
         "test": "npx @eeue56/bach",
-        "docs": "npx @eeue56/geiriadur"
+        "test-playwright": "xvfb-run -a npx playwright test",
+        "test-playwright:update": "xvfb-run -a npx playwright test --update-snapshots",
+        "test-js": "npm test -- --file src/tests/langs/javascript/*",
+        "test-all": "npm run test && npm run test-playwright",
+        "lint": "npx eslint ."
     },
     "repository": {
         "type": "git",
@@ -66,12 +103,18 @@
         "url": "https://github.com/eeue56/coed/issues"
     },
     "homepage": "https://github.com/eeue56/coed#readme",
+    "dependencies": {
+        "typescript": "^6.0.3",
+        "jsdom": "^30.1.2"
+    },
     "devDependencies": {
         "@eeue56/bach": "^1.0.1",
-        "@eeue56/geiriadur": "^0.0.3",
-        "@types/jsdom": "^28.0.3",
+        "@eslint/js": "^10.0.1",
+        "@playwright/test": "^1.61.1",
+        "@types/jsdom": "^30.0.0",
         "@types/node": "^24.0.3",
-        "typescript": "^6.0.3",
-        "jsdom": "^29.1.1"
+        "eslint": "^10.6.0",
+        "prettier": "^3.8.4",
+        "typescript-eslint": "^8.63.0"
     }
 }

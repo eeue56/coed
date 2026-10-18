@@ -1,3 +1,4 @@
+import type { Result } from "../types.ts";
 import type {
     CssBlock,
     Declaration,
@@ -180,7 +181,7 @@ export function parseDeclarations(str: string): Declaration[] {
 type CssParserState = "ReadingSelector" | "ReadingBody";
 
 /** parse css blocks from a string, failing gracefully */
-export function parseCssBlocks(css: string): CssBlock[] {
+export function parseCssBlocks(css: string): Result<CssBlock[]> {
     let state: CssParserState = "ReadingSelector";
     let buffer: string[] = [];
     let selector: null | string = null;
@@ -206,11 +207,15 @@ export function parseCssBlocks(css: string): CssBlock[] {
                     const maybeSelector = parseSelector(selector || "");
 
                     if (maybeSelector.kind === "Media") {
-                        blocks.push({
-                            kind: "MediaQuery",
-                            selector: maybeSelector,
-                            body: parseCssBlocks(buffer.join("").trim()),
-                        });
+                        const body = parseCssBlocks(buffer.join("").trim());
+
+                        if (body.kind === "Ok") {
+                            blocks.push({
+                                kind: "MediaQuery",
+                                selector: maybeSelector,
+                                body: body.value,
+                            });
+                        }
                     } else {
                         blocks.push({
                             kind: "Regular",
@@ -234,7 +239,7 @@ export function parseCssBlocks(css: string): CssBlock[] {
         }
     }
 
-    return blocks;
+    return { kind: "Ok", value: blocks };
 }
 
 /**
@@ -327,9 +332,6 @@ function cssBlockToTagsAndClasses(block: CssBlock): ExtractedTagsAndClasses {
 
             return result;
         }
-        case "Never": {
-            return { tags: [], classes: [] };
-        }
     }
 }
 
@@ -347,94 +349,4 @@ export function cssBlocksToTagsAndClasses(
     }
 
     return result;
-}
-
-function selectorToString(selector: Selector): string {
-    switch (selector.kind) {
-        case "Class": {
-            return `.${selector.class}`;
-        }
-        case "Tag": {
-            return `${selector.tag}`;
-        }
-        case "Child": {
-            return `${selectorToString(selector.parent)} > ${selectorToString(
-                selector.child,
-            )}`;
-        }
-        case "Id": {
-            return `#${selector.id}`;
-        }
-        case "Sibling": {
-            return `${selector.siblings.map(selectorToString).join(" ")}`;
-        }
-        case "Psuedo": {
-            return `${selectorToString(selector.selector)}:${selector.psuedo}`;
-        }
-        case "PsuedoElement": {
-            return `${selectorToString(selector.selector)}::${selector.element}`;
-        }
-        case "Multiple": {
-            return `${selector.selectors.map(selectorToString).join(", ")}`;
-        }
-        case "All": {
-            return "*";
-        }
-        case "Media": {
-            return `@media ${selector.query}`;
-        }
-    }
-}
-
-function indent(text: string): string {
-    return text
-        .split("\n")
-        .map((x) => "    " + x)
-        .join("\n");
-}
-
-export function declarationToString(declaration: Declaration): string {
-    switch (declaration.kind) {
-        case "Property": {
-            return `${declaration.name}: ${declaration.value};`;
-        }
-        case "Nested": {
-            const inner = declaration.declarations
-                .map(declarationToString)
-                .map((x) => indent(x))
-                .join("\n");
-            return `${selectorToString(declaration.selector)} {
-${inner}
-}`;
-        }
-    }
-}
-
-export function declarationsToString(declarations: Declaration[]): string {
-    return declarations.map(declarationToString).join("\n");
-}
-
-export function cssBlockToString(block: CssBlock): string {
-    switch (block.kind) {
-        case "Never": {
-            return "";
-        }
-        case "MediaQuery": {
-            const query = selectorToString(block.selector);
-            const inner = (block.body as CssBlock[])
-                .map((x) => indent(cssBlockToString(x)))
-                .map((x) => "" + x)
-                .join("\n");
-
-            return `${query} {
-${inner.trimEnd()}
-}`;
-        }
-        case "Regular": {
-            const rules = indent(declarationsToString(block.body));
-            return `${selectorToString(block.selector)} {
-${rules}
-}`;
-        }
-    }
 }

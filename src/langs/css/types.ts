@@ -29,12 +29,25 @@ export type CssBlock =
           kind: "MediaQuery";
           selector: { kind: "Media"; query: string };
           body: CssBlock[];
-      }
-    | {
-          kind: "Never";
       };
 
 export type ExtractedTagsAndClasses = {
     tags: string[];
     classes: string[];
 };
+
+export type CssNode = CssBlock | Declaration;
+
+export function isCssBlock(node: CssNode): node is CssBlock {
+    return (
+        (node as CssBlock).kind === "Regular" ||
+        (node as CssBlock).kind === "MediaQuery"
+    );
+}
+
+export function isCssDeclaration(node: CssNode): node is Declaration {
+    return (
+        (node as Declaration).kind === "Property" ||
+        (node as Declaration).kind === "Nested"
+    );
+}
