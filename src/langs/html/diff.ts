@@ -210,15 +210,15 @@ function diffNode(
                 nextTree,
                 pathSoFar,
             );
-            if (attributeDiffs !== null) {
-                return attributeDiffs;
-            }
 
             if (currentTree.children.length !== typedNextTree.children.length) {
                 return nodeReplacementDiff(pathSoFar, currentTree, nextTree);
             }
 
             const diffs: DiffNode<HtmlNode<unknown>>[] = [];
+            if (attributeDiffs !== null) {
+                diffs.push(...attributeDiffs.diffs);
+            }
 
             for (let i = 0; i < typedNextTree.children.length; i++) {
                 const currentChild = currentTree.children[i];

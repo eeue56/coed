@@ -218,6 +218,20 @@ export function testParseWithNamespace() {
     ]);
 }
 
+export function testParseSvgPreservesFilterPrimitiveNames() {
+    const parsed = parseFragment(
+        `<svg><feGaussianBlur stdDeviation="2" /><feFlood /></svg>`,
+    );
+    const svgNode = parsed[0];
+    assert.strictEqual(svgNode.kind, "ns-regular");
+    assert.deepStrictEqual(
+        (svgNode as { children: { tag: string }[] }).children.map(
+            (child) => child.tag,
+        ),
+        ["feGaussianBlur", "feFlood"],
+    );
+}
+
 export function testParseSvg() {
     const html = `<svg><circle cx="50" cy="50" r="40" stroke="green" stroke-width="4" fill="yellow" /></svg>`;
     const parsed = parseFragment(html);

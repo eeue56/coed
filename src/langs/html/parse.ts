@@ -54,65 +54,6 @@ export function parse(string: string): Result<HtmlNode<never>> {
     };
 }
 
-function svgTagNameToCorrectCase(tagName: string): SvgTag {
-    tagName = tagName.toLowerCase();
-    switch (tagName) {
-        case "svg":
-        case "symbol":
-        case "stop":
-        case "g":
-        case "a":
-        case "defs":
-        case "marker":
-        case "mask":
-        case "pattern":
-        case "switch":
-        case "text":
-        case "circle":
-        case "ellipse":
-        case "line":
-        case "path":
-        case "polygon":
-        case "polyline":
-        case "rect":
-        case "image":
-        case "tspan":
-        case "use":
-        case "filter":
-            return tagName;
-        case "textpath":
-            return "textPath";
-        case "clippath":
-            return "clipPath";
-        case "foreignobject":
-            return "foreignObject";
-        case "lineargradient":
-            return "linearGradient";
-        case "radialgradient":
-            return "radialGradient";
-        case "feblend":
-            return "feBlend";
-        case "fecolormatrix":
-            return "feColorMatrix";
-        case "fecomponenttransfer":
-            return "feComponentTransfer";
-        case "fecomposite":
-            return "feComposite";
-        case "feconvolvematrix":
-            return "feConvolveMatrix";
-        case "fediffuselighting":
-            return "feDiffuseLighting";
-        case "fedisplacementmap":
-            return "feDisplacementMap";
-        case "fedropshadow":
-            return "feDropShadow";
-        default: {
-            console.error(`Unknown SVG tag: ${tagName}`);
-            return "text";
-        }
-    }
-}
-
 function namespaceNodeKind(tagName: string, namespace: string): HtmlNodeKind {
     if (namespace !== "http://www.w3.org/2000/svg") return "regular";
 
@@ -155,6 +96,15 @@ function namespaceNodeKind(tagName: string, namespace: string): HtmlNodeKind {
         case "feDiffuseLighting":
         case "feDisplacementMap":
         case "feDropShadow":
+        case "feFlood":
+        case "feGaussianBlur":
+        case "feImage":
+        case "feMerge":
+        case "feMorphology":
+        case "feOffset":
+        case "feSpecularLighting":
+        case "feTile":
+        case "feTurbulence":
             return "ns-void";
         default:
             return "ns-regular";
@@ -326,7 +276,7 @@ function getElementTagName(element: Element): string {
         return element.tagName.toLowerCase();
     }
 
-    return svgTagNameToCorrectCase(element.tagName.toLowerCase());
+    return element.localName;
 }
 
 function walk(childNode: ChildNode): [HtmlNode<never>] | [] {

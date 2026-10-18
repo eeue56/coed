@@ -57,6 +57,13 @@ export function testDiffRegularNodeAttributeChanges() {
     assertDiffPaths(left, right, ["0->attributes{class}"]);
 }
 
+export function testDiffRegularNodeAttributeAndChildChanges() {
+    const left = div([], [class_("test")], [text("hello")]);
+    const right = div([], [class_("another")], [text("world")]);
+
+    assertDiffPaths(left, right, ["0->attributes{class}", "0.0"]);
+}
+
 export function testDiffVoidNodeNoChanges() {
     deepStrictEqual(
         html.diff(img([], [class_("test")]), img([], [class_("test")])),
@@ -134,7 +141,13 @@ export function testDiffHtmlStringChanges() {
 }
 
 export function testDiffNamespacedNodeNamespaceChanges() {
-    const left = nodeNS("div", "http://www.w3.org/2000/svg", [], [], [text("x")]);
+    const left = nodeNS(
+        "div",
+        "http://www.w3.org/2000/svg",
+        [],
+        [],
+        [text("x")],
+    );
     const right = nodeNS("div", "https://example.com/ns", [], [], [text("x")]);
 
     assertDiffPaths(left, right, ["0->attributes{xmlns}"]);
@@ -223,13 +236,7 @@ export function testDiffNestedAttributePath() {
     const right = div(
         [],
         [class_("outer")],
-        [
-            span(
-                [],
-                [attribute("data-state", "closed")],
-                [text("hello")],
-            ),
-        ],
+        [span([], [attribute("data-state", "closed")], [text("hello")])],
     );
 
     assertDiffPaths(left, right, ["0.0->attributes{data-state}"]);

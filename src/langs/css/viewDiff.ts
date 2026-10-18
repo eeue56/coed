@@ -36,6 +36,15 @@ function getAtIndex<T>(items: T[], index: number): T | undefined {
     return items[index];
 }
 
+// css.diff payloads are singleton arrays whose path keeps the original top-level index.
+function localIndexes(blocks: CssBlock[], blockIndexes: number[]): number[] {
+    if (blocks.length !== 1 || blockIndexes.length === 0) {
+        return blockIndexes;
+    }
+
+    return [0, ...blockIndexes.slice(1)];
+}
+
 function describeCssBlock(block: CssBlock | null): string {
     if (block === null) {
         return "(missing)";
@@ -60,7 +69,7 @@ function getBlockTrail(
     let currentBlocks = blocks;
     let currentBlock: CssBlock | undefined;
 
-    for (const index of blockIndexes) {
+    for (const index of localIndexes(blocks, blockIndexes)) {
         currentBlock = getAtIndex(currentBlocks, index);
         trail.push(currentBlock ?? null);
 
@@ -171,7 +180,7 @@ function getBlockAtPath(
     let currentBlocks = blocks;
     let currentBlock: CssBlock | undefined;
 
-    for (const index of blockIndexes) {
+    for (const index of localIndexes(blocks, blockIndexes)) {
         currentBlock = getAtIndex(currentBlocks, index);
         if (typeof currentBlock === "undefined") {
             return null;

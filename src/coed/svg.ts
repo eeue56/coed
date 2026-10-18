@@ -44,7 +44,16 @@ export type SvgTag =
     | "feConvolveMatrix"
     | "feDiffuseLighting"
     | "feDisplacementMap"
-    | "feDropShadow";
+    | "feDropShadow"
+    | "feFlood"
+    | "feGaussianBlur"
+    | "feImage"
+    | "feMerge"
+    | "feMorphology"
+    | "feOffset"
+    | "feSpecularLighting"
+    | "feTile"
+    | "feTurbulence";
 
 export function svg<Msg>(
     events: Event<Msg>[],
