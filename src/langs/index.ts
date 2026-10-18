@@ -15,4 +15,4 @@ export type {
 
 export * from "./engine.ts";
 
-export type { Storage } from "./engine.ts";
+export { Storage } from "./engine.ts";
