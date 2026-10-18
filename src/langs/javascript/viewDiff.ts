@@ -1,5 +1,5 @@
 import { class_, div, pre, text, type HtmlNode } from "../../coed.ts";
-import { DIFF_PATH_SEPARATOR } from "../diffs/diffPath.ts";
+import { DIFF_PATH_SEPARATOR, decodePathPart } from "../diffs/diffPath.ts";
 import {
     compactDiffEntries,
     compactedSummaryNode,
@@ -149,14 +149,14 @@ function parsePath(path: string): PathSegment[] {
                     kind: "PropertyMapPathSegment",
                     raw: segment,
                     field: mapMatch[1],
-                    key: mapMatch[2],
+                    key: decodePathPart(mapMatch[2]),
                 };
             }
 
             return {
                 kind: "FieldPathSegment",
                 raw: segment,
-                field: segment,
+                field: decodePathPart(segment),
             };
         });
 }
