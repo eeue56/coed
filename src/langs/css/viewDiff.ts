@@ -119,7 +119,8 @@ function formatPathForDisplay(
         );
     }
 
-    return lines.join("\n");
+    const escaped = escapeHtml(lines.join("\n"));
+    return escaped;
 }
 
 function parsePath(path: string): ParsedPath {
