@@ -28,7 +28,7 @@ type StorageState<tree> = {
  * creates the underlying table, or reopens it if it's available
  */
 function open<tree>(mode: OpenMode, storage: Storage<tree>): Storage<tree> {
-    if (storage._status && storage._status.status.kind === "open") {
+    if (storage._status.status.kind === "open") {
         return storage;
     }
 
@@ -227,8 +227,14 @@ function deserialize<tree>(
     switch (storage._status.connection.kind) {
         case "in-memory": {
             try {
-                /* eslint-disable-next-line @typescript-eslint/no-unsafe-assignment */
-                storage._status.connection.rows = JSON.parse(string);
+                const parsed = JSON.parse(string) as unknown;
+
+                if (!Array.isArray(parsed)) {
+                    throw new Error(
+                        "Tried to parse storage string, but it is not an array",
+                    );
+                }
+                storage._status.connection.rows = parsed as Row<tree>[];
             } catch (e) {
                 return {
                     kind: "Err",
