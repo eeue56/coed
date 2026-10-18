@@ -18,11 +18,11 @@ export function testParseJs() {
 export async function snapshotGeneratedJs() {
     const parsedJs = javascript.parse(jsString);
     deepStrictEqual(parsedJs.kind, "Ok");
-    return javascript.generate(parsedJs.value);
+    return JSON.stringify(javascript.generate(parsedJs.value));
 }
 
 export async function snapshotParsedJs() {
-    return javascript.parse(jsString);
+    return JSON.stringify(javascript.parse(jsString));
 }
 
 export async function snapshotFilteredJs() {
@@ -47,5 +47,5 @@ export async function snapshotFilteredJs() {
         ],
         parsedJs.value,
     );
-    return filtered;
+    return JSON.stringify(filtered);
 }
