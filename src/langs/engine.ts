@@ -28,6 +28,10 @@ type StorageState<tree> = {
  * creates the underlying table, or reopens it if it's available
  */
 function open<tree>(mode: OpenMode, storage: Storage<tree>): Storage<tree> {
+    if (storage._status && storage._status.status.kind === "open") {
+        return storage;
+    }
+
     switch (mode.kind) {
         case "in-memory": {
             storage._status = {
