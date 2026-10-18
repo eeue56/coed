@@ -2,6 +2,7 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 import { join } from "path";
 import { flatRender } from "../../../coed.ts";
+import { diff as javascriptDiff } from "../../../langs/javascript/diff.ts";
 import { javascript } from "../../../langs/javascript/index.ts";
 import type { Program } from "../../../langs/javascript/types.ts";
 import type { Diff } from "../../../langs/types.ts";
@@ -393,4 +394,44 @@ export async function snapshotViewDiffCompactedJavascriptEntry() {
             },
         ],
     });
+}
+
+export function testViewDiffResolvesNonzeroIndexFromDiff() {
+    const left = parseProgram("const a = 1;\nconst b = 1;");
+    const right = parseProgram("const a = 1;\nconst b = 2;");
+
+    const rendered = flatRender(
+        javascript.viewDiff(javascriptDiff(left, right)),
+    );
+
+    assert.strictEqual(rendered.includes("(missing)"), false);
+    assert.strictEqual(rendered.includes("value: 2 (was 1)"), true);
+    assert.strictEqual(
+        rendered.includes('coed-view-diff-added-highlight">2</span>'),
+        true,
+    );
+}
+
+export function testViewDiffRendersTrailingAdditionFromDiff() {
+    const left = parseProgram("const a = 1;");
+    const right = parseProgram("const a = 1;\nconst b = 2;");
+
+    const rendered = flatRender(
+        javascript.viewDiff(javascriptDiff(left, right)),
+    );
+
+    assert.strictEqual(rendered.includes("const b = 2;"), true);
+    assert.strictEqual(rendered.includes("1: const"), true);
+}
+
+export function testViewDiffRendersTrailingRemovalFromDiff() {
+    const left = parseProgram("const a = 1;\nconst b = 2;");
+    const right = parseProgram("const a = 1;");
+
+    const rendered = flatRender(
+        javascript.viewDiff(javascriptDiff(left, right)),
+    );
+
+    assert.strictEqual(rendered.includes("const b = 2;"), true);
+    assert.strictEqual(rendered.includes("1: "), true);
 }

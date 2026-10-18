@@ -254,16 +254,39 @@ function formatSegmentLabel(segment: PathSegment): string {
     return segment.raw;
 }
 
+// Payloads hold only the changed top-level node, so the leading index is entry-local.
+function localSegments(
+    segments: PathSegment[],
+    addedProgram: Program,
+    removedProgram: Program,
+): PathSegment[] {
+    const first = segments[0];
+
+    if (
+        typeof first === "undefined" ||
+        first.kind !== "IndexPathSegment" ||
+        first.index === 0 ||
+        addedProgram.length > 1 ||
+        removedProgram.length > 1
+    ) {
+        return segments;
+    }
+
+    return [{ ...first, index: 0 }, ...segments.slice(1)];
+}
+
 function formatPathForDisplay(
     path: string,
     addedProgram: Program,
     removedProgram: Program,
 ): string {
-    const segments = parsePath(path);
+    const labelSegments = parsePath(path);
 
-    if (segments.length === 0) {
+    if (labelSegments.length === 0) {
         return escapeHtml(path);
     }
+
+    const segments = localSegments(labelSegments, addedProgram, removedProgram);
 
     const lines: string[] = [];
     let addedCurrent: PathValue = addedProgram;
@@ -279,7 +302,7 @@ function formatPathForDisplay(
         lines.push(
             formatComparedPathLine(
                 i,
-                formatSegmentLabel(segment),
+                formatSegmentLabel(labelSegments[i]),
                 addedDescription,
                 removedDescription,
             ),
@@ -585,7 +608,11 @@ function viewDiffNodeWithSummary(
     summaryNode: HtmlNode<never> | null,
     compactedPropertyKeys: string[],
 ): HtmlNode<never> {
-    const segments = parsePath(entry.path);
+    const segments = localSegments(
+        parsePath(entry.path),
+        entry.added,
+        entry.removed,
+    );
 
     return renderDiffEntrySections(
         "coed-view-diff",
