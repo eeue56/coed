@@ -97,7 +97,7 @@ function splitClassAttribute(
     attribute: StringAttributeWithClass,
 ): StringAttributeWithClass[] {
     return attribute.value
-        .split(" ")
+        .split(/[\t\n\f\r ]+/).filter((className) => className.length > 0)
         .map((className: string) => ({ ...attribute, value: className }));
 }
 
