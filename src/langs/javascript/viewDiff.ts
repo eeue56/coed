@@ -12,6 +12,7 @@ import {
     type HighlightSpec,
     type ValueSnippetSpec,
 } from "../diffs/viewDiffShared.ts";
+import { escapeHtml } from "../helpers.ts";
 import type { Diff, DiffNode } from "../types.ts";
 import { generateExpression, generateProgram } from "./generate.ts";
 import {
@@ -261,7 +262,7 @@ function formatPathForDisplay(
     const segments = parsePath(path);
 
     if (segments.length === 0) {
-        return path;
+        return escapeHtml(path);
     }
 
     const lines: string[] = [];
@@ -285,7 +286,7 @@ function formatPathForDisplay(
         );
     }
 
-    return lines.join("\n");
+    return escapeHtml(lines.join("\n"));
 }
 
 function isPrimitive(value: PathValue): value is PrimitiveValue {
@@ -566,7 +567,13 @@ function renderCode(
         compactedPropertyKeys,
     );
 
-    return renderCodeWithHighlight(code, highlight, codeClass, highlightClass);
+    return renderCodeWithHighlight(
+        code,
+        highlight,
+        codeClass,
+        highlightClass,
+        escapeHtml,
+    );
 }
 
 export function viewDiffNode(entry: DiffNode<JsNode[]>): HtmlNode<never> {

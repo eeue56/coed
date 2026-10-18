@@ -106,7 +106,9 @@ export function testViewDiffHighlightsPropertyMapKeyWhenAdded() {
 
     assert.strictEqual(rendered.includes("properties{b}: number"), true);
     assert.strictEqual(
-        rendered.includes('coed-view-diff-added-highlight">"b"</span>'),
+        rendered.includes(
+            'coed-view-diff-added-highlight">&quot;b&quot;</span>',
+        ),
         true,
     );
 }
@@ -158,7 +160,9 @@ export function testViewDiffHighlightsPropertyMapPrimitiveValueChange() {
         true,
     );
     assert.strictEqual(
-        rendered.includes('coed-view-diff-added-highlight">"status"</span>'),
+        rendered.includes(
+            'coed-view-diff-added-highlight">&quot;status&quot;</span>',
+        ),
         false,
     );
 }
@@ -181,7 +185,7 @@ export function testViewDiffHighlightsRemovedPropertyMapKeyAndValue() {
 
     assert.strictEqual(
         rendered.includes(
-            'coed-view-diff-removed-highlight">"legacy": true</span>',
+            'coed-view-diff-removed-highlight">&quot;legacy&quot;: true</span>',
         ),
         true,
     );
@@ -237,13 +241,13 @@ export function testViewDiffHighlightsCorrectRepeatedPropertyValue() {
 
     assert.strictEqual(
         rendered.includes(
-            '"answer": "<span class="coed-view-diff-added-highlight">Stegosaurus</span>"',
+            '&quot;answer&quot;: &quot;<span class="coed-view-diff-added-highlight">Stegosaurus</span>&quot;',
         ),
         true,
     );
     assert.strictEqual(
         rendered.includes(
-            '"options": ["T. rex", "<span class="coed-view-diff-removed-highlight">Triceratops</span>", "Velociraptor"]',
+            '&quot;options&quot;: [&quot;T. rex&quot;, &quot;<span class="coed-view-diff-removed-highlight">Triceratops</span>&quot;, &quot;Velociraptor&quot;]',
         ),
         false,
     );

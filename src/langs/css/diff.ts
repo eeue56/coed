@@ -149,11 +149,11 @@ function propertyDiffPath(path: string, propertyName: string): string {
     return appendPropertyPath(path, propertyName, DIFF_PROPERTY_SEGMENT);
 }
 
-function getPropertyOnlyDiffPath(
+function getPropertyOnlyDiffPaths(
     leftBody: Declaration[],
     rightBody: Declaration[],
     path: string,
-): string | null {
+): string[] | null {
     if (
         !areAllPropertyDeclarations(leftBody) ||
         !areAllPropertyDeclarations(rightBody) ||
@@ -166,25 +166,23 @@ function getPropertyOnlyDiffPath(
     const leftProperties = propertyMap(leftBody);
     const rightProperties = propertyMap(rightBody);
 
+    const paths: string[] = [];
+
     for (const declaration of rightBody) {
         const leftValue = leftProperties.get(declaration.name);
 
-        if (typeof leftValue === "undefined") {
-            return propertyDiffPath(path, declaration.name);
-        }
-
         if (leftValue !== declaration.value) {
-            return propertyDiffPath(path, declaration.name);
+            paths.push(propertyDiffPath(path, declaration.name));
         }
     }
 
     for (const declaration of leftBody) {
         if (!rightProperties.has(declaration.name)) {
-            return propertyDiffPath(path, declaration.name);
+            paths.push(propertyDiffPath(path, declaration.name));
         }
     }
 
-    return null;
+    return paths;
 }
 
 function getPropertyName(left: Declaration, right: Declaration): string {
@@ -199,13 +197,13 @@ function getPropertyName(left: Declaration, right: Declaration): string {
     return "unknown";
 }
 
-function getDeclarationDiffPath(
+function getDeclarationDiffPaths(
     left: Declaration,
     right: Declaration,
     path: string,
-): string | null {
+): string[] {
     if (left.kind !== right.kind) {
-        return propertyDiffPath(path, getPropertyName(left, right));
+        return [propertyDiffPath(path, getPropertyName(left, right))];
     }
 
     switch (left.kind) {
@@ -213,100 +211,89 @@ function getDeclarationDiffPath(
             assumeKindDeclaration(right, left.kind);
 
             if (left.name === right.name && left.value === right.value) {
-                return null;
+                return [];
             }
 
-            return propertyDiffPath(path, right.name);
+            return [propertyDiffPath(path, right.name)];
         }
         case "Nested": {
             assumeKindDeclaration(right, left.kind);
 
             if (!isSameSelector(left.selector, right.selector)) {
-                return path;
+                return [path];
             }
 
             const sharedLength = Math.min(
                 left.declarations.length,
                 right.declarations.length,
             );
+            const paths: string[] = [];
 
             for (let i = 0; i < sharedLength; i++) {
-                const childPath = getDeclarationDiffPath(
-                    left.declarations[i],
-                    right.declarations[i],
-                    appendPath(path, String(i)),
+                paths.push(
+                    ...getDeclarationDiffPaths(
+                        left.declarations[i],
+                        right.declarations[i],
+                        appendPath(path, String(i)),
+                    ),
                 );
-
-                if (childPath !== null) {
-                    return childPath;
-                }
             }
 
             if (left.declarations.length !== right.declarations.length) {
-                return appendPath(path, String(sharedLength));
+                paths.push(appendPath(path, String(sharedLength)));
             }
 
-            return null;
+            return paths;
         }
     }
 }
 
-function getBlockDiffPath(
+function getBlockDiffPaths(
     left: CssBlock,
     right: CssBlock,
     path: string,
-): string | null {
+): string[] {
     if (
         left.kind !== right.kind ||
         !isSameSelector(left.selector, right.selector)
     ) {
-        return path;
+        return [path];
     }
 
     switch (left.kind) {
         case "Regular": {
             const rightRegular = right as typeof left;
-            const propertyOnlyDiffPath = getPropertyOnlyDiffPath(
+            const propertyOnlyDiffPaths = getPropertyOnlyDiffPaths(
                 left.body,
                 rightRegular.body,
                 path,
             );
 
-            if (propertyOnlyDiffPath !== null) {
-                return propertyOnlyDiffPath;
-            }
-
-            if (
-                areAllPropertyDeclarations(left.body) &&
-                areAllPropertyDeclarations(rightRegular.body) &&
-                !hasDuplicatePropertyNames(left.body) &&
-                !hasDuplicatePropertyNames(rightRegular.body)
-            ) {
-                return null;
+            if (propertyOnlyDiffPaths !== null) {
+                return propertyOnlyDiffPaths;
             }
 
             const sharedLength = Math.min(
                 left.body.length,
                 rightRegular.body.length,
             );
+            const paths: string[] = [];
 
             for (let i = 0; i < sharedLength; i++) {
-                const declarationPath = getDeclarationDiffPath(
-                    left.body[i],
-                    rightRegular.body[i],
-                    path,
+                paths.push(
+                    ...getDeclarationDiffPaths(
+                        left.body[i],
+                        rightRegular.body[i],
+                        path,
+                    ),
                 );
-
-                if (declarationPath !== null) {
-                    return declarationPath;
-                }
             }
 
             if (left.body.length !== rightRegular.body.length) {
-                return appendPath(path, String(sharedLength));
+                paths.push(appendPath(path, String(sharedLength)));
             }
 
-            return null;
+            return paths;
         }
         case "MediaQuery": {
             const rightMedia = right as typeof left;
@@ -315,23 +302,23 @@ function getBlockDiffPath(
                 rightMedia.body.length,
             );
 
-            for (let i = 0; i < sharedLength; i++) {
-                const childPath = getBlockDiffPath(
-                    left.body[i],
-                    rightMedia.body[i],
-                    appendPath(path, String(i)),
-                );
+            const paths: string[] = [];
 
-                if (childPath !== null) {
-                    return childPath;
-                }
+            for (let i = 0; i < sharedLength; i++) {
+                paths.push(
+                    ...getBlockDiffPaths(
+                        left.body[i],
+                        rightMedia.body[i],
+                        appendPath(path, String(i)),
+                    ),
+                );
             }
 
             if (left.body.length !== rightMedia.body.length) {
-                return appendPath(path, String(sharedLength));
+                paths.push(appendPath(path, String(sharedLength)));
             }
 
-            return null;
+            return paths;
         }
     }
 }
@@ -362,17 +349,16 @@ export function diff(left: CssBlock[], right: CssBlock[]): Diff<CssBlock[]> {
     for (let i = 0; i < sharedLength; i++) {
         const leftBlock = left[i];
         const rightBlock = right[i];
-        const path = getBlockDiffPath(leftBlock, rightBlock, `${i}`);
 
-        if (path === null) {
-            continue;
+        const paths = new Set(getBlockDiffPaths(leftBlock, rightBlock, `${i}`));
+
+        for (const path of paths) {
+            diffs.push({
+                path,
+                added: [rightBlock],
+                removed: [leftBlock],
+            });
         }
-
-        diffs.push({
-            path,
-            added: [rightBlock],
-            removed: [leftBlock],
-        });
     }
 
     for (let i = sharedLength; i < right.length; i++) {
