@@ -8,7 +8,7 @@ import { checkPurity } from "./purity.ts";
 import type { JsNode, Program, Purity } from "./types.ts";
 import { viewDiff } from "./viewDiff.ts";
 
-type JsLanguage = Language<Program, JsNode> & {
+export type JsLanguage = Language<Program, JsNode> & {
     checkPurity: (program: Program) => Purity;
     parseTypeScript: (input: string, fileName: string) => Result<Program>;
 };
